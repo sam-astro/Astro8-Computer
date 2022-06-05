@@ -22,8 +22,8 @@ public class Program
         if (action.ToLower() != "microcode")
         {
             List<string> outputBytes = new List<string>();
-            for (int i = 0; i < 16; i++)
-                outputBytes.Add("00");
+            for (int i = 0; i < 256; i++)
+                outputBytes.Add("0000");
 
             //, multiples of 2\nldi 2\nsta 15\nldi 0\nadd 15\nout\njmp 3
             Console.Write("v Code input v\n");
@@ -57,7 +57,7 @@ public class Program
                 }
                 if (splitBySpace[0] == "SET")
                 {
-                    string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 2);
+                    string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 4);
                     outputBytes[Int32.Parse(splitBySpace[1])] = hVal;
                     Console.Write("- " + splitcode[i] + "\t  ~   ~\n");
                     continue;
@@ -78,13 +78,13 @@ public class Program
                 // Check if any args are after the command
                 if (splitcode[i] != splitBySpace[0])
                 {
-                    Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 1));
-                    outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 1);
+                    Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 3));
+                    outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 3);
                 }
                 else
                 {
                     Console.Write("0");
-                    outputBytes[memaddr] += "0";
+                    outputBytes[memaddr] += "000";
                 }
                 Console.Write("\n");
                 memaddr++;
@@ -96,6 +96,26 @@ public class Program
                 if (i < outputBytes.Count - 1)
                     Console.Write(",");
             }
+            Console.Write("\n\n");
+
+            string processedOutput = "";
+            // Print the output
+            Console.Write("\nv3.0 hex words addressed\n");
+            processedOutput += "\nv3.0 hex words addressed\n";
+            Console.Write("00: ");
+            processedOutput += "00: ";
+            for (int outindex = 0; outindex < outputBytes.Count; outindex++)
+            {
+                if (outindex % 8 == 0 && outindex != 0)
+                {
+                    Console.Write("\n" + DecToHexFilled(outindex, 2) + ": ");
+                    processedOutput += "\n" + DecToHexFilled(outindex, 2) + ": ";
+                }
+                Console.Write(outputBytes[outindex] + " ");
+                processedOutput += outputBytes[outindex] + " ";
+            }
+
+            File.WriteAllText("../../../../program_machine_code", processedOutput);
         }
         else
         {
