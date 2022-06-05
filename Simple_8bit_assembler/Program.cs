@@ -1,0 +1,323 @@
+﻿
+//Microsoft (R) Visual C# Compiler version 3.4.0-beta4-19562-05 (ff930dec)
+//Copyright (C) Microsoft Corporation. All rights reserved.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+public class Program
+{
+    static bool MICROCODE_GENERATOR = true;
+
+
+    static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "", "", "", "" };
+
+    public static void Main(string[] args)
+    {
+        Console.Write("Action >  ");
+        string action = Console.ReadLine();
+
+        if (action.ToLower() != "microcode")
+        {
+            List<string> outputBytes = new List<string>();
+            for (int i = 0; i < 16; i++)
+                outputBytes.Add("00");
+
+            //, multiples of 2\nldi 2\nsta 15\nldi 0\nadd 15\nout\njmp 3
+            Console.Write("v Code input v\n");
+            string code = "";
+
+            string line;
+            while (!String.IsNullOrWhiteSpace(line = Console.ReadLine()))
+            {
+                code += line + "\n";
+            }
+            //string code = "";
+            //for (int i = 0; i < args.Length; i++)
+            //    code += args[i]+"\n";
+
+            string[] splitcode = code.ToUpper().Split('\n');
+
+            int memaddr = 0;
+            for (int i = 0; i < splitcode.Length; i++)
+            {
+                if (splitcode[i] == null || splitcode[i] == "")
+                {
+                    continue;
+                }
+
+                string[] splitBySpace = splitcode[i].Split(' ');
+
+                if (splitBySpace[0][0] == ',')
+                {
+                    Console.Write(splitcode[i] + "\n");
+                    continue;
+                }
+                if (splitBySpace[0] == "SET")
+                {
+                    string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 2);
+                    outputBytes[Int32.Parse(splitBySpace[1])] = hVal;
+                    Console.Write("- " + splitcode[i] + "\t  ~   ~\n");
+                    continue;
+                }
+
+                Console.Write(memaddr + " " + splitcode[i] + "   \t  =>  ");
+
+                // Find index of instruction
+                for (int f = 0; f < instructions.Length; f++)
+                {
+                    if (instructions[f] == splitBySpace[0])
+                    {
+                        Console.Write(DecToHexFilled(f, 1));
+                        outputBytes[memaddr] = DecToHexFilled(f, 1);
+                    }
+                }
+
+                // Check if any args are after the command
+                if (splitcode[i] != splitBySpace[0])
+                {
+                    Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 1));
+                    outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 1);
+                }
+                else
+                {
+                    Console.Write("0");
+                    outputBytes[memaddr] += "0";
+                }
+                Console.Write("\n");
+                memaddr++;
+            }
+            Console.Write("\n== OUTPUT: ==\n");
+            for (int i = 0; i < outputBytes.Count; i++)
+            {
+                Console.Write(outputBytes[i]);
+                if (i < outputBytes.Count - 1)
+                    Console.Write(",");
+            }
+        }
+        else
+        {
+            // Generate zeros in data
+            string[] output = new string[1024];
+            for (int osind = 0; osind < output.Length; osind++) { output[osind] = "0000"; }
+
+            string[] microinstructions = { "FL", "RA", "WA", "WB", "AW", "RM", "EO", "SU", "IW", "IR", "DW", "J", "ST", "CE", "CR", "WM" };
+            string[] flags = { "ZEROFLAG", "CARRYFLAG" };
+            string[] instructioncodes = {
+                "0=aw,cr & 1=rm,iw,ce", // Fetch
+                "2=aw,ir & 3=wa,rm", // LoadA
+                "2=aw,ir & 3=wb,rm", // LoadB
+                "2=aw,ir & 3=wb,rm & 4=wa,eo,fl", // Add <addr>
+                "2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl", // Subtract <addr>
+                "2=ra,dw", // Out
+                "2=ir,j", // Jump <addr>
+                "2=aw,ir & 3=ra,wm", // Store A <addr>
+                "2=wa,ir", // Load immediate A <val>
+                "2=ir,j | zeroflag", // Jump if zero <addr>
+                "2=ir,j | carryflag", // Jump if carry <addr>
+                "2=st", // Stop the computer clock
+            };
+            // Remove spaces from instruction codes and make uppercase
+            for (int cl = 0; cl < instructioncodes.Length; cl++)
+            {
+                string newStr = "";
+                for (int clc = 0; clc < instructioncodes[cl].Length; clc++)
+                {
+                    if (instructioncodes[cl][clc] != ' ')
+                        newStr += instructioncodes[cl][clc];
+                }
+                Console.WriteLine(newStr.ToUpper());
+                instructioncodes[cl] = newStr.ToUpper();
+            }
+
+            // Special process fetch instruction
+            Console.WriteLine("\n"+instructioncodes[0]);
+            for (int ins = 0; ins < 16; ins++) // Iterate through all definitions of instructions
+            {
+                string startaddress = DecToBinFilled(ins, 4);
+
+                string[] instSteps = instructioncodes[0].Split('&');
+                for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
+                {
+                    int actualStep = int.Parse(instSteps[step].Split('=')[0]);
+                    string stepContents = instSteps[step].Split('=')[1].Split('|')[0];
+
+                    string midaddress = DecToBinFilled(actualStep, 4);
+
+                    string stepComputedInstruction = "";
+                    for (int mins = 0; mins < microinstructions.Length; mins++)
+                    {
+                        if (stepContents.Contains(microinstructions[mins]))
+                            stepComputedInstruction += "1";
+                        else
+                            stepComputedInstruction += "0";
+                    }
+
+                    // Compute flags combinations
+                    for (int flagcombinations = 0; flagcombinations < flags.Length*flags.Length; flagcombinations++)
+                    {
+                        char[] endaddress = { '0', '0' };
+                        // Look for flags
+                        if (instSteps[step].Contains("|"))
+                        {
+                            string[] inststepFlags = instSteps[step].Split('|')[1].Split(',');
+                            for (int flag = 0; flag < inststepFlags.Length; flag++) // Iterate through all flags in step
+                            {
+                                for (int checkflag = 0; checkflag < flags.Length; checkflag++) // What is the index of the flag
+                                {
+                                    if (inststepFlags[flag] == flags[checkflag])
+                                        endaddress[checkflag] = '1';
+                                }
+                            }
+                        }
+                        char[] newendaddress = DecToBinFilled(flagcombinations, 2).ToCharArray();
+
+                        bool doesntmatch = false;
+                        for (int i = 0; i < endaddress.Length; i++)
+                        {
+                            if (endaddress[i] == '1')
+                            {
+                                if (newendaddress[i] != '1')
+                                    doesntmatch = true;
+                            }
+                        }
+                        if (doesntmatch)
+                            continue;
+
+                        Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
+                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 4);
+                    }
+                }
+
+                //Console.WriteLine();
+            }
+
+            // Do actual processing
+            for (int ins = 1; ins < instructioncodes.Length; ins++) // Iterate through all definitions of instructions
+            {
+                Console.WriteLine(instructioncodes[ins]);
+
+                string startaddress = DecToBinFilled(ins, 4);
+
+                string[] instSteps = instructioncodes[ins].Split('&');
+                for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
+                {
+                    int actualStep = int.Parse(instSteps[step].Split('=')[0]);
+                    string stepContents = instSteps[step].Split('=')[1].Split('|')[0];
+
+                    string midaddress = DecToBinFilled(actualStep, 4);
+
+                    string stepComputedInstruction = "";
+                    for (int mins = 0; mins < microinstructions.Length; mins++)
+                    {
+                        if (stepContents.Contains(microinstructions[mins]))
+                            stepComputedInstruction += "1";
+                        else
+                            stepComputedInstruction += "0";
+                    }
+
+                    // Compute flags combinations
+                    for (int flagcombinations = 0; flagcombinations < flags.Length * flags.Length; flagcombinations++)
+                    {
+                        char[] endaddress = { '0', '0' };
+                        // Look for flags
+                        if (instSteps[step].Contains("|"))
+                        {
+                            string[] inststepFlags = instSteps[step].Split('|')[1].Split(',');
+                            for (int flag = 0; flag < inststepFlags.Length; flag++) // Iterate through all flags in step
+                            {
+                                for (int checkflag = 0; checkflag < flags.Length; checkflag++) // What is the index of the flag
+                                {
+                                    if (inststepFlags[flag] == flags[checkflag])
+                                        endaddress[checkflag] = '1';
+                                }
+                            }
+                        }
+                        char[] newendaddress = DecToBinFilled(flagcombinations, 2).ToCharArray();
+
+                        bool doesntmatch = false;
+                        for (int i = 0; i < endaddress.Length; i++)
+                        {
+                            if (endaddress[i] == '1')
+                            {
+                                if (newendaddress[i] != '1')
+                                    doesntmatch = true;
+                            }
+                        }
+                        if (doesntmatch)
+                            continue;
+
+                        Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
+                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 4);
+                    }
+                }
+
+                //Console.WriteLine();
+            }
+
+
+            string processedOutput = "";
+
+            // Print the output
+            Console.Write("\nv3.0 hex words addressed\n");
+            processedOutput += "\nv3.0 hex words addressed\n";
+            Console.Write("000: ");
+            processedOutput += "000: ";
+            for (int outindex = 0; outindex < output.Length; outindex++)
+            {
+                if (outindex % 8 == 0 && outindex != 0)
+                {
+                    Console.Write("\n" + DecToHexFilled(outindex, 3) + ": ");
+                    processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
+                }
+                Console.Write(output[outindex] + " ");
+                processedOutput += output[outindex] + " ";
+            }
+
+            File.WriteAllText("../../../../microinstructions_cpu_v1", processedOutput);
+        }
+        Console.WriteLine("\n");
+        Console.ReadLine();
+    }
+
+    static string DecToHexFilled(int input, int desiredSize)
+    {
+        string output = input.ToString("X");
+
+        while (output.Length < desiredSize)
+        {
+            output = "0" + output;
+        }
+
+        return output;
+    }
+    static string BinToHexFilled(string input, int desiredSize)
+    {
+        string output = Convert.ToInt32(input, 2).ToString("X");
+
+        while (output.Length < desiredSize)
+        {
+            output = "0" + output;
+        }
+
+        return output;
+    }
+    static int BinToDec(string input)
+    {
+        int output = Convert.ToInt32(input, 2);
+        return output;
+    }
+    static string DecToBinFilled(int input, int desiredSize)
+    {
+        string output = Convert.ToString(input, 2);
+
+        while (output.Length < desiredSize)
+        {
+            output = "0" + output;
+        }
+
+        return output;
+    }
+}

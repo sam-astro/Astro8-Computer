@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32422.2
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simple_8bit_assembler", "Simple_8bit_assembler.csproj", "{06B4AE75-8769-44A2-9F45-FB0714B1320C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{06B4AE75-8769-44A2-9F45-FB0714B1320C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06B4AE75-8769-44A2-9F45-FB0714B1320C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06B4AE75-8769-44A2-9F45-FB0714B1320C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06B4AE75-8769-44A2-9F45-FB0714B1320C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74C06E9B-F394-4F9A-BF53-A536F9A6AA3C}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "Simple_8bit_assembler/1.0.0": {
+        "runtime": {
+          "Simple_8bit_assembler.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Simple_8bit_assembler/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

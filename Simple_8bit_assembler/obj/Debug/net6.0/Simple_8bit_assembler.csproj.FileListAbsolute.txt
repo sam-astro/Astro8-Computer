@@ -1,0 +1,30 @@
+D:\Code\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.exe
+D:\Code\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.deps.json
+D:\Code\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.runtimeconfig.json
+D:\Code\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.dll
+D:\Code\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.pdb
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.csproj.AssemblyReference.cache
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.GeneratedMSBuildEditorConfig.editorconfig
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.AssemblyInfoInputs.cache
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.AssemblyInfo.cs
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.csproj.CoreCompileInputs.cache
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.dll
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\refint\Simple_8bit_assembler.dll
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.pdb
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.genruntimeconfig.cache
+D:\Code\Simple_8bit_assembler\obj\Debug\net6.0\ref\Simple_8bit_assembler.dll
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.exe
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.deps.json
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.runtimeconfig.json
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.dll
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Simple_8bit_assembler.pdb
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.csproj.AssemblyReference.cache
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.GeneratedMSBuildEditorConfig.editorconfig
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.AssemblyInfoInputs.cache
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.AssemblyInfo.cs
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.csproj.CoreCompileInputs.cache
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.dll
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\refint\Simple_8bit_assembler.dll
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.pdb
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.genruntimeconfig.cache
+D:\Code\Basic CPU In Logisim\Simple_8bit_assembler\obj\Debug\net6.0\ref\Simple_8bit_assembler.dll
