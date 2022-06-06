@@ -126,19 +126,20 @@ public class Program
             string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
             string[] flags = { "ZEROFLAG", "CARRYFLAG" };
             string[] instructioncodes = {
-                "0=aw,cr & 1=rm,iw,ce,ei", // Fetch
-                "2=aw,ir & 3=wa,rm,ei", // LoadA
-                "2=aw,ir & 3=wb,rm,ei", // LoadB
-                "2=aw,ir & 3=wb,rm & 4=wa,eo,fl,ei", // Add <addr>
-                "2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl,ei", // Subtract <addr>
-                "2=ra,dw,ei", // Out
-                "2=ir,j,ei", // Jump <addr>
-                "2=aw,ir & 3=ra,wm,ei", // Store A <addr>
-                "2=wa,ir,ei", // Load immediate A <val>
-                "2=ir,j,ei | zeroflag", // Jump if zero <addr>
-                "2=ir,j,ei | carryflag", // Jump if carry <addr>
-                "2=st,ei", // Stop the computer clock
+                "fetch( 0=aw,cr & 1=rm,iw,ce,ei", // Fetch
+                "loda( 2=aw,ir & 3=wa,rm,ei", // LoadA
+                "lodb( 2=aw,ir & 3=wb,rm,ei", // LoadB
+                "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl,ei", // Add <addr>
+                "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl,ei", // Subtract <addr>
+                "out( 2=ra,dw,ei", // Out
+                "jmp( 2=ir,j,ei", // Jump <addr>
+                "sta( 2=aw,ir & 3=ra,wm,ei", // Store A <addr>
+                "ldi( 2=wa,ir,ei", // Load immediate A <val>
+                "jmpz( 2=ir,j,ei | zeroflag", // Jump if zero <addr>
+                "jmpc( 2=ir,j,ei | carryflag", // Jump if carry <addr>
+                "hlt( 2=st,ei", // Stop the computer clock
             };
+            
             // Remove spaces from instruction codes and make uppercase
             for (int cl = 0; cl < instructioncodes.Length; cl++)
             {
@@ -151,12 +152,37 @@ public class Program
                 Console.WriteLine(newStr.ToUpper());
                 instructioncodes[cl] = newStr.ToUpper();
             }
+            
+            // Create indexes for instructions, which allows for duplicates to execute differently for different parameters
+            int[] instIndexes = new int[instructioncodes.Length];
+            List<string> seenNames = new List<string>();
+            for (int cl = 0; cl < instructioncodes.Length; cl++)
+            {
+                string instName = instructioncodes[cl].Split('(')[0];
+                bool foundInList = false;
+                for (int clc = 0; clc < seenNames.Count; clc++)
+                {
+                    if (instName == seenNames[clc])
+                    {
+                        instIndexes[cl] = clc;
+                        foundInList = true;
+                        break;
+                    }
+                }
+                if(!foundInList){
+                    seenNames.Add(instName);
+                    instIndexes[cl] = seenNames.Count-1;
+                }
+                instructioncodes[cl] = instructioncodes[cl].Split('(')[1];
+            }
 
             // Special process fetch instruction
             Console.WriteLine("\n"+instructioncodes[0]);
-            for (int ins = 0; ins < 16; ins++) // Iterate through all definitions of instructions
+            for (int ins = 0; ins < instructioncodes.Length; ins++) // Iterate through all definitions of instructions
             {
-                string startaddress = DecToBinFilled(ins, 4);
+                int correctedIndex = instIndexes[ins];
+                
+                string startaddress = DecToBinFilled(correctedIndex, 4);
 
                 string[] instSteps = instructioncodes[0].Split('&');
                 for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
@@ -217,11 +243,13 @@ public class Program
             // Do actual processing
             for (int ins = 1; ins < instructioncodes.Length; ins++) // Iterate through all definitions of instructions
             {
-                Console.WriteLine(instructioncodes[ins]);
+                int correctedIndex = instIndexes[ins];
+                
+                Console.WriteLine(instructioncodes[correctedIndex]);
 
-                string startaddress = DecToBinFilled(ins, 4);
+                string startaddress = DecToBinFilled(correctedIndex, 4);
 
-                string[] instSteps = instructioncodes[ins].Split('&');
+                string[] instSteps = instructioncodes[correctedIndex].Split('&');
                 for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
                 {
                     int actualStep = int.Parse(instSteps[step].Split('=')[0]);
@@ -242,7 +270,8 @@ public class Program
                     for (int flagcombinations = 0; flagcombinations < flags.Length * flags.Length; flagcombinations++)
                     {
                         char[] endaddress = { '0', '0' };
-                        // Look for flags
+                        int[] stepLocked = { 0, 0 };
+                        // If flags are specified in current step layer, set them to what is specified and lock that bit
                         if (instSteps[step].Contains("|"))
                         {
                             string[] inststepFlags = instSteps[step].Split('|')[1].Split(',');
@@ -250,19 +279,25 @@ public class Program
                             {
                                 for (int checkflag = 0; checkflag < flags.Length; checkflag++) // What is the index of the flag
                                 {
-                                    if (inststepFlags[flag] == flags[checkflag])
-                                        endaddress[checkflag] = '1';
+                                    if (inststepFlags[flag].Contains(flags[checkflag])){
+                                        if(inststepFlags[flag][0] == '!')
+                                            endaddress[checkflag] = '0';
+                                        else
+                                            endaddress[checkflag] = '1';
+                                        stepLocked[checkflag] = 1;
+                                    }
                                 }
                             }
                         }
                         char[] newendaddress = DecToBinFilled(flagcombinations, 2).ToCharArray();
 
+                        // MAke sure the current combination doesn't change the locked bits, otherwise go to next step
                         bool doesntmatch = false;
                         for (int i = 0; i < endaddress.Length; i++)
                         {
-                            if (endaddress[i] == '1')
+                            if (stepLocked[i] == 1)
                             {
-                                if (newendaddress[i] != '1')
+                                if (newendaddress[i] != endaddress[i])
                                     doesntmatch = true;
                             }
                         }
