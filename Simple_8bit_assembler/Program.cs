@@ -121,23 +121,23 @@ public class Program
         {
             // Generate zeros in data
             string[] output = new string[1024];
-            for (int osind = 0; osind < output.Length; osind++) { output[osind] = "0000"; }
+            for (int osind = 0; osind < output.Length; osind++) { output[osind] = "00000"; }
 
-            string[] microinstructions = { "FL", "RA", "WA", "WB", "AW", "RM", "EO", "SU", "IW", "IR", "DW", "J", "ST", "CE", "CR", "WM" };
+            string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
             string[] flags = { "ZEROFLAG", "CARRYFLAG" };
             string[] instructioncodes = {
-                "0=aw,cr & 1=rm,iw,ce", // Fetch
-                "2=aw,ir & 3=wa,rm", // LoadA
-                "2=aw,ir & 3=wb,rm", // LoadB
-                "2=aw,ir & 3=wb,rm & 4=wa,eo,fl", // Add <addr>
-                "2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl", // Subtract <addr>
-                "2=ra,dw", // Out
-                "2=ir,j", // Jump <addr>
-                "2=aw,ir & 3=ra,wm", // Store A <addr>
-                "2=wa,ir", // Load immediate A <val>
-                "2=ir,j | zeroflag", // Jump if zero <addr>
-                "2=ir,j | carryflag", // Jump if carry <addr>
-                "2=st", // Stop the computer clock
+                "0=aw,cr & 1=rm,iw,ce,ei", // Fetch
+                "2=aw,ir & 3=wa,rm,ei", // LoadA
+                "2=aw,ir & 3=wb,rm,ei", // LoadB
+                "2=aw,ir & 3=wb,rm & 4=wa,eo,fl,ei", // Add <addr>
+                "2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl,ei", // Subtract <addr>
+                "2=ra,dw,ei", // Out
+                "2=ir,j,ei", // Jump <addr>
+                "2=aw,ir & 3=ra,wm,ei", // Store A <addr>
+                "2=wa,ir,ei", // Load immediate A <val>
+                "2=ir,j,ei | zeroflag", // Jump if zero <addr>
+                "2=ir,j,ei | carryflag", // Jump if carry <addr>
+                "2=st,ei", // Stop the computer clock
             };
             // Remove spaces from instruction codes and make uppercase
             for (int cl = 0; cl < instructioncodes.Length; cl++)
@@ -207,7 +207,7 @@ public class Program
                             continue;
 
                         Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
-                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 4);
+                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
                     }
                 }
 
@@ -269,8 +269,8 @@ public class Program
                         if (doesntmatch)
                             continue;
 
-                        Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
-                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 4);
+                        Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 5));
+                        output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
                     }
                 }
 
