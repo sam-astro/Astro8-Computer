@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 public class Program
 {
-    static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "", "", "", "" };
+    static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
 
     public static void Main(string[] args)
     {
@@ -128,13 +128,14 @@ public class Program
                 "lodb( 2=aw,ir & 3=wb,rm,ei", // LoadB
                 "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl,ei", // Add <addr>
                 "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl,ei", // Subtract <addr>
-                "out( 2=ra,dw,ei", // Out
+                "out( 2=ra,dw,ei", // Output to decimal display and LCD screen
                 "jmp( 2=ir,j,ei", // Jump <addr>
                 "sta( 2=aw,ir & 3=ra,wm,ei", // Store A <addr>
                 "ldi( 2=wa,ir,ei", // Load immediate A <val>
                 "jmpz( 2=ir,j,ei | zeroflag", // Jump if zero <addr>
                 "jmpc( 2=ir,j,ei | carryflag", // Jump if carry <addr>
                 "hlt( 2=st,ei", // Stop the computer clock
+                "ldain( 2=ra,aw & 3=wa,rm,ei", // Load from reg A as memory address, then copy value from memory into A
             };
             
             // Remove spaces from instruction codes and make uppercase
