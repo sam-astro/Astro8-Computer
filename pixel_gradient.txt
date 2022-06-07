@@ -1,0 +1,23 @@
+, R is at 40, G is at 41, B is at 42. Output is at 100
+, Create a 1 for incrementing B
+set 43 1
+, Create a 10 for incrementing G
+set 44 10
+, Create a 100 for incrementing R
+set 45 100
+, Beginning of main loop
+loda 40
+add 45
+sta 40
+loda 41
+add 44
+sta 41
+loda 42
+add 43
+sta 42
+loda 42
+add 41
+add 40
+sta 100
+out
+jmp 0
