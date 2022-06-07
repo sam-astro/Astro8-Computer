@@ -12,9 +12,9 @@
 7  STA <addr>  0111   : store value of A into <addr> of memory
 8  LDI <val>   1000   : immediately load <val> into reg A
 9  JMPZ <val>  1001   : jump to <val> if the value in reg A is equal to zero
-10  
-11 
-12 
+10 JMPC <val>  1010   : jump if the carry bit is set
+11 HLT         1011   : stop the clock
+12 LDAIN       1100   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
 13 
 14 
 15 
