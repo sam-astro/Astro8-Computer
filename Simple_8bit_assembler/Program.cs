@@ -9,9 +9,6 @@ using System.Text.RegularExpressions;
 
 public class Program
 {
-    static bool MICROCODE_GENERATOR = true;
-
-
     static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "", "", "", "" };
 
     public static void Main(string[] args)
