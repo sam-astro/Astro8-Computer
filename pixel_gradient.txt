@@ -1,10 +1,10 @@
-, R is at 40, G is at 41, B is at 42. Output is at 100
-, Create a 1 for incrementing B
+, R is at 40, G is at 41, B is at 42. Output is at 100. Colors are output using 555 16 bits, ie. (0 red green blue) => (0 00000 00000 00000)
+, Create 0b0000000000000001 1 for incrementing B
 set 43 1
-, Create a 10 for incrementing G
-set 44 10
-, Create a 100 for incrementing R
-set 45 100
+, Create 0b0000000000100000 32 for incrementing G
+set 44 32
+, Create 0b0000010000000000 1024 for incrementing R
+set 45 1024
 , Beginning of main loop
 loda 40
 add 45
@@ -15,9 +15,9 @@ sta 41
 loda 42
 add 43
 sta 42
-loda 42
-add 41
+ldi 0
 add 40
-sta 100
+add 41
+add 42
 out
 jmp 0
