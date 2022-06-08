@@ -34,7 +34,7 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 15
+jmpc 16
 loda 403
 sub 402
 sta 289
