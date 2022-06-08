@@ -49,14 +49,14 @@ public class Program
 
                 if (splitBySpace[0][0] == ',')
                 {
-                    Console.Write(splitcode[i] + "\n");
+                    Console.Write("-\t"+splitcode[i] + "\n");
                     continue;
                 }
                 if (splitBySpace[0] == "SET")
                 {
                     string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 4);
                     outputBytes[Int32.Parse(splitBySpace[1])] = hVal;
-                    Console.Write("- " + splitcode[i] + "\t  ~   ~\n");
+                    Console.Write("-\t" + splitcode[i] + "\t  ~   ~\n");
                     continue;
                 }
 
@@ -85,13 +85,6 @@ public class Program
                 }
                 Console.Write("\n");
                 memaddr++;
-            }
-            Console.Write("\n== OUTPUT: ==\n");
-            for (int i = 0; i < outputBytes.Count; i++)
-            {
-                Console.Write(outputBytes[i]);
-                if (i < outputBytes.Count - 1)
-                    Console.Write(",");
             }
             Console.Write("\n\n");
 
