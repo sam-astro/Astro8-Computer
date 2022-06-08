@@ -14,9 +14,9 @@ public class Program
     public static void Main(string[] args)
     {
         Console.Write("Action >  ");
-        string action = Console.ReadLine();
+        string action = Console.ReadLine().ToLower();
 
-        if (action.ToLower() != "microcode")
+        if (action != "microcode" & action != "emulator")
         {
             List<string> outputBytes = new List<string>();
             for (int i = 0; i < 4000; i++)
@@ -107,7 +107,7 @@ public class Program
 
             File.WriteAllText("../../../../program_machine_code", processedOutput);
         }
-        else
+        else if (action != "emulator")
         {
             // Generate zeros in data
             string[] output = new string[1024];
@@ -282,7 +282,7 @@ public class Program
                         }
                         char[] newendaddress = DecToBinFilled(flagcombinations, 2).ToCharArray();
 
-                        // MAke sure the current combination doesn't change the locked bits, otherwise go to next step
+                        // Make sure the current combination doesn't change the locked bits, otherwise go to next step
                         bool doesntmatch = false;
                         for (int i = 0; i < endaddress.Length; i++)
                         {
@@ -324,6 +324,25 @@ public class Program
 
             File.WriteAllText("../../../../microinstructions_cpu_v1", processedOutput);
         }
+        else
+        {
+            int[] microinstructionActivation = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            int AReg = 0;
+            int BReg = 0;
+            int InstructionReg = 0;
+            int[] flags = {0, 0, 0};
+            int bus = 0;
+            int outputReg = 0;
+            int memoryIndex = 0;
+            
+            Console.Write("v Code input v\n");
+            string code = "";
+            string line;
+            while (!String.IsNullOrWhiteSpace(line = Console.ReadLine())) { code += line + "\n"; }
+            
+            
+        }
+        
         Console.WriteLine("\n");
         Console.ReadLine();
     }
