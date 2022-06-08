@@ -1,11 +1,11 @@
-, Create 0b0000000000000001 1 for incrementing B
+, Create 0 00000 00000 00001 1 for incrementing B
 set 43 1
-, Create 0b0000000000100000 32 for incrementing G
+, Create 0 00000 00001 00000 32 for incrementing G
 set 44 32
-, Create 0b0000010000000000 1024 for incrementing R
+, Create 0 00001 00000 00000 1024 for incrementing R
 set 45 1024
 set 1000 1
-
+,
 ldi 1
 sta 402
 loda 288
@@ -22,7 +22,7 @@ jmpc 0
 loda 403
 sub 402
 sta 288
-
+,
 ldi 1
 loda 289
 sta 400
@@ -38,7 +38,7 @@ jmpc 16
 loda 403
 sub 402
 sta 289
-
+,
 loda 288
 sta 400
 loda 45
