@@ -1,23 +1,110 @@
-, R is at 40, G is at 41, B is at 42. Output is at 100. Colors are output using 555 16 bits, ie. (0 red green blue) => (0 00000 00000 00000)
 , Create 0b0000000000000001 1 for incrementing B
 set 43 1
 , Create 0b0000000000100000 32 for incrementing G
 set 44 32
 , Create 0b0000010000000000 1024 for incrementing R
 set 45 1024
-, Beginning of main loop
-loda 40
-add 45
-sta 40
-loda 41
-add 44
-sta 41
-loda 42
-add 43
-sta 42
+set 1000 1
+
+ldi 1
+sta 402
+loda 288
+sta 400
+ldi 3
+sta 401
+ldi 1
+add 403
+sta 403
+loda 400
+sub 401
+sta 400
+jmpc 0
+loda 403
+sub 402
+sta 288
+
+ldi 1
+loda 289
+sta 400
+ldi 3
+sta 401
+ldi 1
+add 403
+sta 403
+loda 400
+sub 401
+sta 400
+jmpc 15
+loda 403
+sub 402
+sta 289
+
+loda 288
+sta 400
+loda 45
+sta 401
+ldi 1
+sta 402
 ldi 0
-add 40
-add 41
-add 42
+sta 403
+loda 400
+sub 402
+jmpc 43
+jmp 48
+sta 400
+loda 403
+add 401
+sta 403
+jmp 39
+loda 403
+sta 300
+loda 289
+sta 400
+loda 44
+sta 401
+ldi 1
+sta 402
+ldi 0
+sta 403
+loda 400
+sub 402
+jmpc 62
+jmp 67
+sta 400
+loda 403
+add 401
+sta 403
+jmp 58
+loda 403
+sta 301
+loda 288
+add 289
+sta 400
+ldi 2
+sta 401
+ldi 1
+sta 402
+ldi 1
+add 403
+sta 403
+loda 400
+sub 401
+sta 400
+jmpc 76
+loda 403
+sub 402
+sta 302
+add 301
+add 300
 out
+loda 288
+add 1000
+sta 288
+jmpc 94
+jmp 0
+ldi 0
+sta 288
+loda 289
+add 1000
+sta 289
 jmp 0

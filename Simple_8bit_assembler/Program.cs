@@ -19,7 +19,7 @@ public class Program
         if (action.ToLower() != "microcode")
         {
             List<string> outputBytes = new List<string>();
-            for (int i = 0; i < 256; i++)
+            for (int i = 0; i < 4000; i++)
                 outputBytes.Add("0000");
 
             //, multiples of 2\nldi 2\nsta 15\nldi 0\nadd 15\nout\njmp 3
@@ -123,19 +123,19 @@ public class Program
             string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
             string[] flags = { "ZEROFLAG", "CARRYFLAG" };
             string[] instructioncodes = {
-                "fetch( 0=aw,cr & 1=rm,iw,ce,ei", // Fetch
-                "loda( 2=aw,ir & 3=wa,rm,ei", // LoadA
-                "lodb( 2=aw,ir & 3=wb,rm,ei", // LoadB
-                "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl,ei", // Add <addr>
-                "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl,ei", // Subtract <addr>
-                "out( 2=ra,dw,ei", // Output to decimal display and LCD screen
-                "jmp( 2=ir,j,ei", // Jump <addr>
-                "sta( 2=aw,ir & 3=ra,wm,ei", // Store A <addr>
-                "ldi( 2=wa,ir,ei", // Load immediate A <val>
-                "jmpz( 2=ir,j,ei | zeroflag", // Jump if zero <addr>
-                "jmpc( 2=ir,j,ei | carryflag", // Jump if carry <addr>
-                "hlt( 2=st,ei", // Stop the computer clock
-                "ldain( 2=ra,aw & 3=wa,rm,ei", // Load from reg A as memory address, then copy value from memory into A
+                "fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
+                "loda( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
+                "lodb( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
+                "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl & 5=ei", // Add <addr>
+                "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
+                "out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
+                "jmp( 2=ir,j & 3=ei", // Jump <addr>
+                "sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
+                "ldi( 2=wa,ir & 3=ei", // Load immediate A <val>
+                "jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
+                "jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
+                "hlt( 2=st & 3=ei", // Stop the computer clock
+                "ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
             };
             
             // Remove spaces from instruction codes and make uppercase
