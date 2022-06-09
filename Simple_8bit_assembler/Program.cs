@@ -18,88 +18,30 @@ public class Program
 
         if (action != "microcode" & action != "emulator")
         {
-            List<string> outputBytes = new List<string>();
-            for (int i = 0; i < 4000; i++)
-                outputBytes.Add("0000");
-
-            //, multiples of 2\nldi 2\nsta 15\nldi 0\nadd 15\nout\njmp 3
             Console.Write("v Code input v\n");
             string code = "";
-
             string line;
             while (!String.IsNullOrWhiteSpace(line = Console.ReadLine()))
             {
                 code += line + "\n";
             }
-            //string code = "";
-            //for (int i = 0; i < args.Length; i++)
-            //    code += args[i]+"\n";
 
-            string[] splitcode = code.ToUpper().Split('\n');
+            List<string> outputBytes = parseCode(code);
 
-            int memaddr = 0;
-            for (int i = 0; i < splitcode.Length; i++)
-            {
-                if (splitcode[i] == null || splitcode[i] == "")
-                {
-                    continue;
-                }
-
-                string[] splitBySpace = splitcode[i].Split(' ');
-
-                if (splitBySpace[0][0] == ',')
-                {
-                    Console.Write("-\t"+splitcode[i] + "\n");
-                    continue;
-                }
-                if (splitBySpace[0] == "SET")
-                {
-                    string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 4);
-                    outputBytes[Int32.Parse(splitBySpace[1])] = hVal;
-                    Console.Write("-\t" + splitcode[i] + "\t  ~   ~\n");
-                    continue;
-                }
-
-                Console.Write(memaddr + " " + splitcode[i] + "   \t  =>  ");
-
-                // Find index of instruction
-                for (int f = 0; f < instructions.Length; f++)
-                {
-                    if (instructions[f] == splitBySpace[0])
-                    {
-                        Console.Write(DecToHexFilled(f, 1));
-                        outputBytes[memaddr] = DecToHexFilled(f, 1);
-                    }
-                }
-
-                // Check if any args are after the command
-                if (splitcode[i] != splitBySpace[0])
-                {
-                    Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 3));
-                    outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 3);
-                }
-                else
-                {
-                    Console.Write("0");
-                    outputBytes[memaddr] += "000";
-                }
-                Console.Write("\n");
-                memaddr++;
-            }
             Console.Write("\n\n");
 
             string processedOutput = "";
             // Print the output
             Console.Write("\nv3.0 hex words addressed\n");
             processedOutput += "\nv3.0 hex words addressed\n";
-            Console.Write("00: ");
-            processedOutput += "00: ";
+            Console.Write("000: ");
+            processedOutput += "000: ";
             for (int outindex = 0; outindex < outputBytes.Count; outindex++)
             {
                 if (outindex % 8 == 0 && outindex != 0)
                 {
-                    Console.Write("\n" + DecToHexFilled(outindex, 2) + ": ");
-                    processedOutput += "\n" + DecToHexFilled(outindex, 2) + ": ";
+                    Console.Write("\n" + DecToHexFilled(outindex, 3) + ": ");
+                    processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
                 }
                 Console.Write(outputBytes[outindex] + " ");
                 processedOutput += outputBytes[outindex] + " ";
@@ -326,7 +268,7 @@ public class Program
         }
         else
         {
-            int[] microinstructionActivation = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            int su, iw, dw, st, ce, cr, wm, ra, eo, fl, j, wb, wa, rm, aw, ir, ei = 0;
             int AReg = 0;
             int BReg = 0;
             int InstructionReg = 0;
@@ -334,13 +276,43 @@ public class Program
             int bus = 0;
             int outputReg = 0;
             int memoryIndex = 0;
+			int programCounter = 0;
             
-            Console.Write("v Code input v\n");
+            Console.Write("v Emu. Code input v\n");
             string code = "";
             string line;
             while (!String.IsNullOrWhiteSpace(line = Console.ReadLine())) { code += line + "\n"; }
+            List<string> outputBytes = parseCode(code);
             
-            
+            while(true)
+            {
+                for(int step = 0; step < 16; step++)
+                {
+					// Fetch
+            	    if(step == 0){
+						su = iw = dw = st = ce = cr = wm = ra = eo = fl = j = wb = wa = rm = aw = ir = ei = 0;
+						cr,= aw = 1;
+					}
+            	    if(step == 1){
+						su = iw = dw = st = ce = cr = wm = ra = eo = fl = j = wb = wa = rm = aw = ir = ei = 0;
+						iw = ce = rm = ei = 1;
+					}
+            	    
+            	    // iw, dw, st, ce, cr, wm, ra, fl, j, wb, wa, rm, aw, ir, ei
+            	    // Execute microinstructions
+            	    if (eo == 1)
+            	    {
+            	        if(su == 1)
+            	            AReg = AReg - BReg;
+            	        else
+            	            AReg = AReg + BReg;
+            	    }
+            	    if (ei == 1)
+					{
+						
+					}
+                }
+            }
         }
         
         Console.WriteLine("\n");
@@ -384,5 +356,64 @@ public class Program
         }
 
         return output;
+    }
+    List<string> parseCode(string input)
+    {
+            List<string> outputBytes = new List<string>();
+            for (int i = 0; i < 4000; i++)
+                outputBytes.Add("0000");
+
+            string[] splitcode = input.ToUpper().Split('\n');
+
+            int memaddr = 0;
+            for (int i = 0; i < splitcode.Length; i++)
+            {
+                if (splitcode[i] == null || splitcode[i] == "")
+                {
+                    continue;
+                }
+
+                string[] splitBySpace = splitcode[i].Split(' ');
+
+                if (splitBySpace[0][0] == ',')
+                {
+                    Console.Write("-\t"+splitcode[i] + "\n");
+                    continue;
+                }
+                if (splitBySpace[0] == "SET")
+                {
+                    string hVal = DecToHexFilled(Int32.Parse(splitBySpace[2]), 4);
+                    outputBytes[Int32.Parse(splitBySpace[1])] = hVal;
+                    Console.Write("-\t" + splitcode[i] + "\t  ~   ~\n");
+                    continue;
+                }
+
+                Console.Write(memaddr + " " + splitcode[i] + "   \t  =>  ");
+
+                // Find index of instruction
+                for (int f = 0; f < instructions.Length; f++)
+                {
+                    if (instructions[f] == splitBySpace[0])
+                    {
+                        Console.Write(DecToHexFilled(f, 1));
+                        outputBytes[memaddr] = DecToHexFilled(f, 1);
+                    }
+                }
+
+                // Check if any args are after the command
+                if (splitcode[i] != splitBySpace[0])
+                {
+                    Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 3));
+                    outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 3);
+                }
+                else
+                {
+                    Console.Write("0");
+                    outputBytes[memaddr] += "000";
+                }
+                Console.Write("\n");
+                memaddr++;
+            }
+        return outputBytes;
     }
 }
