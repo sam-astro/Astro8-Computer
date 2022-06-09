@@ -1,0 +1,34 @@
+, Create 0 00000 00000 00001 1 for incrementing B
+set 43 1
+, Create 0 00000 00001 00000 32 for incrementing G
+set 44 32
+, Create 0 00001 00000 00000 1024 for incrementing R
+set 45 1024
+set 1000 1
+set 288 16
+set 289 16
+set 298 16
+set 299 16
+,
+ldi 1
+sta 402
+loda 288
+sta 400
+ldi 3
+sta 401
+ldi 1
+add 403
+sta 403
+loda 400
+sub 401
+sta 400
+jmpc 6
+loda 403
+sub 402
+sta 298
+out
+,
+loda 288
+add 1000
+sta 288
+jmp 0
