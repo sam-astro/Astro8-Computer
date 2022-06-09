@@ -9,7 +9,7 @@ set 1000 1
 loda 400
 sub 1000
 jmpc 5
-loda 13
+loda 403
 jmp 10
 sta 400
 loda 403
