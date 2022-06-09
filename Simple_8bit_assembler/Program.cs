@@ -10,11 +10,13 @@ using System.Text.RegularExpressions;
 public class Program
 {
     static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
-
+    string action = "";
+    string[] microinstructionData = new string[1024];
+    
     public static void Main(string[] args)
     {
         Console.Write("Action >  ");
-        string action = Console.ReadLine().ToLower();
+        action = Console.ReadLine().ToLower();
 
         if (action != "microcode" & action != "emulator")
         {
@@ -262,13 +264,16 @@ public class Program
                 }
                 Console.Write(output[outindex] + " ");
                 processedOutput += output[outindex] + " ";
+                microinstructionData[outindex] = HexToBin(output[outindex]);
             }
 
             File.WriteAllText("../../../../microinstructions_cpu_v1", processedOutput);
+            
+            Console.Write("Secondary-Action >  ");
+            action = Console.ReadLine().ToLower();
         }
-        else
+        if (action == "emulator")
         {
-            int su, iw, dw, st, ce, cr, wm, ra, eo, fl, j, wb, wa, rm, aw, ir, ei = 0;
             int AReg = 0;
             int BReg = 0;
             int InstructionReg = 0;
@@ -276,41 +281,61 @@ public class Program
             int bus = 0;
             int outputReg = 0;
             int memoryIndex = 0;
-			int programCounter = 0;
+            int programCounter = 0;
             
             Console.Write("v Emu. Code input v\n");
             string code = "";
             string line;
             while (!String.IsNullOrWhiteSpace(line = Console.ReadLine())) { code += line + "\n"; }
-            List<string> outputBytes = parseCode(code);
+            List<string> memoryBytes = parseCode(code);
             
-            while(true)
+            while(memoryIndex < memoryBytes.Count)
             {
+                //InstructionReg = DecToBinFilled(memoryBytes[programCounter], 16);
+                //string instruction = instructions[BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4))];
+                
                 for(int step = 0; step < 16; step++)
                 {
-					// Fetch
-            	    if(step == 0){
-						su = iw = dw = st = ce = cr = wm = ra = eo = fl = j = wb = wa = rm = aw = ir = ei = 0;
-						cr,= aw = 1;
-					}
-            	    if(step == 1){
-						su = iw = dw = st = ce = cr = wm = ra = eo = fl = j = wb = wa = rm = aw = ir = ei = 0;
-						iw = ce = rm = ei = 1;
-					}
+                    int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
+                    string mcode = microinstructionData[microcodeLocation];
             	    
-            	    // iw, dw, st, ce, cr, wm, ra, fl, j, wb, wa, rm, aw, ir, ei
+            	    // 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9 fl  10 j  11 wb  12 wa  13 rm  14 aw  15 ir  16-ei
             	    // Execute microinstructions
-            	    if (eo == 1)
-            	    {
-            	        if(su == 1)
+            	    if (mcode[8] == "1") { // EO
+            	        if(mcode[0] == "1") // SU
             	            AReg = AReg - BReg;
             	        else
             	            AReg = AReg + BReg;
             	    }
-            	    if (ei == 1)
-					{
-						
-					}
+            	    if (mcode[1] == "1") { // IW
+						InstructionReg = bus;
+                    }
+            	    if (mcode[2] == "1") { // DW
+						outputReg = bus;
+                    }
+            	    if (mcode[3] == "1") { // ST
+                        Console.WriteLine("\n== PAUSED from HLT ==\n");
+                        Console.ReadLine();
+                    }
+            	    if (mcode[4] == "1") { // CE
+                        programCounter += 1;
+                    }
+            	    if (mcode[5] == "1") { // CR
+                        bus = programCounter;
+                    }
+            	    if (mcode[6] == "1") { // WM
+                        memoryBytes[memoryIndex] = DecToHexFilled(bus, 4);
+                    }
+            	    if (mcode[7] == "1") { // RA
+                        bus = AReg;
+                    }
+            	    if (mcode[9] == "1") { // FL
+                        bus = AReg;
+                    }
+                    
+            	    if (mcode[16] == "1") { // EI
+						step = 16;
+                    }
                 }
             }
         }
@@ -357,6 +382,33 @@ public class Program
 
         return output;
     }
+    private static readonly Dictionary<char, string> hexCharacterToBinary = new Dictionary<char, string> {
+    { '0', "0000" },
+    { '1', "0001" },
+    { '2', "0010" },
+    { '3', "0011" },
+    { '4', "0100" },
+    { '5', "0101" },
+    { '6', "0110" },
+    { '7', "0111" },
+    { '8', "1000" },
+    { '9', "1001" },
+    { 'a', "1010" },
+    { 'b', "1011" },
+    { 'c', "1100" },
+    { 'd', "1101" },
+    { 'e', "1110" },
+    { 'f', "1111" }
+};
+
+public string HexToBin(string hex) {
+    StringBuilder result = new StringBuilder();
+    foreach (char c in hex) {
+        // This will crash for non-hex characters. You might want to handle that differently.
+        result.Append(hexCharacterToBinary[char.ToLower(c)]);
+    }
+    return result.ToString();
+}
     List<string> parseCode(string input)
     {
             List<string> outputBytes = new List<string>();
