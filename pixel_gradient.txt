@@ -51,16 +51,15 @@ ldi 0
 sta 403
 loda 400
 sub 1000
-sta 400
-jmpc 49
+jmpc 46
 loda 403
-sta 300
-out
-jmp 53
+jmp 51
+sta 400
 loda 403
 add 401
 sta 403
 jmp 41
+out
 , incrementer
 loda 298
 add 1000
