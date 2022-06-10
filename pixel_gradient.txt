@@ -1,9 +1,9 @@
 , Create 0 00000 00000 00001 1 for incrementing B
-set 43 1
+set 512 1
 , Create 0 00000 00001 00000 32 for incrementing G
-set 44 32
+set 511 32
 , Create 0 00001 00000 00000 1024 for incrementing R
-set 45 1024
+set 510 1024
 set 1000 1
 ,
 ldi 0
@@ -42,10 +42,10 @@ jmpc 25
 loda 403
 sub 402
 sta 289
-, Calculate Red   35 v
+,    Calculate Red   35 v
 loda 288
 sta 400
-loda 45
+loda 510
 sta 401
 ldi 0
 sta 403
@@ -59,8 +59,54 @@ loda 403
 add 401
 sta 403
 jmp 41
+sta 300
+,    Calculate Green   51 v
+loda 289
+sta 400
+loda 511
+sta 401
+ldi 0
+sta 403
+loda 400
+sub 1000
+jmpc 63
+loda 403
+jmp 68
+sta 400
+loda 403
+add 401
+sta 403
+jmp 58
+,    Calculate Blue   67 v
+loda 288
+add 289
+sta 400
+ldi 0
+sta 403
+ldi 1
+sta 402
+ldi 4
+sta 401
+ldi 1
+add 403
+sta 403
+loda 400
+sub 401
+sta 400
+jmpc 76
+loda 403
+sub 402
+sta 401
+ldi 32
+sub 401
+sta 302
+,    output  90 v
+sta 301
+loda 300
+add 301
+add 302
 out
-, incrementer
+,    incrementer
 loda 298
 add 1000
 sta 298
