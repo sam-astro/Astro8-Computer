@@ -302,14 +302,34 @@ public class Program
                     int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
                     string mcode = microinstructionData[microcodeLocation];
 
-                    // 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9 fl  10 j  11 wb  12 wa  13 rm  14 aw  15 ir  16-ei
+                    // 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11 wb  12 wa  13 rm  14 aw  15 ir  16-ei
                     // Execute microinstructions
                     if (mcode[8] == '1')
                     { // EO
                         if (mcode[0] == '1') // SU
+                        {
+                            flags[0] = 0;
+                            flags[1] = 0;
+                            if (mcode[9] == '1' && AReg - BReg == 0)
+                                flags[0] = 1;
+                            if (mcode[9] == '1' && AReg - BReg < 0)
+                                flags[1] = 1;
                             AReg = AReg - BReg;
+                            if (AReg < 0)
+                                AReg = 65535 + AReg;
+                        }
                         else
+                        {
+                            flags[0] = 0;
+                            flags[1] = 0;
+                            if (mcode[9] == '1' && AReg + BReg == 0)
+                                flags[0] = 1;
+                            if (mcode[9] == '1' && AReg + BReg >= 65535)
+                                flags[1] = 1;
                             AReg = AReg + BReg;
+                            if (AReg >= 65535)
+                                AReg = AReg - 65535;
+                        }
                     }
                     if (mcode[1] == '1')
                     { // IW
@@ -340,9 +360,9 @@ public class Program
                     { // RA
                         bus = AReg;
                     }
-                    if (mcode[9] == '1')
-                    { // FL
-                        bus = AReg;
+                    if (mcode[10] == '1')
+                    { // J
+                        programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 16));
                     }
 
                     if (mcode[16] == '1')
