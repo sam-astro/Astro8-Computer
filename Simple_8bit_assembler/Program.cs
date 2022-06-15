@@ -134,35 +134,7 @@ public class Program
                         if (mcode[15] == '1')
                         { // IR
                             Console.Write("IR ");
-                            bus = InstructionReg;
-                        }
-                        if (mcode[8] == '1')
-                        { // EO
-                            Console.Write("EO ");
-                            if (mcode[0] == '1') // SU
-                            {
-                                flags[0] = 0;
-                                flags[1] = 0;
-                                if (mcode[9] == '1' && AReg - BReg == 0)
-                                    flags[0] = 1;
-                                if (mcode[9] == '1' && AReg - BReg < 0)
-                                    flags[1] = 1;
-                                AReg = AReg - BReg;
-                                if (AReg < 0)
-                                    AReg = 65535 + AReg;
-                            }
-                            else
-                            {
-                                flags[0] = 0;
-                                flags[1] = 0;
-                                if (mcode[9] == '1' && AReg + BReg == 0)
-                                    flags[0] = 1;
-                                if (mcode[9] == '1' && AReg + BReg >= 65535)
-                                    flags[1] = 1;
-                                AReg = AReg + BReg;
-                                if (AReg >= 65535)
-                                    AReg = AReg - 65535;
-                            }
+                            bus = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
                         }
                         if (mcode[1] == '1')
                         { // IW
@@ -173,11 +145,13 @@ public class Program
                         { // DW
                             Console.Write("DW ");
                             outputReg = bus;
+                            Console.WriteLine("\no: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg);
                         }
                         if (mcode[3] == '1')
                         { // ST
                             Console.Write("ST ");
                             Console.WriteLine("\n== PAUSED from HLT ==\n");
+                            Console.WriteLine("FINAL VALUES |=  o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg);
                             Console.ReadLine();
                         }
                         if (mcode[4] == '1')
@@ -210,18 +184,48 @@ public class Program
                         if (mcode[14] == '1')
                         { // AW
                             Console.Write("AW ");
-                            memoryIndex = bus;
+                            memoryIndex = BinToDec(DecToBinFilled(bus, 16).Substring(4, 12));
                         }
-                        Console.WriteLine();
+                        if (mcode[8] == '1')
+                        { // EO
+                            Console.Write("EO ");
+                            if (mcode[0] == '1') // SU
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                                if (mcode[9] == '1' && AReg - BReg == 0)
+                                    flags[0] = 1;
+                                if (mcode[9] == '1' && AReg - BReg < 0)
+                                    flags[1] = 1;
+                                AReg = AReg - BReg;
+                                if (AReg < 0)
+                                    AReg = 65535 + AReg;
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                                if (mcode[9] == '1' && AReg + BReg == 0)
+                                    flags[0] = 1;
+                                if (mcode[9] == '1' && AReg + BReg >= 65535)
+                                    flags[1] = 1;
+                                AReg = AReg + BReg;
+                                if (AReg >= 65535)
+                                    AReg = AReg - 65535;
+                            }
+                        }
 
                         if (mcode[16] == '1')
                         { // EI
-                            //Console.Write("EI ");
+                            Console.Write("EI ");
+                            Console.WriteLine();
                             break;
                         }
+                        else
+                            Console.WriteLine();
                     }
 
-                    Console.WriteLine("o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg);
+                    Console.WriteLine("o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + "\n");
                 }
                 iterations++;
             }
