@@ -43,3 +43,8 @@ D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\obj\Debug\net6.0\refint\Simpl
 D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.pdb
 D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.genruntimeconfig.cache
 D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\obj\Debug\net6.0\ref\Simple_8bit_assembler.dll
+D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\bin\Debug\net6.0\System.Drawing.Common.dll
+D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+D:\Code\Basic-CPU-In-Logisim\Simple_8bit_assembler\obj\Debug\net6.0\Simple_8bit_assembler.csproj.CopyComplete

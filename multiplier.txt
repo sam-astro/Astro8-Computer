@@ -16,3 +16,4 @@ loda 403
 add 401
 sta 403
 jmp 0
+hlt

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.IO;
+using System.Drawing;
 
 public class Program
 {
@@ -67,11 +69,24 @@ public class Program
             int memoryIndex = 0;
             int programCounter = 0;
 
+            int imgX = 0;
+            int imgY = 0;
+
+            // Gather user inputted code
             Console.Write("v Emu. Code input v\n");
             string code = "";
             string line;
             while (!String.IsNullOrWhiteSpace(line = Console.ReadLine())) { code += line + "\n"; }
-            List<string> memoryBytes = parseCode(code);
+
+            // Generate memory from code and convert from hex to decimal
+            List<int> memoryBytes = new List<int>();
+            List<string> mbytes = parseCode(code);
+            for (int memindex = 0; memindex < mbytes.Count; memindex++)
+                memoryBytes.Add(HexToDec(mbytes[memindex]));
+
+            // Output Image
+            Bitmap ledScreen = new Bitmap(new Bitmap((Bitmap)Image.FromFile("./blank.png"), 32, 32));
+
             GenerateMicrocode();
 
             Console.WriteLine();
@@ -90,6 +105,8 @@ public class Program
                         int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
                         string mcode = microinstructionData[microcodeLocation];
 
+                        //Console.WriteLine("     microcode: " + mcode);
+
                         //Console.WriteLine("mcLoc- "+DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
                         //Console.WriteLine("mcDat- "+mcode);
 
@@ -100,7 +117,7 @@ public class Program
                             memoryIndex = programCounter;
                             // RM
                             // IW
-                            InstructionReg = HexToDec(memoryBytes[memoryIndex]);
+                            InstructionReg = memoryBytes[memoryIndex];
                             // CE
                             programCounter += 1;
                             step = 1;
@@ -115,117 +132,139 @@ public class Program
                         //Console.Write("ftmem=" + memoryIndex);
                         // 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
                         // Execute microinstructions
+                        if (mcode[8] == '1')
+                        { // EO
+                            //Console.Write("EO ");
+                            if (mcode[0] == '1') // SU
+                            {
+                                flags[0] = 0;
+                                flags[1] = 1;
+                                if (AReg - BReg == 0)
+                                    flags[0] = 1;
+                                bus = AReg - BReg;
+                                if (bus < 0)
+                                {
+                                    bus = 65535 + bus;
+                                    flags[1] = 0;
+                                }
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                                if (AReg + BReg == 0)
+                                    flags[0] = 1;
+                                bus = AReg + BReg;
+                                if (bus >= 65535)
+                                {
+                                    bus = bus - 65535;
+                                    flags[1] = 1;
+                                }
+                            }
+                        }
                         if (mcode[5] == '1')
                         { // CR
-                            Console.Write("CR ");
+                            //Console.Write("CR ");
                             bus = programCounter;
                         }
                         if (mcode[7] == '1')
                         { // RA
-                            Console.Write("RA ");
+                            //Console.Write("RA ");
                             bus = AReg;
                         }
                         if (mcode[13] == '1')
                         { // RM
-                            Console.Write("RM ");
-                            Console.WriteLine(memoryIndex);
-                            bus = HexToDec(memoryBytes[memoryIndex]);
+                            //Console.Write("RM ");
+                            //Console.WriteLine(memoryIndex + " " + memoryBytes[memoryIndex]);
+                            bus = memoryBytes[memoryIndex];
                         }
                         if (mcode[15] == '1')
                         { // IR
-                            Console.Write("IR ");
+                            //Console.Write("IR ");
                             bus = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
                         }
                         if (mcode[1] == '1')
                         { // IW
-                            Console.Write("IW ");
+                            //Console.Write("IW ");
                             InstructionReg = bus;
                         }
                         if (mcode[2] == '1')
                         { // DW
-                            Console.Write("DW ");
+                            //Console.Write("DW ");
                             outputReg = bus;
-                            Console.WriteLine("\no: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg);
-                        }
-                        if (mcode[3] == '1')
-                        { // ST
-                            Console.Write("ST ");
-                            Console.WriteLine("\n== PAUSED from HLT ==\n");
-                            Console.WriteLine("FINAL VALUES |=  o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg);
-                            Console.ReadLine();
+                            Console.WriteLine("\no: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")");
+
+                            // Write to LED screen
+                            int r = BinToDec(DecToBinFilled(bus, 16).Substring(1, 5))*8;
+                            int g = BinToDec(DecToBinFilled(bus, 16).Substring(6, 5))*8;
+                            int b = BinToDec(DecToBinFilled(bus, 16).Substring(11, 5))*8;
+                            ledScreen.SetPixel(imgX, imgY, Color.FromArgb(r, g, b));
+
+                            imgX++;
+                            if (imgX >= 32)
+                            {
+                                imgY++;
+                                imgX = 0;
+                            }
+                            if (imgY >= 32)
+                            {
+                                imgY = 0;
+                                ledScreen.Save("../../../../out_display.jpg");
+                            }
+
                         }
                         if (mcode[4] == '1')
                         { // CE
-                            Console.Write("CE ");
+                            //Console.Write("CE ");
                             programCounter += 1;
                         }
                         if (mcode[6] == '1')
                         { // WM
-                            Console.Write("WM ");
-                            memoryBytes[memoryIndex] = DecToHexFilled(bus, 4);
+                            //Console.Write("WM ");
+                            memoryBytes[memoryIndex] = bus;
                         }
                         if (mcode[10] == '1')
                         { // J
-                            Console.Write("J ");
+                            //Console.Write("J ");
                             //Console.WriteLine(DecToBinFilled(InstructionReg, 16));
                             //Console.WriteLine(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
                             programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
                         }
                         if (mcode[11] == '1')
                         { // WB
-                            Console.Write("WB ");
+                            //Console.Write("WB ");
                             BReg = bus;
                         }
                         if (mcode[12] == '1')
                         { // WA
-                            Console.Write("WA ");
+                            //Console.Write("WA ");
                             AReg = bus;
                         }
                         if (mcode[14] == '1')
                         { // AW
-                            Console.Write("AW ");
+                            //Console.Write("AW ");
                             memoryIndex = BinToDec(DecToBinFilled(bus, 16).Substring(4, 12));
                         }
-                        if (mcode[8] == '1')
-                        { // EO
-                            Console.Write("EO ");
-                            if (mcode[0] == '1') // SU
-                            {
-                                flags[0] = 0;
-                                flags[1] = 0;
-                                if (mcode[9] == '1' && AReg - BReg == 0)
-                                    flags[0] = 1;
-                                if (mcode[9] == '1' && AReg - BReg < 0)
-                                    flags[1] = 1;
-                                AReg = AReg - BReg;
-                                if (AReg < 0)
-                                    AReg = 65535 + AReg;
-                            }
-                            else
-                            {
-                                flags[0] = 0;
-                                flags[1] = 0;
-                                if (mcode[9] == '1' && AReg + BReg == 0)
-                                    flags[0] = 1;
-                                if (mcode[9] == '1' && AReg + BReg >= 65535)
-                                    flags[1] = 1;
-                                AReg = AReg + BReg;
-                                if (AReg >= 65535)
-                                    AReg = AReg - 65535;
-                            }
+                        if (mcode[3] == '1')
+                        { // ST
+                            //Console.Write("ST ");
+                            Console.WriteLine("\n== PAUSED from HLT ==\n");
+                            Console.WriteLine("FINAL VALUES |=  o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")");
+                            ledScreen.Save("../../../../out_display.jpg");
+                            Console.ReadLine();
                         }
 
                         if (mcode[16] == '1')
                         { // EI
-                            Console.Write("EI ");
-                            Console.WriteLine();
+                            //Console.Write("EI ");
+                            //Console.WriteLine();
                             break;
                         }
-                        else
-                            Console.WriteLine();
+                        //else
+                            //Console.WriteLine();
                     }
 
-                    Console.WriteLine("o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + "\n");
+                    //Console.WriteLine(programCounter + " | o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")" + "\n");
                 }
                 iterations++;
             }
