@@ -629,7 +629,7 @@ public:
 			if (outindex % 8 == 0 && outindex != 0)
 			{
 				string locationTmp = DecToHexFilled(outindex, 3);
-				transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::tolower);
+				//transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::tolower);
 				cout << ("\n" + locationTmp + ": ");
 				processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 			}
