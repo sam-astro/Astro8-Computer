@@ -66,7 +66,8 @@ public:
 
 		cout << endl;
 		cout << DecToBin(16) << endl;
-		cout << BinToDec(DecToBin(16)) << endl;
+		cout << HexToDec("ffff") << endl;
+		cout << HexToBin("ffff", 4) << endl;
 		cout << endl;
 
 
@@ -79,16 +80,17 @@ public:
 		//string instruction = instructions[BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4))];
 		if (iterations % (int)slowdownAmnt == 0)
 		{
+			cout << programCounter << ")  ";
 			for (int step = 0; step < 16; step++)
 			{
 
-				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
+				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 0) + to_string(flags[0]) + to_string(flags[1]));
 				string mcode = microinstructionData[microcodeLocation];
 
-				//Console.WriteLine("     microcode: " + mcode);
+				//cout<<("     microcode: " + mcode)<<endl;
 
-				//Console.WriteLine("mcLoc- "+DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
-				//Console.WriteLine("mcDat- "+mcode);
+				//cout << ("mcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 0) + to_string(flags[0]) + to_string(flags[1])) << "  ==  "<< microcodeLocation << endl;
+				cout << ("\nmcDat- " + mcode) << endl;
 
 				if (step == 0)
 				{
@@ -109,12 +111,12 @@ public:
 				//if (memoryIndex < 0)
 				//    memoryIndex = -memoryIndex;
 
-				//Console.Write("ftmem=" + memoryIndex);
+				//cout<<("ftmem=" + memoryIndex);
 				// 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
 				// Execute microinstructions
 				if (mcode[8] == '1')
 				{ // EO
-					//Console.Write("EO ");
+					cout << ("EO ");
 					if (mcode[0] == '1') // SU
 					{
 						flags[0] = 0;
@@ -144,33 +146,33 @@ public:
 				}
 				if (mcode[5] == '1')
 				{ // CR
-					//Console.Write("CR ");
+					cout << ("CR ");
 					bus = programCounter;
 				}
 				if (mcode[7] == '1')
 				{ // RA
-					//Console.Write("RA ");
+					cout << ("RA ");
 					bus = AReg;
 				}
 				if (mcode[13] == '1')
 				{ // RM
-					//Console.Write("RM ");
-					//Console.WriteLine(memoryIndex + " " + memoryBytes[memoryIndex]);
+					cout << ("RM ");
+					cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
 					bus = memoryBytes[memoryIndex];
 				}
 				if (mcode[15] == '1')
 				{ // IR
-					//Console.Write("IR ");
+					cout << ("IR ");
 					bus = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
 				}
 				if (mcode[1] == '1')
 				{ // IW
-					//Console.Write("IW ");
+					cout << ("IW ");
 					InstructionReg = bus;
 				}
 				if (mcode[2] == '1')
 				{ // DW
-					//Console.Write("DW ");
+					cout << ("DW ");
 					outputReg = bus;
 					cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 
@@ -194,55 +196,56 @@ public:
 				}
 				if (mcode[4] == '1')
 				{ // CE
-					//Console.Write("CE ");
+					cout << ("CE ");
 					programCounter += 1;
 				}
 				if (mcode[6] == '1')
 				{ // WM
-					//Console.Write("WM ");
+					cout << ("WM ");
 					memoryBytes[memoryIndex] = bus;
 				}
 				if (mcode[10] == '1')
 				{ // J
-					//Console.Write("J ");
-					//Console.WriteLine(DecToBinFilled(InstructionReg, 16));
-					//Console.WriteLine(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
+					cout << ("J ");
+					//cout<<Line(DecToBinFilled(InstructionReg, 16));
+					//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
 					programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
 				}
 				if (mcode[11] == '1')
 				{ // WB
-					//Console.Write("WB ");
+					cout << ("WB ");
 					BReg = bus;
 				}
 				if (mcode[12] == '1')
 				{ // WA
-					//Console.Write("WA ");
+					cout << ("WA ");
 					AReg = bus;
 				}
 				if (mcode[14] == '1')
 				{ // AW
-					//Console.Write("AW ");
+					cout << ("AW ");
 					memoryIndex = BinToDec(DecToBinFilled(bus, 16).substr(4, 12));
 				}
 				if (mcode[3] == '1')
 				{ // ST
-					//Console.Write("ST ");
+					//cout<<("ST ");
 					cout << ("\n== PAUSED from HLT ==\n\n");
 					cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 					system("pause");
+					exit(1);
 				}
 
 				if (mcode[16] == '1')
 				{ // EI
-					//Console.Write("EI ");
-					//Console.WriteLine();
+					//cout<<("EI ");
+					cout<<endl;
 					break;
 				}
 				//else
-					//Console.WriteLine();
+				//	cout<<endl;
 			}
 
-			//Console.WriteLine(programCounter + " | o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")" + "\n");
+			cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 		}
 		iterations += 1;
 
@@ -302,30 +305,45 @@ public:
 
 		return output;
 	}
-	string HexToBin(string hex, int desiredSize)
+	string HexToBin(string s, int desiredSize)
 	{
-		int decval = HexToDec(hex);
-
-		// Convert dec to bin
-		string output = DecToBin(decval);
+		string out;
+		for (auto i : s) {
+			uint8_t n;
+			if (i <= '9' and i >= '0')
+				n = i - '0';
+			else
+				n = 10 + i - 'A';
+			for (int8_t j = 3; j >= 0; --j)
+				out.push_back((n & (1 << j)) ? '1' : '0');
+		}
 
 		// Fill
-		while (output.length() < desiredSize)
+		while (out.length() < desiredSize)
 		{
-			output = "0" + output;
+			out = "0" + out;
 		}
-		if (output.length() > desiredSize)
-			output = output.substr(output.length() - desiredSize);
-		return output;
+		if (out.length() > desiredSize)
+			out = out.substr(out.length() - desiredSize);
+		return out;
 	}
 
 	int HexToDec(string hex)
 	{
-		int decimal_value;
-		stringstream ss;
-		ss << hex;
-		ss >> hex >> decimal_value;
-		return decimal_value;
+		unsigned long result = 0;
+		for (int i = 0; i < hex.length(); i++) {
+			if (hex[i] >= 48 && hex[i] <= 57)
+			{
+				result += (hex[i] - 48) * pow(16, hex.length() - i - 1);
+			}
+			else if (hex[i] >= 65 && hex[i] <= 70) {
+				result += (hex[i] - 55) * pow(16, hex.length() - i - 1);
+			}
+			else if (hex[i] >= 97 && hex[i] <= 102) {
+				result += (hex[i] - 87) * pow(16, hex.length() - i - 1);
+			}
+		}
+		return result;
 	}
 
 	vector<string> explode(const string& str, const char& ch) {
@@ -362,6 +380,8 @@ public:
 		string icopy = input;
 		transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 		vector<string> splitcode = explode(icopy, '\n');
+
+		cout << endl;
 
 		int memaddr = 0;
 		for (int i = 0; i < splitcode.size(); i++)
@@ -413,17 +433,20 @@ public:
 			memaddr += 1;
 		}
 
-		cout << ("\n000: ");
+		/*
+		cout << ("\n000:");
 		for (int outindex = 0; outindex < outputBytes.size(); outindex++)
 		{
 			if (outindex % 8 == 0 && outindex != 0)
 			{
 				string locationTmp = DecToHexFilled(outindex, 3);
 				transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
-				cout << ("\n" + locationTmp + ": ");
+				cout << ("\n" + locationTmp + ":");
 			}
-			cout << (outputBytes[outindex] + " ");
-		}
+			string bytetmp = (" " + outputBytes[outindex]);
+			transform(bytetmp.begin(), bytetmp.end(), bytetmp.begin(), ::toupper);
+			cout << bytetmp;
+		}*/
 		return outputBytes;
 	}
 
@@ -462,7 +485,7 @@ public:
 				"loda( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
 				"lodb( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
 				"add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl & 5=ei", // Add <addr>
-				"sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
+				"sub( 2=aw,ir & 3=rm,wb & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
 				"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
 				"jmp( 2=ir,j & 3=ei", // Jump <addr>
 				"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
@@ -573,7 +596,7 @@ public:
 				}
 			}
 
-			//Console.WriteLine();
+			//cout<<Line();
 		}
 
 		// Do actual processing
@@ -648,7 +671,7 @@ public:
 				}
 			}
 
-			//Console.WriteLine();
+			//cout<<Line();
 		}
 
 
