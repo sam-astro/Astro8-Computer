@@ -5,13 +5,11 @@ set 44 32
 , Create 0 00001 00000 00000 1024 for incrementing R
 set 45 1024
 set 1000 1
-set 288 16
-set 289 16
-set 298 16
-set 299 16
+set 288 0
+set 289 0
+set 298 0
+set 299 0
 ,
-ldi 1
-sta 402
 loda 288
 sta 400
 ldi 3
@@ -22,9 +20,9 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 6
+jmpc 4
 loda 403
-sub 402
+sub 1000
 sta 298
 out
 ,
