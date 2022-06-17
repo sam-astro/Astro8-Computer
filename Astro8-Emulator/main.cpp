@@ -64,6 +64,7 @@ public:
 
 		GenerateMicrocode();
 
+		cout << endl;
 		cout << DecToBin(16) << endl;
 		cout << BinToDec(DecToBin(16)) << endl;
 		cout << endl;
@@ -365,7 +366,7 @@ public:
 		int memaddr = 0;
 		for (int i = 0; i < splitcode.size(); i++)
 		{
-			if (splitcode[i] == "")
+			if (trim(splitcode[i]) == "")
 			{
 				continue;
 			}
@@ -385,7 +386,7 @@ public:
 				continue;
 			}
 
-			cout << (memaddr + " " + splitcode[i] + "   \t  =>  ");
+			cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
 
 			// Find index of instruction
 			for (int f = 0; f < sizeof(instructions) / sizeof(instructions[0]); f++)
@@ -409,9 +410,43 @@ public:
 				outputBytes[memaddr] += "000";
 			}
 			cout << ("\n");
-			memaddr++;
+			memaddr += 1;
+		}
+
+		cout << ("\n000: ");
+		for (int outindex = 0; outindex < outputBytes.size(); outindex++)
+		{
+			if (outindex % 8 == 0 && outindex != 0)
+			{
+				string locationTmp = DecToHexFilled(outindex, 3);
+				transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
+				cout << ("\n" + locationTmp + ": ");
+			}
+			cout << (outputBytes[outindex] + " ");
 		}
 		return outputBytes;
+	}
+
+	// trim from start (in place)
+	static inline void ltrim(std::string& s) {
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+			return !std::isspace(ch);
+			}));
+	}
+
+	// trim from end (in place)
+	static inline void rtrim(std::string& s) {
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+			return !std::isspace(ch);
+			}).base(), s.end());
+	}
+
+	// trim from both ends (in place)
+	static inline string trim(std::string s) {
+		string ss = s;
+		ltrim(ss);
+		rtrim(ss);
+		return ss;
 	}
 
 	void GenerateMicrocode()
@@ -629,7 +664,7 @@ public:
 			if (outindex % 8 == 0 && outindex != 0)
 			{
 				string locationTmp = DecToHexFilled(outindex, 3);
-				//transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::tolower);
+				transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 				cout << ("\n" + locationTmp + ": ");
 				processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 			}
