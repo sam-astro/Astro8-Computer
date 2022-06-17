@@ -1,0 +1,3 @@
+﻿  main.cpp
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(474,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Debug\Astro8-Emulator.exe
