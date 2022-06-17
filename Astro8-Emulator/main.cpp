@@ -67,7 +67,7 @@ public:
 		cout << endl;
 		cout << DecToBin(16) << endl;
 		cout << HexToDec("ffff") << endl;
-		cout << HexToBin("ffff", 4) << endl;
+		cout << HexToBin("ffff", 17) << endl;
 		cout << endl;
 
 
@@ -83,14 +83,11 @@ public:
 			cout << programCounter << ")  ";
 			for (int step = 0; step < 16; step++)
 			{
-
-				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 0) + to_string(flags[0]) + to_string(flags[1]));
+				cout << "step:" << step << endl;
+				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
 				string mcode = microinstructionData[microcodeLocation];
 
 				//cout<<("     microcode: " + mcode)<<endl;
-
-				//cout << ("mcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 0) + to_string(flags[0]) + to_string(flags[1])) << "  ==  "<< microcodeLocation << endl;
-				cout << ("\nmcDat- " + mcode) << endl;
 
 				if (step == 0)
 				{
@@ -105,6 +102,9 @@ public:
 					step = 1;
 					continue;
 				}
+
+				cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
+				cout << ("mcDat- " + mcode) << endl;
 
 				//while (memoryIndex >= 4000)
 				//    memoryIndex -= 4000;
@@ -476,7 +476,7 @@ public:
 	{
 		// Generate zeros in data
 		vector<string> output;
-		for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back("00000"); }
+		for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back(""); }
 
 		string microinstructions[] = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
 		string flags[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -693,7 +693,10 @@ public:
 			}
 			cout << (output[outindex] + " ");
 			processedOutput += output[outindex] + " ";
-			microinstructionData[outindex] = HexToBin(output[outindex], 17);
+
+			string ttmp = output[outindex];
+			transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
+			microinstructionData[outindex] = HexToBin(ttmp, 17);
 		}
 	}
 };
