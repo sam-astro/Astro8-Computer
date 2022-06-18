@@ -92,9 +92,9 @@ sta 400
 jmpc 73
 loda 403
 sub 1000
-sta 401
+sta 403
 ldi 32
-sub 401
+sub 403
 sta 302
 ,    output  86 v
 loda 300
