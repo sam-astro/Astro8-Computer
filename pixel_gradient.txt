@@ -84,7 +84,7 @@ sub 403
 sta 400
 ldi 0
 sta 403
-ldi 2
+ldi 4
 sta 401
 ldi 1
 add 403
