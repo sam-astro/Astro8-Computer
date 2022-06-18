@@ -8,8 +8,6 @@ set 1000 1
 ,
 ldi 0
 sta 403
-ldi 1
-sta 402
 loda 298
 sta 400
 ldi 2
@@ -20,14 +18,13 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 8
+jmpc 6
 loda 403
-sub 402
+sub 1000
 sta 288
 ,
 ldi 0
 sta 403
-ldi 1
 loda 299
 sta 400
 ldi 2
@@ -38,11 +35,11 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 25
+jmpc 22
 loda 403
-sub 402
+sub 1000
 sta 289
-,    Calculate Red   35 v
+,    Calculate Red   32 v
 loda 288
 sta 400
 loda 510
@@ -51,16 +48,16 @@ ldi 0
 sta 403
 loda 400
 sub 1000
-jmpc 46
+jmpc 43
 loda 403
-jmp 51
+jmp 48
 sta 400
 loda 403
 add 401
 sta 403
-jmp 41
+jmp 38
 sta 300
-,    Calculate Green   51 v
+,    Calculate Green   49 v
 loda 289
 sta 400
 loda 511
@@ -69,22 +66,20 @@ ldi 0
 sta 403
 loda 400
 sub 1000
-jmpc 63
+jmpc 60
 loda 403
-jmp 68
+jmp 65
 sta 400
 loda 403
 add 401
 sta 403
-jmp 58
-,    Calculate Blue   67 v
+jmp 55
+,    Calculate Blue   65 v
 loda 288
 add 289
 sta 400
 ldi 0
 sta 403
-ldi 1
-sta 402
 ldi 4
 sta 401
 ldi 1
@@ -93,14 +88,14 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 76
+jmpc 72
 loda 403
-sub 402
+sub 1000
 sta 401
 ldi 32
 sub 401
 sta 302
-,    output  90 v
+,    output  85 v
 sta 301
 loda 300
 add 301
@@ -124,4 +119,4 @@ jmpc 0
 ldi 0
 sta 299
 jmp 0
-, 61 ^
+, 106 ^
