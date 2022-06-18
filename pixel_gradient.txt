@@ -74,7 +74,8 @@ loda 403
 add 401
 sta 403
 jmp 55
-,    Calculate Blue   65 v
+sta 301
+,    Calculate Blue   66 v
 loda 288
 add 289
 sta 400
@@ -88,14 +89,14 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 72
+jmpc 73
 loda 403
 sub 1000
 sta 401
 ldi 32
 sub 401
 sta 302
-,    output  85 v
+,    output  86 v
 sta 301
 loda 300
 add 301
@@ -119,4 +120,4 @@ jmpc 0
 ldi 0
 sta 299
 jmp 0
-, 106 ^
+, 107 ^
