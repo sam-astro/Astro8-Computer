@@ -97,7 +97,6 @@ ldi 32
 sub 401
 sta 302
 ,    output  86 v
-sta 301
 loda 300
 add 301
 add 302
@@ -120,4 +119,4 @@ jmpc 0
 ldi 0
 sta 299
 jmp 0
-, 107 ^
+, 106 ^
