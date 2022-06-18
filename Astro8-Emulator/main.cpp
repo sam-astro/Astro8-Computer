@@ -80,10 +80,10 @@ public:
 		//string instruction = instructions[BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4))];
 		if (iterations % (int)slowdownAmnt == 0)
 		{
-			cout << programCounter << ")  ";
+			//cout << programCounter << ")  ";
 			for (int step = 0; step < 16; step++)
 			{
-				cout << "step:" << step << endl;
+				//cout << "step:" << step << endl;
 				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
 				string mcode = microinstructionData[microcodeLocation];
 
@@ -103,8 +103,8 @@ public:
 					continue;
 				}
 
-				cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
-				cout << ("mcDat- " + mcode) << endl;
+				//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
+				//cout << ("mcDat- " + mcode) << endl;
 
 				//while (memoryIndex >= 4000)
 				//    memoryIndex -= 4000;
@@ -116,7 +116,7 @@ public:
 				// Execute microinstructions
 				if (mcode[8] == '1')
 				{ // EO
-					cout << ("EO ");
+					//cout << ("EO ");
 					if (mcode[0] == '1') // SU
 					{
 						flags[0] = 0;
@@ -146,35 +146,35 @@ public:
 				}
 				if (mcode[5] == '1')
 				{ // CR
-					cout << ("CR ");
+					//cout << ("CR ");
 					bus = programCounter;
 				}
 				if (mcode[7] == '1')
 				{ // RA
-					cout << ("RA ");
+					//cout << ("RA ");
 					bus = AReg;
 				}
 				if (mcode[13] == '1')
 				{ // RM
-					cout << ("RM ");
-					cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
+					//cout << ("RM ");
+					//cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
 					bus = memoryBytes[memoryIndex];
 				}
 				if (mcode[15] == '1')
 				{ // IR
-					cout << ("IR ");
+					//cout << ("IR ");
 					bus = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
 				}
 				if (mcode[1] == '1')
 				{ // IW
-					cout << ("IW ");
+					//cout << ("IW ");
 					InstructionReg = bus;
 				}
 				if (mcode[2] == '1')
 				{ // DW
-					cout << ("DW ");
+					//cout << ("DW ");
 					outputReg = bus;
-					cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+					//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 
 					// Write to LED screen
 					int r = BinToDec(DecToBinFilled(bus, 16).substr(1, 5)) * 8;
@@ -183,12 +183,12 @@ public:
 					Draw(imgX, imgY, olc::Pixel(r, g, b));
 
 					imgX++;
-					if (imgX >= 32)
+					if (imgX >= 64)
 					{
 						imgY++;
 						imgX = 0;
 					}
-					if (imgY >= 32)
+					if (imgY >= 64)
 					{
 						imgY = 0;
 					}
@@ -196,34 +196,34 @@ public:
 				}
 				if (mcode[4] == '1')
 				{ // CE
-					cout << ("CE ");
+					//cout << ("CE ");
 					programCounter += 1;
 				}
 				if (mcode[6] == '1')
 				{ // WM
-					cout << ("WM ");
+					//cout << ("WM ");
 					memoryBytes[memoryIndex] = bus;
 				}
 				if (mcode[10] == '1')
 				{ // J
-					cout << ("J ");
+					//cout << ("J ");
 					//cout<<Line(DecToBinFilled(InstructionReg, 16));
 					//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
 					programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
 				}
 				if (mcode[11] == '1')
 				{ // WB
-					cout << ("WB ");
+					//cout << ("WB ");
 					BReg = bus;
 				}
 				if (mcode[12] == '1')
 				{ // WA
-					cout << ("WA ");
+					//cout << ("WA ");
 					AReg = bus;
 				}
 				if (mcode[14] == '1')
 				{ // AW
-					cout << ("AW ");
+					//cout << ("AW ");
 					memoryIndex = BinToDec(DecToBinFilled(bus, 16).substr(4, 12));
 				}
 				if (mcode[3] == '1')
@@ -238,14 +238,14 @@ public:
 				if (mcode[16] == '1')
 				{ // EI
 					//cout<<("EI ");
-					cout<<endl;
+					//cout<<endl;
 					break;
 				}
 				//else
 				//	cout<<endl;
 			}
 
-			cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			//cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 		}
 		iterations += 1;
 
@@ -704,7 +704,7 @@ public:
 int main()
 {
 	Emulator displayWindow;
-	if (displayWindow.Construct(32, 32, 6, 6))
+	if (displayWindow.Construct(64, 64, 5, 5))
 		displayWindow.Start();
 	return 0;
 }
