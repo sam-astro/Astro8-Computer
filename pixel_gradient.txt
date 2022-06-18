@@ -78,10 +78,13 @@ sta 301
 ,    Calculate Blue   66 v
 loda 288
 add 289
+sta 403
+ldi 63
+sub 403
 sta 400
 ldi 0
 sta 403
-ldi 4
+ldi 2
 sta 401
 ldi 1
 add 403
@@ -89,12 +92,9 @@ sta 403
 loda 400
 sub 401
 sta 400
-jmpc 73
+jmpc 76
 loda 403
 sub 1000
-sta 403
-ldi 31
-sub 403
 sta 302
 ,    output  86 v
 loda 300
