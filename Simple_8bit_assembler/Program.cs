@@ -61,11 +61,11 @@ public class Program
         else if (action == "imggen")
         {
             Console.Write("Path to image >  ");
-            string path = Console.ReadLine();
+            string path = Console.ReadLine().Replace("\"", "");
             Bitmap img = new Bitmap(new Bitmap((Bitmap)Image.FromFile(path), 32, 32));
 
 
-            string code = "LDI 200\nSTA 100\nLDI 1\nADD 100\nSTA 100\nLDAIN\nOUT\nJMP 2\n";
+            string code = File.ReadAllText("../../../../draw_image.txt")+"\n";
             int currentMemIndex = 0;
             for (int pos = 0; pos < img.Width * img.Height; pos++)
             {

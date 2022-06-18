@@ -1,8 +1,26 @@
-LDI 200
-STA 100
-LDI 1
-ADD 100
-STA 100
-LDAIN
-OUT
-JMP 2
+set 100 400
+set 62 1
+,
+ldi 0
+sta 63
+loda 100
+sta 60
+ldi 2
+sta 61
+loda 62
+add 63
+sta 63
+loda 60
+sub 61
+sta 60
+jmpc 6
+loda 63
+sub 62
+,
+ldain
+out
+,
+ldi 1
+add 100
+sta 100
+jmp 0
