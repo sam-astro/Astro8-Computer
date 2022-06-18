@@ -21,7 +21,7 @@ public class Program
         Console.Write("Action >  ");
         action = Console.ReadLine().ToLower();
 
-        if (action != "microcode" & action != "emulator")
+        if (action != "microcode" & action != "emulator" & action != "imggen")
         {
             Console.Write("v Code input v\n");
             string code = "";
@@ -54,9 +54,33 @@ public class Program
 
             File.WriteAllText("../../../../program_machine_code", processedOutput);
         }
-        else if (action != "emulator")
+        else if (action != "emulator" && action != "imggen")
         {
             GenerateMicrocode();
+        }
+        else if (action == "imggen")
+        {
+            Console.Write("Path to image >  ");
+            string path = Console.ReadLine();
+            Bitmap img = new Bitmap(new Bitmap((Bitmap)Image.FromFile(path), 32, 32));
+
+
+            string code = "LDI 200\nSTA 100\nLDI 1\nADD 100\nSTA 100\nLDAIN\nOUT\nJMP 2\n";
+            int currentMemIndex = 0;
+            for (int pos = 0; pos < img.Width * img.Height; pos++)
+            {
+                Color col = img.GetPixel(pos % img.Width, pos / img.Height);
+                int r = col.R / 8;
+                int g = col.G / 8;
+                int b = col.B / 8;
+                string binval = "0" + DecToBinFilled(r, 5) + DecToBinFilled(g, 5) + DecToBinFilled(b, 5);
+                int decval = BinToDec(binval);
+
+                code += "set " + (200 + currentMemIndex) + " " + decval +"\n";
+                currentMemIndex++;
+            }
+            File.WriteAllText("../../../../code_text_val.txt", code, Encoding.UTF8);
+
         }
         if (action == "emulator")
         {
@@ -195,9 +219,9 @@ public class Program
                             Console.WriteLine("\no: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")");
 
                             // Write to LED screen
-                            int r = BinToDec(DecToBinFilled(bus, 16).Substring(1, 5))*8;
-                            int g = BinToDec(DecToBinFilled(bus, 16).Substring(6, 5))*8;
-                            int b = BinToDec(DecToBinFilled(bus, 16).Substring(11, 5))*8;
+                            int r = BinToDec(DecToBinFilled(bus, 16).Substring(1, 5)) * 8;
+                            int g = BinToDec(DecToBinFilled(bus, 16).Substring(6, 5)) * 8;
+                            int b = BinToDec(DecToBinFilled(bus, 16).Substring(11, 5)) * 8;
                             ledScreen.SetPixel(imgX, imgY, Color.FromArgb(r, g, b));
 
                             imgX++;
@@ -261,7 +285,7 @@ public class Program
                             break;
                         }
                         //else
-                            //Console.WriteLine();
+                        //Console.WriteLine();
                     }
 
                     //Console.WriteLine(programCounter + " | o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")" + "\n");
