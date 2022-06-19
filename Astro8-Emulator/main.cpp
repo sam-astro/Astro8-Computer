@@ -85,7 +85,7 @@ public:
 			{
 				//cout << "step:" << step << endl;
 				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
-				string mcode = microinstructionData[microcodeLocation];
+				char* mcode = (char*)microinstructionData[microcodeLocation].c_str();
 
 				//cout<<("     microcode: " + mcode)<<endl;
 
