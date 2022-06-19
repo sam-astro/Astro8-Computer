@@ -1,26 +1,51 @@
-set 100 400
+set 69 31
+set 100 200
 set 62 1
 ,
-ldi 0
-sta 63
-loda 100
+ldi 1
+add 60
 sta 60
-ldi 2
+ldi 1
+add 61
 sta 61
-loda 62
-add 63
-sta 63
-loda 60
-sub 61
-sta 60
-jmpc 6
-loda 63
-sub 62
 ,
+loda 100
 ldain
 out
 ,
 ldi 1
+sub 60
+jmpc 0
+ldi 1
 add 100
 sta 100
+ldi 1
+add 61
+sta 61
+ldi 0
+sta 60
+,
+ldi 1223
+sub 100
+jmpc 25
+,
+ldi 200
+sta 100
+,
+ldi 31
+sub 61
+jmpc 0
+ldi 1
+add 66
+sta 66
+ldi 0
+sta 61
+ldi 1
+sub 66
+jmpc 0
+loda 100
+sub 69
+sta 100
+ldi 0
+sta 66
 jmp 0
