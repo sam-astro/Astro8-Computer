@@ -75,7 +75,7 @@ public class Program
                 string binval = "0" + DecToBinFilled(r, 5) + DecToBinFilled(g, 5) + DecToBinFilled(b, 5);
                 int decval = BinToDec(binval);
 
-                code += "set " + (200 + currentMemIndex) + " " + decval +"\n\r";
+                code += "set " + (200 + currentMemIndex) + " " + decval +"\r";
                 currentMemIndex++;
             }
             code += "\n";
