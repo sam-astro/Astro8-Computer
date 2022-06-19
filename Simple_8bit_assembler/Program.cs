@@ -62,8 +62,7 @@ public class Program
         {
             Console.Write("Path to image >  ");
             string path = Console.ReadLine().Replace("\"", "");
-            Bitmap img = new Bitmap(new Bitmap((Bitmap)Image.FromFile(path), 32, 32));
-
+            Bitmap img = ResizeBitmap(new Bitmap((Bitmap)Image.FromFile(path)), 32, 32);
 
             string code = File.ReadAllText("../../../../draw_image.txt")+"\n";
             int currentMemIndex = 0;
@@ -76,9 +75,10 @@ public class Program
                 string binval = "0" + DecToBinFilled(r, 5) + DecToBinFilled(g, 5) + DecToBinFilled(b, 5);
                 int decval = BinToDec(binval);
 
-                code += "set " + (200 + currentMemIndex) + " " + decval +"\n";
+                code += "set " + (200 + currentMemIndex) + " " + decval +"\n\r";
                 currentMemIndex++;
             }
+            code += "\n";
             File.WriteAllText("../../../../code_text_val.txt", code, Encoding.UTF8);
 
         }
@@ -354,7 +354,16 @@ public class Program
     { 'e', "1110" },
     { 'f', "1111" }
 };
-
+    static Bitmap ResizeBitmap(Bitmap sourceBMP, int width, int height)
+    {
+        Bitmap result = new Bitmap(width, height);
+        using (Graphics g = Graphics.FromImage(result))
+        {
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            g.DrawImage(sourceBMP, 0, 0, width, height);
+        }
+        return result;
+    }
     static string HexToBin(string hex, int desiredSize)
     {
         StringBuilder result = new StringBuilder();

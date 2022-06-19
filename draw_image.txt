@@ -1,13 +1,11 @@
-set 69 31
+set 69 32
 set 100 200
 set 62 1
+set 66 2
 ,
 ldi 1
 add 60
 sta 60
-ldi 1
-add 61
-sta 61
 ,
 loda 100
 ldain
@@ -16,6 +14,9 @@ out
 ldi 1
 sub 60
 jmpc 0
+ldi 1
+add 61
+sta 61
 ldi 1
 add 100
 sta 100
@@ -40,7 +41,7 @@ add 66
 sta 66
 ldi 0
 sta 61
-ldi 1
+ldi 3
 sub 66
 jmpc 0
 loda 100
