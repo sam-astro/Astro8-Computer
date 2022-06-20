@@ -2,10 +2,10 @@
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(373,29): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(376,29): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(379,29): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(568,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(569,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  3 of 1428 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+  17 of 1491 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    39 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Release\Astro8-Emulator.exe

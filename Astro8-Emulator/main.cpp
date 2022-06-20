@@ -42,13 +42,13 @@ public:
 
 	string instructions[16] = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
 	string action = "";
-	vector<string> microinstructionData;
+	vector<vector<int>> microinstructionData;
 
 	bool OnUserCreate() override
 	{
 		InstructionReg = 100;
-		int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
-		//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
+		//int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
+		unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
 		cout << b<< " == 0b" << DecToBin(b) << endl;
 
 		// Gather user inputted code
@@ -83,15 +83,12 @@ public:
 	steady_clock::time_point start;
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (iterations % 1000 == 0)
+		if (iterations % 10000 == 0)
 			start = high_resolution_clock::now();
 
 		//cout << programCounter << ")  ";
-		for (int step = 0; step < 7; step++)
+		for (int step = 0; step < 16; step++)
 		{
-			//cout << "step:" << step << endl;
-			int microcodeLocation = (BitRange((unsigned)InstructionReg, 12, 4) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-			char* mcode = (char*)microinstructionData[microcodeLocation].c_str();
 
 			//cout<<("     microcode: " + mcode)<<endl;
 
@@ -108,6 +105,9 @@ public:
 				step = 1;
 				continue;
 			}
+			//cout << "step:" << step << endl;
+			int microcodeLocation = (BitRange((unsigned)InstructionReg, 12, 4) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
+			vector<int> mcode = microinstructionData[microcodeLocation];
 
 			//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
 			//cout << ("mcDat- " + mcode) << endl;
@@ -120,10 +120,10 @@ public:
 			//cout<<("ftmem=" + memoryIndex);
 			// 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
 			// Execute microinstructions
-			if (mcode[8] == '1')
+			if (mcode[8] == 1)
 			{ // EO
 				//cout << ("EO ");
-				if (mcode[0] == '1') // SU
+				if (mcode[0] == 1) // SU
 				{
 					flags[0] = 0;
 					flags[1] = 1;
@@ -150,42 +150,42 @@ public:
 					}
 				}
 			}
-			if (mcode[5] == '1')
+			if (mcode[5] == 1)
 			{ // CR
 				//cout << ("CR ");
 				bus = programCounter;
 			}
-			if (mcode[7] == '1')
+			if (mcode[7] == 1)
 			{ // RA
 				//cout << ("RA ");
 				bus = AReg;
 			}
-			if (mcode[13] == '1')
+			if (mcode[13] == 1)
 			{ // RM
 				//cout << ("RM ");
 				//cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
 				bus = memoryBytes[memoryIndex];
 			}
-			if (mcode[15] == '1')
+			if (mcode[15] == 1)
 			{ // IR
 				//cout << ("IR ");
-				bus = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
+				bus = BitRange(InstructionReg, 0, 12);
 			}
-			if (mcode[1] == '1')
+			if (mcode[1] == 1)
 			{ // IW
 				//cout << ("IW ");
 				InstructionReg = bus;
 			}
-			if (mcode[2] == '1')
+			if (mcode[2] == 1)
 			{ // DW
 				//cout << ("DW ");
 				outputReg = bus;
 				//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 
 				// Write to LED screen
-				int r = BinToDec(DecToBinFilled(bus, 16).substr(1, 5)) * 8;
-				int g = BinToDec(DecToBinFilled(bus, 16).substr(6, 5)) * 8;
-				int b = BinToDec(DecToBinFilled(bus, 16).substr(11, 5)) * 8;
+				int r = BitRange(bus, 10, 15) * 8; // Get first 5 bits
+				int g = BitRange(bus, 5, 10) * 8; // get middle bits
+				int b = BitRange(bus, 0, 5) * 8; // Gets last 5 bits
 				Draw(imgX, imgY, olc::Pixel(r, g, b));
 
 				imgX++;
@@ -200,39 +200,39 @@ public:
 				}
 
 			}
-			if (mcode[4] == '1')
+			if (mcode[4] == 1)
 			{ // CE
 				//cout << ("CE ");
 				programCounter += 1;
 			}
-			if (mcode[6] == '1')
+			if (mcode[6] == 1)
 			{ // WM
 				//cout << ("WM ");
 				memoryBytes[memoryIndex] = bus;
 			}
-			if (mcode[10] == '1')
+			if (mcode[10] == 1)
 			{ // J
 				//cout << ("J ");
 				//cout<<Line(DecToBinFilled(InstructionReg, 16));
 				//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-				programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
+				programCounter = BitRange(InstructionReg, 0, 12);
 			}
-			if (mcode[11] == '1')
+			if (mcode[11] == 1)
 			{ // WB
 				//cout << ("WB ");
 				BReg = bus;
 			}
-			if (mcode[12] == '1')
+			if (mcode[12] == 1)
 			{ // WA
 				//cout << ("WA ");
 				AReg = bus;
 			}
-			if (mcode[14] == '1')
+			if (mcode[14] == 1)
 			{ // AW
 				//cout << ("AW ");
-				memoryIndex = BinToDec(DecToBinFilled(bus, 16).substr(4, 12));
+				memoryIndex = BitRange(bus, 0, 12);
 			}
-			if (mcode[3] == '1')
+			if (mcode[3] == 1)
 			{ // ST
 				//cout<<("ST ");
 				cout << ("\n== PAUSED from HLT ==\n\n");
@@ -241,7 +241,7 @@ public:
 				exit(1);
 			}
 
-			if (mcode[16] == '1')
+			if (mcode[16] == 1)
 			{ // EI
 				//cout<<("EI ");
 				//cout<<endl;
@@ -251,7 +251,7 @@ public:
 			//	cout<<endl;
 		}
 
-		if (iterations % 1000 == 0) {
+		if (iterations % 10000 == 0) {
 			auto stop = high_resolution_clock::now();
 			cout << "\r                " << "\r" << round((1.0f / fElapsedTime) * 10.0f) / 10.0f << "\thz";
 		}
@@ -512,7 +512,8 @@ public:
 	{
 		// Generate zeros in data
 		vector<string> output;
-		for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back(""); }
+		vector<int> ii;
+		for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
 
 		string microinstructions[] = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
 		string flags[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -732,7 +733,12 @@ public:
 
 			string ttmp = output[outindex];
 			transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
-			microinstructionData[outindex] = HexToBin(ttmp, 17);
+
+			string binversion = HexToBin(ttmp, 17);
+			for (int i = 0; i < binversion.size(); i++)
+			{
+				microinstructionData[outindex].push_back(binversion[i] == '1');
+			}
 		}
 	}
 };
@@ -740,7 +746,7 @@ public:
 int main()
 {
 	Emulator displayWindow;
-	if (displayWindow.Construct(64, 64, 5, 5))
+	if (displayWindow.Construct(64, 64, 6, 6))
 		displayWindow.Start();
 	return 0;
 }
