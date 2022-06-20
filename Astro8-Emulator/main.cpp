@@ -46,8 +46,10 @@ public:
 
 	bool OnUserCreate() override
 	{
-		unsigned b = BitRange(1234, 4, 4); // Should output 10011010010 to 1101 (13)
-		cout << "= " << b << endl;
+		InstructionReg = 100;
+		int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
+		//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
+		cout << b<< " == 0b" << DecToBin(b) << endl;
 
 		// Gather user inputted code
 		cout << ("v Emu. Code input v\n");
@@ -88,7 +90,7 @@ public:
 		for (int step = 0; step < 7; step++)
 		{
 			//cout << "step:" << step << endl;
-			int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
+			int microcodeLocation = (BitRange((unsigned)InstructionReg, 12, 4) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
 			char* mcode = (char*)microinstructionData[microcodeLocation].c_str();
 
 			//cout<<("     microcode: " + mcode)<<endl;
