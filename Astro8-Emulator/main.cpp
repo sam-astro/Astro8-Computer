@@ -6,6 +6,7 @@
 #include <algorithm> 
 #include <string> 
 #include <chrono>
+#include <limits.h>
 
 using namespace std::chrono;
 using namespace std;
@@ -45,9 +46,10 @@ public:
 
 	bool OnUserCreate() override
 	{
-		// Called once at the start, so create things here
+		unsigned b = BitRange(1234, 4, 4); // Should output 10011010010 to 1101 (13)
+		cout << "= " << b << endl;
 
-			// Gather user inputted code
+		// Gather user inputted code
 		cout << ("v Emu. Code input v\n");
 		string code = "";
 		string line;
@@ -264,7 +266,32 @@ public:
 		string s(a);
 		return s;
 	}
+	/*unsigned createMask(unsigned a, unsigned b)
+	{
+		unsigned r = 0;
+		for (unsigned i = a; i <= b; i++)
+			r |= 1 << i;
 
+		return r;
+	}
+	unsigned BitRange(unsigned x, unsigned min, unsigned max) {
+		unsigned r = createMask(min, max);
+		unsigned result = r & x;
+		return result;
+	}*/
+
+	// Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
+	unsigned BitRange(unsigned value, unsigned offset, unsigned n)
+	{
+		const unsigned max_n = CHAR_BIT * sizeof(unsigned);
+		if (offset >= max_n)
+			return 0; /* value is padded with infinite zeros on the left */
+		value >>= offset; /* drop offset bits */
+		if (n >= max_n)
+			return value; /* all  bits requested */
+		const unsigned mask = (1u << n) - 1; /* n '1's */
+		return value & mask;
+	}
 	string DecToHexFilled(int input, int desiredSize)
 	{
 		stringstream ss;
