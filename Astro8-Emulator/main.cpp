@@ -5,7 +5,9 @@
 #include <vector>
 #include <algorithm> 
 #include <string> 
+#include <chrono>
 
+using namespace std::chrono;
 using namespace std;
 
 // Override base class with your custom functionality
@@ -74,179 +76,184 @@ public:
 		return true;
 	}
 
+	steady_clock::time_point start;
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		//InstructionReg = DecToBinFilled(memoryBytes[programCounter], 16);
-		//string instruction = instructions[BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4))];
-		if (iterations % (int)slowdownAmnt == 0)
+		if (iterations % 1000 == 0)
+			start = high_resolution_clock::now();
+
+		//cout << programCounter << ")  ";
+		for (int step = 0; step < 7; step++)
 		{
-			//cout << programCounter << ")  ";
-			for (int step = 0; step < 16; step++)
+			//cout << "step:" << step << endl;
+			int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
+			char* mcode = (char*)microinstructionData[microcodeLocation].c_str();
+
+			//cout<<("     microcode: " + mcode)<<endl;
+
+			if (step == 0)
 			{
-				//cout << "step:" << step << endl;
-				int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1]));
-				char* mcode = (char*)microinstructionData[microcodeLocation].c_str();
-
-				//cout<<("     microcode: " + mcode)<<endl;
-
-				if (step == 0)
-				{
-					// CR
-					// AW
-					memoryIndex = programCounter;
-					// RM
-					// IW
-					InstructionReg = memoryBytes[memoryIndex];
-					// CE
-					programCounter += 1;
-					step = 1;
-					continue;
-				}
-
-				//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
-				//cout << ("mcDat- " + mcode) << endl;
-
-				//while (memoryIndex >= 4000)
-				//    memoryIndex -= 4000;
-				//if (memoryIndex < 0)
-				//    memoryIndex = -memoryIndex;
-
-				//cout<<("ftmem=" + memoryIndex);
-				// 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
-				// Execute microinstructions
-				if (mcode[8] == '1')
-				{ // EO
-					//cout << ("EO ");
-					if (mcode[0] == '1') // SU
-					{
-						flags[0] = 0;
-						flags[1] = 1;
-						if (AReg - BReg == 0)
-							flags[0] = 1;
-						bus = AReg - BReg;
-						if (bus < 0)
-						{
-							bus = 65535 + bus;
-							flags[1] = 0;
-						}
-					}
-					else
-					{
-						flags[0] = 0;
-						flags[1] = 0;
-						if (AReg + BReg == 0)
-							flags[0] = 1;
-						bus = AReg + BReg;
-						if (bus >= 65535)
-						{
-							bus = bus - 65535;
-							flags[1] = 1;
-						}
-					}
-				}
-				if (mcode[5] == '1')
-				{ // CR
-					//cout << ("CR ");
-					bus = programCounter;
-				}
-				if (mcode[7] == '1')
-				{ // RA
-					//cout << ("RA ");
-					bus = AReg;
-				}
-				if (mcode[13] == '1')
-				{ // RM
-					//cout << ("RM ");
-					//cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
-					bus = memoryBytes[memoryIndex];
-				}
-				if (mcode[15] == '1')
-				{ // IR
-					//cout << ("IR ");
-					bus = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
-				}
-				if (mcode[1] == '1')
-				{ // IW
-					//cout << ("IW ");
-					InstructionReg = bus;
-				}
-				if (mcode[2] == '1')
-				{ // DW
-					//cout << ("DW ");
-					outputReg = bus;
-					//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-
-					// Write to LED screen
-					int r = BinToDec(DecToBinFilled(bus, 16).substr(1, 5)) * 8;
-					int g = BinToDec(DecToBinFilled(bus, 16).substr(6, 5)) * 8;
-					int b = BinToDec(DecToBinFilled(bus, 16).substr(11, 5)) * 8;
-					Draw(imgX, imgY, olc::Pixel(r, g, b));
-
-					imgX++;
-					if (imgX >= 64)
-					{
-						imgY++;
-						imgX = 0;
-					}
-					if (imgY >= 64)
-					{
-						imgY = 0;
-					}
-
-				}
-				if (mcode[4] == '1')
-				{ // CE
-					//cout << ("CE ");
-					programCounter += 1;
-				}
-				if (mcode[6] == '1')
-				{ // WM
-					//cout << ("WM ");
-					memoryBytes[memoryIndex] = bus;
-				}
-				if (mcode[10] == '1')
-				{ // J
-					//cout << ("J ");
-					//cout<<Line(DecToBinFilled(InstructionReg, 16));
-					//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-					programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
-				}
-				if (mcode[11] == '1')
-				{ // WB
-					//cout << ("WB ");
-					BReg = bus;
-				}
-				if (mcode[12] == '1')
-				{ // WA
-					//cout << ("WA ");
-					AReg = bus;
-				}
-				if (mcode[14] == '1')
-				{ // AW
-					//cout << ("AW ");
-					memoryIndex = BinToDec(DecToBinFilled(bus, 16).substr(4, 12));
-				}
-				if (mcode[3] == '1')
-				{ // ST
-					//cout<<("ST ");
-					cout << ("\n== PAUSED from HLT ==\n\n");
-					cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-					system("pause");
-					exit(1);
-				}
-
-				if (mcode[16] == '1')
-				{ // EI
-					//cout<<("EI ");
-					//cout<<endl;
-					break;
-				}
-				//else
-				//	cout<<endl;
+				// CR
+				// AW
+				memoryIndex = programCounter;
+				// RM
+				// IW
+				InstructionReg = memoryBytes[memoryIndex];
+				// CE
+				programCounter += 1;
+				step = 1;
+				continue;
 			}
 
-			//cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
+			//cout << ("mcDat- " + mcode) << endl;
+
+			//while (memoryIndex >= 4000)
+			//    memoryIndex -= 4000;
+			//if (memoryIndex < 0)
+			//    memoryIndex = -memoryIndex;
+
+			//cout<<("ftmem=" + memoryIndex);
+			// 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
+			// Execute microinstructions
+			if (mcode[8] == '1')
+			{ // EO
+				//cout << ("EO ");
+				if (mcode[0] == '1') // SU
+				{
+					flags[0] = 0;
+					flags[1] = 1;
+					if (AReg - BReg == 0)
+						flags[0] = 1;
+					bus = AReg - BReg;
+					if (bus < 0)
+					{
+						bus = 65535 + bus;
+						flags[1] = 0;
+					}
+				}
+				else
+				{
+					flags[0] = 0;
+					flags[1] = 0;
+					if (AReg + BReg == 0)
+						flags[0] = 1;
+					bus = AReg + BReg;
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+				}
+			}
+			if (mcode[5] == '1')
+			{ // CR
+				//cout << ("CR ");
+				bus = programCounter;
+			}
+			if (mcode[7] == '1')
+			{ // RA
+				//cout << ("RA ");
+				bus = AReg;
+			}
+			if (mcode[13] == '1')
+			{ // RM
+				//cout << ("RM ");
+				//cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
+				bus = memoryBytes[memoryIndex];
+			}
+			if (mcode[15] == '1')
+			{ // IR
+				//cout << ("IR ");
+				bus = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
+			}
+			if (mcode[1] == '1')
+			{ // IW
+				//cout << ("IW ");
+				InstructionReg = bus;
+			}
+			if (mcode[2] == '1')
+			{ // DW
+				//cout << ("DW ");
+				outputReg = bus;
+				//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+
+				// Write to LED screen
+				int r = BinToDec(DecToBinFilled(bus, 16).substr(1, 5)) * 8;
+				int g = BinToDec(DecToBinFilled(bus, 16).substr(6, 5)) * 8;
+				int b = BinToDec(DecToBinFilled(bus, 16).substr(11, 5)) * 8;
+				Draw(imgX, imgY, olc::Pixel(r, g, b));
+
+				imgX++;
+				if (imgX >= 64)
+				{
+					imgY++;
+					imgX = 0;
+				}
+				if (imgY >= 64)
+				{
+					imgY = 0;
+				}
+
+			}
+			if (mcode[4] == '1')
+			{ // CE
+				//cout << ("CE ");
+				programCounter += 1;
+			}
+			if (mcode[6] == '1')
+			{ // WM
+				//cout << ("WM ");
+				memoryBytes[memoryIndex] = bus;
+			}
+			if (mcode[10] == '1')
+			{ // J
+				//cout << ("J ");
+				//cout<<Line(DecToBinFilled(InstructionReg, 16));
+				//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
+				programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).substr(4, 12));
+			}
+			if (mcode[11] == '1')
+			{ // WB
+				//cout << ("WB ");
+				BReg = bus;
+			}
+			if (mcode[12] == '1')
+			{ // WA
+				//cout << ("WA ");
+				AReg = bus;
+			}
+			if (mcode[14] == '1')
+			{ // AW
+				//cout << ("AW ");
+				memoryIndex = BinToDec(DecToBinFilled(bus, 16).substr(4, 12));
+			}
+			if (mcode[3] == '1')
+			{ // ST
+				//cout<<("ST ");
+				cout << ("\n== PAUSED from HLT ==\n\n");
+				cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+				system("pause");
+				exit(1);
+			}
+
+			if (mcode[16] == '1')
+			{ // EI
+				//cout<<("EI ");
+				//cout<<endl;
+				break;
+			}
+			//else
+			//	cout<<endl;
 		}
+
+		if (iterations % 1000 == 0) {
+			auto stop = high_resolution_clock::now();
+			cout << "\r                " << "\r" << round((1.0f / fElapsedTime) * 10.0f) / 10.0f << "\thz";
+		}
+
+		//cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+	//}
 		iterations += 1;
 
 		return true;
