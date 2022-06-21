@@ -64,7 +64,7 @@ public class Program
             string path = Console.ReadLine().Replace("\"", "");
             Bitmap img = ResizeBitmap(new Bitmap((Bitmap)Image.FromFile(path)), 32, 32);
 
-            string code = File.ReadAllText("../../../../draw_image.txt")+"\n";
+            string code = File.ReadAllText("../../../../draw_image.txt") + "\n";
             int currentMemIndex = 0;
             for (int pos = 0; pos < img.Width * img.Height; pos++)
             {
@@ -75,7 +75,7 @@ public class Program
                 string binval = "0" + DecToBinFilled(r, 5) + DecToBinFilled(g, 5) + DecToBinFilled(b, 5);
                 int decval = BinToDec(binval);
 
-                code += "set " + (200 + currentMemIndex) + " " + decval +"\r";
+                code += "set " + (200 + currentMemIndex) + " " + decval + "\r";
                 currentMemIndex++;
             }
             code += "\n";
@@ -452,7 +452,8 @@ public class Program
         string[] output = new string[1024];
         for (int osind = 0; osind < output.Length; osind++) { output[osind] = "00000"; }
 
-        string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
+        string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "WM", "EO", "FL", "J", "WB", "WA", "AW", "EI"};
+        string[] readInstructionSpecialAddress = { "RA", "RM", "IR", "CR" };
         string[] flags = { "ZEROFLAG", "CARRYFLAG" };
         string[] instructioncodes = {
                 "fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
@@ -523,13 +524,26 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                string stepComputedInstruction = "";
+                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
+                    // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction += "1";
+                        stepComputedInstruction[mins] = '1'; // activate
                     else
-                        stepComputedInstruction += "0";
+                    {
+                        // Check if microinstruction requires special code
+                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        {
+                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                            {
+                                string binaryval = DecToBinFilled(minsother+1, 3);
+                                stepComputedInstruction[13] = binaryval[0];
+                                stepComputedInstruction[14] = binaryval[1];
+                                stepComputedInstruction[15] = binaryval[2];
+                            }
+                        }
+                    }
                 }
 
                 // Compute flags combinations
@@ -563,8 +577,8 @@ public class Program
                     if (doesntmatch)
                         continue;
 
-                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
-                    output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 4));
+                    output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(string.Join("", stepComputedInstruction), 5);
                 }
             }
 
@@ -588,13 +602,26 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                string stepComputedInstruction = "";
+                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
+                    // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction += "1";
+                        stepComputedInstruction[mins] = '1'; // activate
                     else
-                        stepComputedInstruction += "0";
+                    {
+                        // Check if microinstruction requires special code
+                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        {
+                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                            {
+                                string binaryval = DecToBinFilled(minsother+1, 3);
+                                stepComputedInstruction[13] = binaryval[0];
+                                stepComputedInstruction[14] = binaryval[1];
+                                stepComputedInstruction[15] = binaryval[2];
+                            }
+                        }
+                    }
                 }
 
                 // Compute flags combinations
@@ -636,8 +663,8 @@ public class Program
                     if (doesntmatch)
                         continue;
 
-                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 5));
-                    output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 5));
+                    output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(string.Join("", stepComputedInstruction), 5);
                 }
             }
 

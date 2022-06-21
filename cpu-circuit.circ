@@ -612,6 +612,10 @@
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="west"/>
     </comp>
+    <comp lib="0" loc="(3630,690)" name="Probe">
+      <a name="appearance" val="NewPins"/>
+      <a name="facing" val="west"/>
+    </comp>
     <comp lib="0" loc="(3670,550)" name="Tunnel">
       <a name="facing" val="south"/>
       <a name="label" val="EI"/>
@@ -632,41 +636,30 @@
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="north"/>
     </comp>
-    <comp lib="0" loc="(3850,330)" name="Tunnel">
+    <comp lib="0" loc="(3850,300)" name="Constant"/>
+    <comp lib="0" loc="(3850,450)" name="Tunnel">
       <a name="label" val="EI"/>
     </comp>
-    <comp lib="0" loc="(3850,360)" name="Tunnel">
-      <a name="label" val="REG_INS_READ"/>
-    </comp>
-    <comp lib="0" loc="(3850,390)" name="Tunnel">
+    <comp lib="0" loc="(3850,480)" name="Tunnel">
       <a name="label" val="REG_MEMADDR_WRITE"/>
     </comp>
-    <comp lib="0" loc="(3850,420)" name="Tunnel">
-      <a name="label" val="MEM_READ"/>
-    </comp>
-    <comp lib="0" loc="(3850,450)" name="Tunnel">
+    <comp lib="0" loc="(3850,510)" name="Tunnel">
       <a name="label" val="REG_A_WRITE"/>
     </comp>
-    <comp lib="0" loc="(3850,480)" name="Tunnel">
+    <comp lib="0" loc="(3850,540)" name="Tunnel">
       <a name="label" val="REG_B_WRITE"/>
     </comp>
-    <comp lib="0" loc="(3850,510)" name="Tunnel">
+    <comp lib="0" loc="(3850,570)" name="Tunnel">
       <a name="label" val="JUMP"/>
     </comp>
-    <comp lib="0" loc="(3850,540)" name="Tunnel">
+    <comp lib="0" loc="(3850,600)" name="Tunnel">
       <a name="label" val="FLAG_REG_WRITE"/>
     </comp>
-    <comp lib="0" loc="(3850,570)" name="Tunnel">
+    <comp lib="0" loc="(3850,630)" name="Tunnel">
       <a name="label" val="EO"/>
     </comp>
-    <comp lib="0" loc="(3850,600)" name="Tunnel">
-      <a name="label" val="REG_A_READ"/>
-    </comp>
-    <comp lib="0" loc="(3850,630)" name="Tunnel">
-      <a name="label" val="MEM_WRITE"/>
-    </comp>
     <comp lib="0" loc="(3850,660)" name="Tunnel">
-      <a name="label" val="PRG_CNT_READ"/>
+      <a name="label" val="MEM_WRITE"/>
     </comp>
     <comp lib="0" loc="(3850,690)" name="Tunnel">
       <a name="label" val="COUNT_ENABLE"/>
@@ -682,6 +675,24 @@
     </comp>
     <comp lib="0" loc="(3850,810)" name="Tunnel">
       <a name="label" val="SUB"/>
+    </comp>
+    <comp lib="0" loc="(3870,350)" name="Splitter">
+      <a name="facing" val="west"/>
+      <a name="fanout" val="3"/>
+      <a name="incoming" val="3"/>
+      <a name="spacing" val="3"/>
+    </comp>
+    <comp lib="0" loc="(3940,270)" name="Tunnel">
+      <a name="label" val="REG_A_READ"/>
+    </comp>
+    <comp lib="0" loc="(3940,300)" name="Tunnel">
+      <a name="label" val="MEM_READ"/>
+    </comp>
+    <comp lib="0" loc="(3940,330)" name="Tunnel">
+      <a name="label" val="REG_INS_READ"/>
+    </comp>
+    <comp lib="0" loc="(3940,360)" name="Tunnel">
+      <a name="label" val="PRG_CNT_READ"/>
     </comp>
     <comp lib="0" loc="(50,200)" name="Clock"/>
     <comp lib="0" loc="(60,310)" name="Tunnel">
@@ -926,6 +937,9 @@
       <a name="enable" val="false"/>
       <a name="select" val="4"/>
     </comp>
+    <comp lib="2" loc="(3850,300)" name="Demultiplexer">
+      <a name="select" val="3"/>
+    </comp>
     <comp lib="3" loc="(1650,970)" name="Adder">
       <a name="width" val="16"/>
     </comp>
@@ -992,15 +1006,137 @@
       <a name="addrWidth" val="12"/>
       <a name="appearance" val="logisim_evolution"/>
       <a name="contents">addr/data: 12 16
-8000 7193 8001 7192 112a 7190 8002 7191
-8001 3193 7193 1190 4191 7190 a008 1193
-4192 7120 8000 7193 8001 112b 7190 8002
-7191 8001 3193 7193 1190 4191 7190 a019
-1193 4192 7121 1120 7190 102d 7191 8000
-7193 1190 43e8 7190 a031 1193 712c 5000
-6035 1193 3191 7193 6029 112a 33e8 712a
-803f 412a a000 8000 712a 112b 33e8 712b
-803f 412b a000 8000 712b 6000 930*0 1
+8001 303c 703c 1064 c000 5000 8001 403c
+a000 8001 303d 703d 8001 3064 7064 8001
+303d 703d 8000 703c 84c7 4064 a019 80c8
+7064 801f 403d a000 8001 3042 7042 8000
+703d 8003 4042 a000 1064 4045 7064 8000
+7042 6000 20*0 1 0 0 0 2
+0 0 20 30*0 c8 99*0 4aa 4a9
+488 488 488 487 488 488 489 489
+489 488 489 489 489 488 488 468
+488 468 889 488 4aa 489 468 67
+6*467 8cb 8ca 4a9 489 488 488 489
+8a9 4a9 8aa 4a9 8cb 489 88a 489
+8aa 8aa 489 489 468 489 68 8aa
+48a 67 468 468 488 488 468 467
+467 8cc 4ca 4aa 4a9 4a9 4a9 4aa
+8aa 4aa 8aa 8aa 8ab 8aa 8aa 8aa
+4aa 4aa 8aa 489 10ec 468 488 4*489
+488 889 489 468 488 468 8ed 8cb
+4cb 4aa 4aa 8aa 4aa 8cb 4aa 4*8cb
+4ab 8aa 4aa 4aa 8aa 8ab 889 68
+8aa 8aa 8ab 8aa 48a 489 489 489
+468 468 468 d0e 8ec 8*8cb 8ec 8cb
+8cc 8ec 150e 8cb 8cb 8cc 4ab 1d70
+48a 489 8ab 8ab 8ab 3616 88a 469
+4*489 192e d0d 5*8ec d0d 4*8ec 8ed cec
+8cc d2e 1130 8cc ced cee 8cb 2e16
+cee 8cc 4ab 48a 8aa 48a 489 2dd3
+489 489 214f 152e 110d 110e d0d 8ed
+d0d 8ed d0d 8ed 8ec 90e 112f 1550
+112f 2592 d0f 110e 8ed 8cc cee 1972
+2e16 8cc 8cb 8ab 8ab 8aa 8ab 489
+489 48a 2970 212f 190e 190e 150e 2dd3
+110e 110e d0e 8ed cee 110f 152f 152f
+192f 2192 8ed 8ed 1530 8ed 2dd4 90f
+d0f 8ed 8cc 8cc 8ab 48a 8ab 8aa
+8aa 8ab 3171 2570 214f 212f 214f 1d4f
+1d2f 192f 192f 1d2f 1d2f 190f 192f 192f
+1d50 110f ced d0e 2592 2db3 1130 90f
+8ee d0f 8ed 8cc 8cc 8cc 4*8ab 39b2
+3170 2970 2970 2950 254f 2550 2550 2150
+212f 2150 2971 2551 2150 1d2f 1d30 1d51
+39b3 2150 2d93 5afc 1130 d0f 8ee 8ee
+cee 8ed 8ed 8cc 8cc 8ab 8cb 3db2
+3991 3591 3591 3170 2d70 35b2 2970 2950
+2d50 2d50 3172 41f5 3593 2550 3192 5ebb
+4a37 4637 3193 29b4 2193 1572 1151 90f
+d0f 90e 8ee 3a79 8ed 8cc 8cc 49d4
+41b2 3db2 3db2 3591 3991 3571 3591 3170
+3591 3d92 3571 45b4 3dd4 45d4 39b3 3993
+5237 39d5 35b5 2993 2172 1151 d31 d31
+d2f d0f d0e 90e d0e 8ed 8ed 51f5
+4df4 4dd3 49d3 4192 4192 41b3 45b3 49d3
+51d5 5e37 4dd5 4192 49b4 5a58 62b9 5238
+45f6 41f6 39b4 39d6 29b4 1d52 2e16 1171
+1151 d50 d2f 90e d2f d0f d2f 5e56
+5a15 51f4 51f4 4dd3 4dd4 4dd4 4dd4 6679
+5e37 6eba 6699 5a36 6efb 6699 669a 627a
+565a 45f7 41f6 4217 39f7 2dd5 2193 21b4
+1993 1171 d51 d50 4ed d50 d50 6a97
+6256 5e36 5a35 5a35 5614 5a15 5a15 5e36
+6ed9 6698 51d5 5e57 6678 6a9a 627a 66bb
+5a7a 5239 4e59 4639 39f7 31f6 2dd4 2df6
+1db3 1193 d92 d71 1172 d92 d92 6ef9
+6ab7 6697 6676 6656 6657 6677 6677 6277
+72fa 72fa 66b9 6698 6efb 6aba 6aba 6adc
+629a 5a7a 5259 4a39 4238 3a17 3a17 3217
+29f5 2e58 15b3 15b3 15b3 11b3 214c 6f1a
+6ef9 6ad8 6ab7 6ab7 6ab8 6ab8 6a98 6256
+6a98 72fb 6297 775c 6ada 6efb 190b 14ca
+66db 5e9b 5a7a 4e79 4e7a 4259 469a 3a38
+3237 2a16 2616 21f5 2216 2636 2d8f 775b
+731a 6f19 6ef9 6ef9 6ef9 6f1a 6f1a 6f1a
+6ad8 6ad9 777d 6afa 6ada 190b 8a8 150b
+62db 5ebb 5a9a 569a 4e99 4679 4a9a 3e79
+3a78 3658 3678 2e36 3257 298f 190b 777b
+775b 773a 733a 733a 6f3a 733a 6af9 6af9
+6af9 14e9 150b 190b 192c 24 150b 150b
+14eb 62db 5eda 216e 258f 887 56fc 4aba
+4299 3e79 3a99 3a98 3e99 2db0 31b0 777c
+775b 775b 735b 10e9 6f3a 733a 6f1a 1cea
+ce9 150b 150b 192c 150b 192c 1d4d 192c
+192c 150b 298f 1d4d 190a 1d4d 152b 56fb
+4eda 4aba 46da 3a98 214d 216e 256e 7b9d
+777c 777c 214d 150a 10ea 10ea 192c 150b
+192b 150b 1d2c 214e 298f 1d4d 1d4c 192c
+35f2 216e 1d4d 214e 23 44 150b 150b
+152b 52fa 4eda 44 256f 256e 256f 779d
+777c 1d4c 214d 214d 10ea 192c 256f 192c
+1d4d 258f 190a 29b0 1d2c 444 443 216e
+1d4e 258f 298f 258f 10c8 150b 1d4d 192c
+192d 192c 152c 216e 466 256f 29b0 779d
+10e9 64 1d2c 192b 298f 192c 216e 65
+23 44 23 44 44 444 444 23
+150b 1d6d cc8 23 44 1d4d 192c 216e
+258f 43 44 43 23 44 65 192c
+1d4d 2990 256e 35d1 258f 22 43 43
+44 44 444 44 4*43 23 216e ca7
+887 31d1 258f 44 444 44 443 444
+443 465 44 43 216e 31d1 1d4d 29b0
+464 444 43 23 465 43 443 44
+44 444 44 44 43 464 44 ca7
+31d1 43 43 443 444 44 44 44
+465 465 43 444 465 43 464 44
+465 43 23 43 885 43 44 43
+464 486 ca7 44 43 464 443 444
+43 23 43 64 444 486 486 464
+64 444 65 444 43 43 465 465
+44 43 444 464 43 43 423 65
+44 485 43 465 44 485 44 23
+444 485 44 43 486 65 43 443
+43 443 43 44 444 43 465 466
+43 443 443 444 43 444 465 464
+465 465 44 43 44 464 485 43
+23 43 43 43 44 23 44 444
+444 464 65 464 444 43 485 43
+43 443 465 23 8a7 8a7 464 465
+44 43 64 485 464 465 44 44
+886 43 43 444 43 464 43 43
+44 443 23 443 44 43 464 465
+44 465 465 486 43 44 443 44
+465 465 485 464 43 464 465 465
+44 464 443 443 465 465 443 43
+443 464 443 443 43 44 444 44
+443 465 464 465 465 464 44 443
+443 444 464 43 465 443 464 444
+64 464 464 464 23 43 443 443
+443 44 443 442 443 23 4*43 464
+64 465 43 443 443 43 43 43
+485 465 43 444 465 464 44 464
+43 44 443 43 443 443 465 443
+443
 </a>
       <a name="dataWidth" val="16"/>
       <a name="label" val="PROGRAM_ROM"/>
@@ -1010,16 +1146,16 @@
       <a name="addrWidth" val="10"/>
       <a name="appearance" val="logisim_evolution"/>
       <a name="contents">addr/data: 10 17
-4*804 4*9008 4*1 52*0 4*804 4*9008 4*6 4*18
-4*1 44*0 4*804 4*9008 4*6 4*28 4*1 44*0
-4*804 4*9008 4*6 4*28 4*190 4*1 40*0 4*804
-4*9008 4*6 4*28 4*10190 4*1 40*0 4*804 4*9008
-4*4200 4*1 48*0 4*804 4*9008 4*42 4*1 48*0
-4*804 4*9008 4*6 4*600 4*1 44*0 4*804 4*9008
-4*12 4*1 48*0 4*804 4*9008 1 1 42
-42 4*1 48*0 4*804 4*9008 1 42 1
-42 4*1 48*0 4*804 4*9008 4*2000 4*1 48*0
-4*804 4*9008 4*204 4*18 4*1
+4*28 4*9004 4*10 52*0 4*28 4*9004 4*26 4*44
+4*10 44*0 4*28 4*9004 4*26 4*84 4*10 44*0
+4*28 4*9004 4*26 4*84 4*640 4*10 40*0 4*28
+4*9004 4*26 4*84 4*10640 4*10 40*0 4*28 4*9004
+4*4002 4*10 48*0 4*28 4*9004 4*106 4*10 48*0
+4*28 4*9004 4*26 4*802 4*10 44*0 4*28 4*9004
+4*46 4*10 48*0 4*28 4*9004 10 10 106
+106 4*10 48*0 4*28 4*9004 10 106 10
+106 4*10 48*0 4*28 4*9004 4*2000 4*10 48*0
+4*28 4*9004 4*22 4*44 4*10
 </a>
       <a name="dataWidth" val="17"/>
       <a name="labelvisible" val="true"/>
@@ -1495,6 +1631,7 @@
     <wire from="(3390,1250)" to="(3390,1290)"/>
     <wire from="(3390,1250)" to="(3400,1250)"/>
     <wire from="(3400,1030)" to="(3400,1170)"/>
+    <wire from="(3630,630)" to="(3630,690)"/>
     <wire from="(3630,630)" to="(3710,630)"/>
     <wire from="(3640,1250)" to="(3720,1250)"/>
     <wire from="(3670,550)" to="(3670,560)"/>
@@ -1518,8 +1655,7 @@
     <wire from="(3730,600)" to="(3770,600)"/>
     <wire from="(3730,610)" to="(3760,610)"/>
     <wire from="(3730,620)" to="(3750,620)"/>
-    <wire from="(3740,330)" to="(3740,460)"/>
-    <wire from="(3740,330)" to="(3850,330)"/>
+    <wire from="(3740,430)" to="(3740,460)"/>
     <wire from="(3750,1230)" to="(3750,1240)"/>
     <wire from="(3750,360)" to="(3750,470)"/>
     <wire from="(3750,360)" to="(3850,360)"/>
@@ -1554,6 +1690,16 @@
     <wire from="(3830,570)" to="(3850,570)"/>
     <wire from="(3840,530)" to="(3840,540)"/>
     <wire from="(3840,540)" to="(3850,540)"/>
+    <wire from="(3870,340)" to="(3870,350)"/>
+    <wire from="(3890,270)" to="(3940,270)"/>
+    <wire from="(3890,280)" to="(3940,280)"/>
+    <wire from="(3890,290)" to="(3930,290)"/>
+    <wire from="(3890,300)" to="(3920,300)"/>
+    <wire from="(3920,300)" to="(3920,360)"/>
+    <wire from="(3920,360)" to="(3940,360)"/>
+    <wire from="(3930,290)" to="(3930,330)"/>
+    <wire from="(3930,330)" to="(3940,330)"/>
+    <wire from="(3940,280)" to="(3940,300)"/>
     <wire from="(470,180)" to="(470,190)"/>
     <wire from="(50,200)" to="(60,200)"/>
     <wire from="(530,180)" to="(530,190)"/>
