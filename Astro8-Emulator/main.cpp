@@ -65,6 +65,7 @@ static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
+int BinaryVecRangeToInt(vector<int> vec, int min, int max);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
@@ -124,6 +125,8 @@ int main(int argc, char** argv)
 	////int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
 	//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
 	//cout << b << " == 0b" << DecToBin(b) << endl;
+	int i = BinaryVecRangeToInt(vector<int>{0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0}, 13, 15);
+	cout << i << endl;
 
 	// Gather user inputted code
 	cout << ("v Emu. Code input v\n");
@@ -219,15 +222,13 @@ bool Update(float deltatime)
 		//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
 		//cout << ("mcDat- " + mcode) << endl;
 
-		//while (memoryIndex >= 4000)
-		//    memoryIndex -= 4000;
-		//if (memoryIndex < 0)
-		//    memoryIndex = -memoryIndex;
 
-		//cout<<("ftmem=" + memoryIndex);
-		// 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
+		//  0 "SU", 1 "IW", 2 "DW", 3 "ST", 4 "CE", 5 "WM", 6 "EO", 7 "FL", 8 "J", 9 "WB", 10 "WA", 11 "AW", 12 "EI"
+		//  13 "readcode0", 14 "readcode1", 15 "readcode2", 16 ""
+		//  "RA", "RM", "IR", "CR" 
+
 		// Execute microinstructions
-		if (mcode[8] == 1)
+		if (mcode[6] == 1)
 		{ // EO
 			//cout << ("EO ");
 			if (mcode[0] == 1) // SU
@@ -257,27 +258,31 @@ bool Update(float deltatime)
 				}
 			}
 		}
-		if (mcode[5] == 1)
-		{ // CR
-			//cout << ("CR ");
-			bus = programCounter;
-		}
-		if (mcode[7] == 1)
+
+		// Check for any reads and execute if applicable
+		int readInstr = BinaryVecRangeToInt(mcode, 13, 15);
+		if (readInstr == 1)
 		{ // RA
 			//cout << ("RA ");
 			bus = AReg;
 		}
-		if (mcode[13] == 1)
+		else if (readInstr == 2)
 		{ // RM
 			//cout << ("RM ");
-			//cout << "\nmemread: " + to_string(memoryIndex )+ " " + to_string(memoryBytes[memoryIndex] )+ "\n";
 			bus = memoryBytes[memoryIndex];
 		}
-		if (mcode[15] == 1)
+		else if (readInstr == 3)
 		{ // IR
 			//cout << ("IR ");
 			bus = BitRange(InstructionReg, 0, 12);
 		}
+		else if (readInstr == 4)
+		{ // CR
+			//cout << ("CR ");
+			bus = programCounter;
+		}
+
+
 		if (mcode[1] == 1)
 		{ // IW
 			//cout << ("IW ");
@@ -325,29 +330,29 @@ bool Update(float deltatime)
 			//cout << ("CE ");
 			programCounter += 1;
 		}
-		if (mcode[6] == 1)
+		if (mcode[5] == 1)
 		{ // WM
 			//cout << ("WM ");
 			memoryBytes[memoryIndex] = bus;
 		}
-		if (mcode[10] == 1)
+		if (mcode[8] == 1)
 		{ // J
 			//cout << ("J ");
 			//cout<<Line(DecToBinFilled(InstructionReg, 16));
 			//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
 			programCounter = BitRange(InstructionReg, 0, 12);
 		}
-		if (mcode[11] == 1)
+		if (mcode[9] == 1)
 		{ // WB
 			//cout << ("WB ");
 			BReg = bus;
 		}
-		if (mcode[12] == 1)
+		if (mcode[10] == 1)
 		{ // WA
 			//cout << ("WA ");
 			AReg = bus;
 		}
-		if (mcode[14] == 1)
+		if (mcode[11] == 1)
 		{ // AW
 			//cout << ("AW ");
 			memoryIndex = BitRange(bus, 0, 12);
@@ -361,7 +366,7 @@ bool Update(float deltatime)
 			exit(1);
 		}
 
-		if (mcode[16] == 1)
+		if (mcode[12] == 1)
 		{ // EI
 			//cout<<("EI ");
 			//cout<<endl;
@@ -481,6 +486,19 @@ string BinToHexFilled(string input, int desiredSize)
 int BinToDec(string input)
 {
 	return stoi(input, nullptr, 2);
+}
+int BinaryVecRangeToInt(vector<int> vec, int min, int max)
+{
+	int result = 0;
+	int base = 1;
+
+	for (unsigned int i = max; i >= min; --i)
+	{
+		result += vec[i] * base;
+		base *= 2;
+	}
+
+	return result;
 }
 string DecToBin(int input)
 {
@@ -674,7 +692,8 @@ void GenerateMicrocode()
 	vector<int> ii;
 	for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
 
-	string microinstructions[] = { "SU", "IW", "DW", "ST", "CE", "CR", "WM", "RA", "EO", "FL", "J", "WB", "WA", "RM", "AW", "IR", "EI" };
+	string microinstructions[] = { "SU", "IW", "DW", "ST", "CE", "WM", "EO", "FL", "J", "WB", "WA", "AW", "EI" };
+	string readInstructionSpecialAddress[] = { "RA", "RM", "IR", "CR" };
 	string flags[] = { "ZEROFLAG", "CARRYFLAG" };
 	string instructioncodes[] = {
 			"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
@@ -746,13 +765,26 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			string stepComputedInstruction = "";
+			char stepComputedInstruction[17] = { '0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
 			for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
 			{
+				// Check if microinstruction matches at index
 				if (stepContents.find(microinstructions[mins]) != std::string::npos)
-					stepComputedInstruction += "1";
+					stepComputedInstruction[mins] = '1'; // activate
 				else
-					stepComputedInstruction += "0";
+				{
+					// Check if microinstruction requires special code
+					for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
+					{
+						if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
+						{
+							string binaryval = DecToBinFilled(minsother + 1, 3);
+							stepComputedInstruction[13] = binaryval[0];
+							stepComputedInstruction[14] = binaryval[1];
+							stepComputedInstruction[15] = binaryval[2];
+						}
+					}
+				}
 			}
 
 			// Compute flags combinations
@@ -812,13 +844,26 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			string stepComputedInstruction = "";
-			for (int mins = 0; mins < (sizeof(microinstructions) / sizeof(microinstructions[0])); mins++)
+			char stepComputedInstruction[17] = { '0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
 			{
+				// Check if microinstruction matches at index
 				if (stepContents.find(microinstructions[mins]) != std::string::npos)
-					stepComputedInstruction += "1";
+					stepComputedInstruction[mins] = '1'; // activate
 				else
-					stepComputedInstruction += "0";
+				{
+					// Check if microinstruction requires special code
+					for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
+					{
+						if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
+						{
+							string binaryval = DecToBinFilled(minsother + 1, 3);
+							stepComputedInstruction[13] = binaryval[0];
+							stepComputedInstruction[14] = binaryval[1];
+							stepComputedInstruction[15] = binaryval[2];
+						}
+					}
+				}
 			}
 
 			// Compute flags combinations

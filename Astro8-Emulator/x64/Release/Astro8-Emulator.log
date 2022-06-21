@@ -1,13 +1,14 @@
 ﻿  main.cpp
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(410,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(410,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(532,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(535,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(538,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(728,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(415,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(415,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(495,31): warning C4018: '>=': signed/unsigned mismatch
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(550,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(553,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(556,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(747,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  3 of 522 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
+  1 of 539 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
