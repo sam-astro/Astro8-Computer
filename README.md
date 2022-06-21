@@ -1,4 +1,4 @@
-# Basic-CPU-In-Logisim
+# Astro-8 Computer
 
 ```
 ~  SET <addr> <val>   : tells assembler to set <addr> equal to <val>
