@@ -219,6 +219,11 @@ bool Update(float deltatime)
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 12, 4) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
 		vector<int> mcode = microinstructionData[microcodeLocation];
 
+		//for (size_t i = 0; i < mcode.size(); i++)
+		//{
+		//	cout << mcode[i];
+		//}
+		//cout << endl;
 		//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
 		//cout << ("mcDat- " + mcode) << endl;
 
@@ -226,6 +231,32 @@ bool Update(float deltatime)
 		//  0 "SU", 1 "IW", 2 "DW", 3 "ST", 4 "CE", 5 "WM", 6 "EO", 7 "FL", 8 "J", 9 "WB", 10 "WA", 11 "AW", 12 "EI"
 		//  13 "readcode0", 14 "readcode1", 15 "readcode2", 16 ""
 		//  "RA", "RM", "IR", "CR" 
+
+
+		// Check for any reads and execute if applicable
+		int readInstr = BinaryVecRangeToInt(mcode, 13, 15);
+		//cout << readInstr << "  " << DecToBinFilled(readInstr, 3) << endl;
+		if (readInstr == 1)
+		{ // RA
+			//cout << ("RA ");
+			bus = AReg;
+		}
+		else if (readInstr == 2)
+		{ // RM
+			//cout << ("RM ");
+			bus = memoryBytes[memoryIndex];
+		}
+		else if (readInstr == 3)
+		{ // IR
+			//cout << ("IR ");
+			bus = BitRange(InstructionReg, 0, 12);
+		}
+		else if (readInstr == 4)
+		{ // CR
+			//cout << ("CR ");
+			bus = programCounter;
+		}
+
 
 		// Execute microinstructions
 		if (mcode[6] == 1)
@@ -259,29 +290,6 @@ bool Update(float deltatime)
 			}
 		}
 
-		// Check for any reads and execute if applicable
-		int readInstr = BinaryVecRangeToInt(mcode, 13, 15);
-		if (readInstr == 1)
-		{ // RA
-			//cout << ("RA ");
-			bus = AReg;
-		}
-		else if (readInstr == 2)
-		{ // RM
-			//cout << ("RM ");
-			bus = memoryBytes[memoryIndex];
-		}
-		else if (readInstr == 3)
-		{ // IR
-			//cout << ("IR ");
-			bus = BitRange(InstructionReg, 0, 12);
-		}
-		else if (readInstr == 4)
-		{ // CR
-			//cout << ("CR ");
-			bus = programCounter;
-		}
-
 
 		if (mcode[1] == 1)
 		{ // IW
@@ -295,10 +303,10 @@ bool Update(float deltatime)
 			//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 
 			// Write to LED screen
-			int r = BitRange(bus, 10, 15) * 8; // Get first 5 bits
-			int g = BitRange(bus, 5, 10) * 8; // get middle bits
-			int b = BitRange(bus, 0, 5) * 8; // Gets last 5 bits
-
+			int r = BitRange(outputReg, 10, 5) * 8; // Get first 5 bits
+			int g = BitRange(outputReg, 5, 5) * 8; // get middle bits
+			int b = BitRange(outputReg, 0, 5) * 8; // Gets last 5 bits
+			//cout << "rgb: (" << r << ", " << g << ", " << b << ")" << endl;
 
 			//set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
 			DrawPixel(imgX, imgY, r, g, b);
@@ -819,7 +827,7 @@ void GenerateMicrocode()
 				if (doesntmatch)
 					continue;
 
-				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
+				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 5) + "\n");
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
