@@ -7,33 +7,39 @@ NOP         00000   : no operation
 AIN <addr>  00001   : load data from <addr> to reg A
 BIN <addr>  00010   : load data from <addr> to reg B
 CIN <addr>  00011   : load data from <addr> to reg C
-LDIA <val>  01011   : immediately load <val> into reg A
-LDIB <val>  01011   : immediately load <val> into reg B
-LDEXP       01011   : load value stored on the expansion port into reg B
-STEXP       01011   : copy reg A into the expansion port
-ADD         00100   : add reg B to reg A, and set reg A = to sum
-SUB         00101   : subtract reg B from reg A, and set reg A = to sum
-MULT        00110   : multiply reg B with reg A, and set reg A = to product
-DIV         00111   : divide reg A by reg B, and set reg A = to quotient
-JMP <val>   10001   : change counter to <val> (changes which instruction is next)
-JMPZ <val>  10100   : jump to <val> if the value in reg A is equal to zero
-JMPC <val>  10101   : jump if the carry bit is set
-STA <addr>  10010   : store value of A into <addr> of memory
-LDAIN       10111   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
-HLT         10110   : stop the clock
-OUT         10000   : copy value from reg A to display reg
+LDIA <val>  00100   : immediately load <val> into reg A
+LDIB <val>  00101   : immediately load <val> into reg B
+LDEXP       00110   : load value stored on the expansion port into reg B
+STEXP       00111   : copy reg A into the expansion port
+STA <addr>  01000   : store value of A into <addr> of memory
+STC <addr>  01001   : store value of C into <addr> of memory
+ADD         01010   : add reg B to reg A, and set reg A = to sum
+SUB         01011   : subtract reg B from reg A, and set reg A = to sum
+MULT        01100   : multiply reg B with reg A, and set reg A = to product
+DIV         01101   : divide reg A by reg B, and set reg A = to quotient
+JMP <val>   01110   : change counter to <val> (changes which instruction is next)
+JMPZ <val>  01111   : jump to <val> if the value in reg A is equal to zero
+JMPC <val>  10000   : jump if the carry bit is set
+LDAIN       10001   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
+HLT         10010   : stop the clock
+OUT         10011   : copy value from reg A to display reg
 
 
 
 microinstructions
 
+(logisim microinstructions are in reversed order. Bottom of this list is left of binary code )
+
+// 0000000000000 1  full
 EO : read from ALU to bus
 
+// 00000000000 11 0  compact
 SU : enable subtraction in ALU
 MU : enable multiplication in ALU
 DI : enable division in ALU
 
 
+// 00000000 111 000  compact
 RA : read from reg A to bus
 RB : read from reg B to bus
 RC : read from reg C to bus
@@ -43,6 +49,7 @@ CR : read value from counter to bus
 RE : read from expansion port to bus
 
 
+// 0000 1111 000000  compact
 WA : write from bus to reg A
 WB : write from bus to reg B
 WC : write from bus to reg C
@@ -53,7 +60,7 @@ J  : write from bus to counter current value
 AW : write lowest 12 bits from bus to mem. addr. register
 WE : write from bus to expansion port
 
-
+// 1111 0000000000  full
 FL : update flags register
 EI : end instruction, resets step counter to move to next instruction
 ST : stop the clock
@@ -90,9 +97,11 @@ New Assembly (WIP):
 @B - B register
 @C - C register
 @D - D register
+@EX - Expansion port
 
+$                            - '$' symbol refers to a variable containing an integer (address in memory)
 @                            - '@' symbol refers to a register, ie. ('@A' for register 'A')
-#                            - '#' symbol refers to a label, which is a point the program can jump to ie. ('#main')
+#                            - '#' symbol refers to a label, which is a point the program can jump to ie. ('#main') (address in program counter)
 const <addr> <val>           - Assembler sets <addr> to <val>. Sets memory values before the program is executed, then is removed.
 set <addr> <val>             - Change <addr> to <val> at any time
 add <valA>,<valB> -> <addr>  - Add the values <valA> and <valB>, then store the result in <addr>
