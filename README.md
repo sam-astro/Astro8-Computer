@@ -65,78 +65,40 @@ jmp 0
 
 New Assembly (WIP):
 ```
-, Create 0 00000 00001 00000 32 for multiplying G
+@A - A register
+@B - B register
+@C - C register
+@D - D register
+
+```
+
+```
+,   Create 0 00000 00001 00000 32 for multiplying G
 set 0x1ff 32
-, Create 0 00001 00000 00000 1024 for multiplying R
+,   Create 0 00001 00000 00000 1024 for multiplying R
 set 0x1fe 1024
-, Constant 1
+,   Constant 1
 set 0x3e8 1
-,
+,   0x120 = 0x12a / 2
 div 0x12a,2 -> 0x120
-,
+,   0x121 = 0x12b / 2
 div 0x12b,2 -> 0x121
-,    Calculate Red   32 v
-loda 288
-sta 400
-loda 510
-sta 401
-ldi 0
-sta 403
-loda 400
-sub 1000
-jmpc 43
-loda 403
-jmp 48
-sta 400
-loda 403
-add 401
-sta 403
-jmp 38
-sta 300
-,    Calculate Green   49 v
-loda 289
-sta 400
-loda 511
-sta 401
-ldi 0
-sta 403
-loda 400
-sub 1000
-jmpc 60
-loda 403
-jmp 65
-sta 400
-loda 403
-add 401
-sta 403
-jmp 55
-sta 301
-,    Calculate Blue   66 v
-loda 288
-add 289
-sta 403
-ldi 63
-sub 403
-sta 400
-ldi 0
-sta 403
-ldi 4
-sta 401
-ldi 1
-add 403
-sta 403
-loda 400
-sub 401
-sta 400
-jmpc 76
-loda 403
-sub 1000
-sta 302
+,
+,   Red is equal to the x times 10-bit offset of 1024
+mult 0x120,0x1fe -> 0x12c
+,
+,   Green is equal to the y times 5-bit offset of 32
+mult 0x121,0x1ff -> 0x12d
+,
+,   Blue is equal to 63 -( ( x plus y ) divided by 2)
+add 0x120,0x121 -> @D
+div @D,4 -> @D
+sub 63,@D -> 0x12e
+,
 ,    output  86 v
-loda 300
-add 301
-add 302
-out
+add 0x12c,0x12d -> 0x12c
+add 0x12c,0x12e -> @D
+out @D
 ,    incrementer
 loda 298
 add 1000
