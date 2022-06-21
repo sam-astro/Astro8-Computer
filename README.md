@@ -1,44 +1,63 @@
 # Astro-8 Computer
 
 ```
-~  SET <addr> <val>   : tells assembler to set <addr> equal to <val>
-0  NOP         0000   : no operation
-1  LODA <addr> 0001   : load data from <addr> to reg A
-2  LODB <addr> 0010   : load data from <addr> to reg B
-3  ADD <addr>  0011   : add value at <addr> to reg A, and set reg A = to sum
-4  SUB <addr>  0100   : subtract value at <addr> from reg A, and set reg A = to sum
-5  OUT         0101   : copy value from reg A to display reg
-6  JMP <val>   0110   : change counter to <val> (changes which instruction is next)
-7  STA <addr>  0111   : store value of A into <addr> of memory
-8  LDI <val>   1000   : immediately load <val> into reg A
-9  JMPZ <val>  1001   : jump to <val> if the value in reg A is equal to zero
-10 JMPC <val>  1010   : jump if the carry bit is set
-11 HLT         1011   : stop the clock
-12 LDAIN       1100   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
-13 
-14 
-15 
-16
+instructions
+
+NOP         00000   : no operation
+AIN <addr>  00001   : load data from <addr> to reg A
+BIN <addr>  00010   : load data from <addr> to reg B
+CIN <addr>  00011   : load data from <addr> to reg C
+LDIA <val>  01011   : immediately load <val> into reg A
+LDIB <val>  01011   : immediately load <val> into reg B
+LDEXP       01011   : load value stored on the expansion port into reg B
+STEXP       01011   : copy reg A into the expansion port
+ADD         00100   : add reg B to reg A, and set reg A = to sum
+SUB         00101   : subtract reg B from reg A, and set reg A = to sum
+MULT        00110   : multiply reg B with reg A, and set reg A = to product
+DIV         00111   : divide reg A by reg B, and set reg A = to quotient
+JMP <val>   10001   : change counter to <val> (changes which instruction is next)
+JMPZ <val>  10100   : jump to <val> if the value in reg A is equal to zero
+JMPC <val>  10101   : jump if the carry bit is set
+STA <addr>  10010   : store value of A into <addr> of memory
+LDAIN       10111   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
+HLT         10110   : stop the clock
+OUT         10000   : copy value from reg A to display reg
+
+
 
 microinstructions
-0  SU : enable subtraction in ALU
-1  IW : write from bus to instruction register
-2  DW : write from bus to display register
-3  ST : stop the clock
-4  CE : enable incrementing of counter
-5  CR : read value from counter to bus
-6  WM : write from bus to memory
-7  RA : read from reg A to bus
-8  EO : read from ALU to bus
-9  FL : write values to flags register
-10 J  : write from bus to counter current value
-11 WB : write from bus to reg B
-12 WA : write from bus to reg A
-13 RM : read from memory to bus at the address in mem addr. register
-14 AW : write lowest 12 bits from bus to mem. addr. register
-15 IR : read from lowest 12 bits of instruction register to bus
-16 EI : end instruction, resets step counter to move to next instruction
 
+EO : read from ALU to bus
+
+SU : enable subtraction in ALU
+MU : enable multiplication in ALU
+DI : enable division in ALU
+
+
+RA : read from reg A to bus
+RB : read from reg B to bus
+RC : read from reg C to bus
+RM : read from memory to bus at the address in mem addr. register
+IR : read from lowest 12 bits of instruction register to bus
+CR : read value from counter to bus
+RE : read from expansion port to bus
+
+
+WA : write from bus to reg A
+WB : write from bus to reg B
+WC : write from bus to reg C
+IW : write from bus to instruction register
+DW : write from bus to display register
+WM : write from bus to memory
+J  : write from bus to counter current value
+AW : write lowest 12 bits from bus to mem. addr. register
+WE : write from bus to expansion port
+
+
+FL : update flags register
+EI : end instruction, resets step counter to move to next instruction
+ST : stop the clock
+CE : enable incrementing of counter
 ```
 
 Multiply program:
