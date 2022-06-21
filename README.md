@@ -65,20 +65,32 @@ jmp 0
 
 New Assembly (WIP):
 ```
+// Use hex values (0xff) when referring to addresses, and decimal (213) for a new immediate integer
+
 @A - A register
 @B - B register
 @C - C register
 @D - D register
 
+@                            - '@' symbol refers to a register, ie. ('@A' for register 'A')
+#                            - '#' symbol refers to a label, which is a point the program can jump to ie. ('#main')
+const <addr> <val>           - Assembler sets <addr> to <val>. Sets memory values before the program is executed, then is removed.
+set <addr> <val>             - Change <addr> to <val> at any time
+add <valA>,<valB> -> <addr>  - Add the values <valA> and <valB>, then store the result in <addr>
+sub <valA>,<valB> -> <addr>  - Subtract the values <valA> and <valB> (valA - valB), then store the result in <addr>
+mult <valA>,<valB> -> <addr> - Multiply the values <valA> and <valB>, then store the result in <addr>
+div <valA>,<valB> -> <addr>  - Divide the values <valA> and <valB> (valA / valB), then store the result in <addr>
+jmp <addr>                   - Jumps to the given address or label
+jmpc <valA><C><valB>,<addr>  - Jumps to <addr>, given the logic relationship between <valA> and <valB> given a comparer <C>, ie. (jmpc 0x12==4,0x0)
 ```
 
 ```
 ,   Create 0 00000 00001 00000 32 for multiplying G
-set 0x1ff 32
+const 0x1ff 32
 ,   Create 0 00001 00000 00000 1024 for multiplying R
-set 0x1fe 1024
+const 0x1fe 1024
 ,   Constant 1
-set 0x3e8 1
+const 0x3e8 1
 ,   0x120 = 0x12a / 2
 div 0x12a,2 -> 0x120
 ,   0x121 = 0x12b / 2
@@ -90,7 +102,7 @@ mult 0x120,0x1fe -> 0x12c
 ,   Green is equal to the y times 5-bit offset of 32
 mult 0x121,0x1ff -> 0x12d
 ,
-,   Blue is equal to 63 -( ( x plus y ) divided by 2)
+,   Blue is equal to 63 minus ( ( x plus y ) divided by 2)
 add 0x120,0x121 -> @D
 div @D,4 -> @D
 sub 63,@D -> 0x12e
@@ -100,21 +112,17 @@ add 0x12c,0x12d -> 0x12c
 add 0x12c,0x12e -> @D
 out @D
 ,    incrementer
-loda 298
-add 1000
-sta 298
-ldi 63
-sub 298
-jmpc 0
-ldi 0
-sta 298
-loda 299
-add 1000
-sta 299
-ldi 63
-sub 299
-jmpc 0
-ldi 0
-sta 299
-jmp 0
+add 0x12a,1 -> 0x12a
+jmpc 0x12a==64,#incrementY
+jmp 0x0
+,
+#incrementY
+add 0x12b,1 -> 0x12b
+set 0x12a,0
+jmpc 0x12b==64,#resetY
+jmp 0x0
+,
+#resetY
+set 0x12b,0
+jmp 0x0
 ```
