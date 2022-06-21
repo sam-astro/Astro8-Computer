@@ -112,6 +112,7 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
+	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
@@ -308,8 +309,8 @@ bool Update(float deltatime)
 			int b = BitRange(outputReg, 0, 5) * 8; // Gets last 5 bits
 			//cout << "rgb: (" << r << ", " << g << ", " << b << ")" << endl;
 
-			//set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
-			DrawPixel(imgX, imgY, r, g, b);
+			set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
+			//DrawPixel(imgX, imgY, r, g, b);
 
 			imgX++;
 			if (imgX >= 64)
@@ -322,8 +323,8 @@ bool Update(float deltatime)
 				imgY = 0;
 
 				// Apply pixels and render
-				SDL_SetRenderDrawColor(gRenderer, 60, 60, 60, SDL_ALPHA_OPAQUE);
-				SDL_RenderClear(gRenderer);
+				//SDL_SetRenderDrawColor(gRenderer, 60, 60, 60, SDL_ALPHA_OPAQUE);
+				//SDL_RenderClear(gRenderer);
 				apply_pixels(pixels, texture, 64);
 				DisplayTexture(gRenderer, texture);
 
