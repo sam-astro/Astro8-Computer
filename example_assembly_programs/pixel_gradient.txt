@@ -29,12 +29,12 @@ sta 301
 ain 288
 bin 289
 add
-ldib 2
-div
 sta 400
-ldia 32
+ldia 63
 bin 400
 sub
+ldib 2
+div
 sta 302
 ,    output
 ain 300
