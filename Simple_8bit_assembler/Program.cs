@@ -12,9 +12,9 @@ using System.Drawing;
 
 public class Program
 {
-    static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
+    static string[] instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "HLT", "OUT" };
     static string action = "";
-    static string[] microinstructionData = new string[1024];
+    static string[] microinstructionData = new string[2048];
 
     public static void Main(string[] args)
     {
@@ -449,7 +449,7 @@ public class Program
     static void GenerateMicrocode()
     {
         // Generate zeros in data
-        string[] output = new string[1024];
+        string[] output = new string[2048];
         for (int osind = 0; osind < output.Length; osind++) { output[osind] = "00000"; }
 
         string[] microinstructions = { "EO", "CE", "ST", "EI", "FL" };
@@ -457,20 +457,29 @@ public class Program
         string[] readInstructionSpecialAddress = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
         string[] aluInstructionSpecialAddress = { "SU", "MU", "DI" };
         string[] flags = { "ZEROFLAG", "CARRYFLAG" };
+        //   "LDAIN", "HLT", "OUT"
+
         string[] instructioncodes = {
                 "fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
-                "loda( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
-                "lodb( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
-                "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl & 5=ei", // Add <addr>
-                "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
-                "out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
-                "jmp( 2=ir,j & 3=ei", // Jump <addr>
+                "ain( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
+                "bin( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
+                "cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
+                "ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
+                "ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
+                "rdexp( 2=wb,re & 3=ei", // Read from expansion port to register B
+                "wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
                 "sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-                "ldi( 2=wa,ir & 3=ei", // Load immediate A <val>
+                "stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
+                "add( 2=wa,eo,fl & 3=ei", // Add
+                "sub( 2=wa,eo,su,fl & 3=ei", // Subtract
+                "mult( 2=wa,eo,mu,fl & 5=ei", // Multiply
+                "div( 2=wa,eo,di,fl & 5=ei", // Divide
+                "jmp( 2=ir,j & 3=ei", // Jump <addr>
                 "jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
                 "jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
-                "hlt( 2=st & 3=ei", // Stop the computer clock
                 "ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
+                "hlt( 2=st & 3=ei", // Stop the computer clock
+                "out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
             };
 
         // Remove spaces from instruction codes and make uppercase
@@ -516,7 +525,7 @@ public class Program
         {
             int correctedIndex = instIndexes[ins];
 
-            string startaddress = DecToBinFilled(correctedIndex, 4);
+            string startaddress = DecToBinFilled(correctedIndex, 5);
 
             string[] instSteps = instructioncodes[0].Split('&');
             for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
@@ -618,7 +627,7 @@ public class Program
 
             Console.WriteLine(instructioncodes[correctedIndex]);
 
-            string startaddress = DecToBinFilled(correctedIndex, 4);
+            string startaddress = DecToBinFilled(correctedIndex, 5);
 
             string[] instSteps = instructioncodes[correctedIndex].Split('&');
             for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
@@ -631,55 +640,47 @@ public class Program
                 char[] stepComputedInstruction = new char[14] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
-                    bool foundmatch = false;
                     // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
                     {
                         stepComputedInstruction[mins] = '1'; // activate
-                        foundmatch = true;
                     }
-                    if (foundmatch == false)
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
-                        { // Check all write instruction types
-                            if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother + 1, 4);
-                                stepComputedInstruction[5] = binaryval[0];
-                                stepComputedInstruction[6] = binaryval[1];
-                                stepComputedInstruction[7] = binaryval[2];
-                                stepComputedInstruction[8] = binaryval[3];
-                                foundmatch = true;
-                                break;
-                            }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
+                    { // Check all write instruction types
+                        if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 4);
+                            stepComputedInstruction[5] = binaryval[0];
+                            stepComputedInstruction[6] = binaryval[1];
+                            stepComputedInstruction[7] = binaryval[2];
+                            stepComputedInstruction[8] = binaryval[3];
                         }
-                    if (foundmatch == false)
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
-                        { // Check all read instruction types
-                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother + 1, 3);
-                                stepComputedInstruction[9] = binaryval[0];
-                                stepComputedInstruction[10] = binaryval[1];
-                                stepComputedInstruction[11] = binaryval[2];
-                                foundmatch = true;
-                                break;
-                            }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                    { // Check all read instruction types
+                        if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 3);
+                            stepComputedInstruction[9] = binaryval[0];
+                            stepComputedInstruction[10] = binaryval[1];
+                            stepComputedInstruction[11] = binaryval[2];
                         }
-                    if (foundmatch == false)
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
-                        { // Check all ALU instruction types
-                            if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother + 1, 2);
-                                stepComputedInstruction[12] = binaryval[0];
-                                stepComputedInstruction[13] = binaryval[1];
-                                foundmatch = true;
-                                break;
-                            }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
+                    { // Check all ALU instruction types
+                        if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 2);
+                            stepComputedInstruction[12] = binaryval[0];
+                            stepComputedInstruction[13] = binaryval[1];
                         }
+                    }
                 }
 
                 // Compute flags combinations
