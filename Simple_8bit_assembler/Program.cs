@@ -452,8 +452,10 @@ public class Program
         string[] output = new string[1024];
         for (int osind = 0; osind < output.Length; osind++) { output[osind] = "00000"; }
 
-        string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "WM", "EO", "FL", "J", "WB", "WA", "AW", "EI"};
-        string[] readInstructionSpecialAddress = { "RA", "RM", "IR", "CR" };
+        string[] microinstructions = { "EO", "CE", "ST", "EI", "FL" };
+        string[] writeInstructionSpecialAddress = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
+        string[] readInstructionSpecialAddress = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
+        string[] aluInstructionSpecialAddress = { "SU", "MU", "DI" };
         string[] flags = { "ZEROFLAG", "CARRYFLAG" };
         string[] instructioncodes = {
                 "fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
@@ -524,24 +526,48 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+                char[] stepComputedInstruction = new char[14] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
                     // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction[mins] = '1'; // activate
-                    else
                     {
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        stepComputedInstruction[mins] = '1'; // activate
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
+                    { // Check all write instruction types
+                        if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
                         {
-                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother+1, 3);
-                                stepComputedInstruction[13] = binaryval[0];
-                                stepComputedInstruction[14] = binaryval[1];
-                                stepComputedInstruction[15] = binaryval[2];
-                            }
+                            string binaryval = DecToBinFilled(minsother + 1, 4);
+                            stepComputedInstruction[5] = binaryval[0];
+                            stepComputedInstruction[6] = binaryval[1];
+                            stepComputedInstruction[7] = binaryval[2];
+                            stepComputedInstruction[8] = binaryval[3];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                    { // Check all read instruction types
+                        if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 3);
+                            stepComputedInstruction[9] = binaryval[0];
+                            stepComputedInstruction[10] = binaryval[1];
+                            stepComputedInstruction[11] = binaryval[2];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
+                    { // Check all ALU instruction types
+                        if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 2);
+                            stepComputedInstruction[12] = binaryval[0];
+                            stepComputedInstruction[13] = binaryval[1];
                         }
                     }
                 }
@@ -602,26 +628,58 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+                char[] stepComputedInstruction = new char[14] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
+                    bool foundmatch = false;
                     // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction[mins] = '1'; // activate
-                    else
                     {
+                        stepComputedInstruction[mins] = '1'; // activate
+                        foundmatch = true;
+                    }
+                    if (foundmatch == false)
                         // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
-                        {
-                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                        for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
+                        { // Check all write instruction types
+                            if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
                             {
-                                string binaryval = DecToBinFilled(minsother+1, 3);
-                                stepComputedInstruction[13] = binaryval[0];
-                                stepComputedInstruction[14] = binaryval[1];
-                                stepComputedInstruction[15] = binaryval[2];
+                                string binaryval = DecToBinFilled(minsother + 1, 4);
+                                stepComputedInstruction[5] = binaryval[0];
+                                stepComputedInstruction[6] = binaryval[1];
+                                stepComputedInstruction[7] = binaryval[2];
+                                stepComputedInstruction[8] = binaryval[3];
+                                foundmatch = true;
+                                break;
                             }
                         }
-                    }
+                    if (foundmatch == false)
+                        // Check if microinstruction requires special code
+                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        { // Check all read instruction types
+                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                            {
+                                string binaryval = DecToBinFilled(minsother + 1, 3);
+                                stepComputedInstruction[9] = binaryval[0];
+                                stepComputedInstruction[10] = binaryval[1];
+                                stepComputedInstruction[11] = binaryval[2];
+                                foundmatch = true;
+                                break;
+                            }
+                        }
+                    if (foundmatch == false)
+                        // Check if microinstruction requires special code
+                        for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
+                        { // Check all ALU instruction types
+                            if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
+                            {
+                                string binaryval = DecToBinFilled(minsother + 1, 2);
+                                stepComputedInstruction[12] = binaryval[0];
+                                stepComputedInstruction[13] = binaryval[1];
+                                foundmatch = true;
+                                break;
+                            }
+                        }
                 }
 
                 // Compute flags combinations
