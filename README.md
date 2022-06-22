@@ -9,8 +9,8 @@ BIN <addr>  00010   : load data from <addr> to reg B
 CIN <addr>  00011   : load data from <addr> to reg C
 LDIA <val>  00100   : immediately load <val> into reg A
 LDIB <val>  00101   : immediately load <val> into reg B
-LDEXP       00110   : load value stored on the expansion port into reg B
-STEXP       00111   : copy reg A into the expansion port
+RDEXP       00110   : load value stored on the expansion port into reg B
+WREXP       00111   : copy reg A into the expansion port
 STA <addr>  01000   : store value of A into <addr> of memory
 STC <addr>  01001   : store value of C into <addr> of memory
 ADD         01010   : add reg B to reg A, and set reg A = to sum
