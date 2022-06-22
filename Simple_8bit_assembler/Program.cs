@@ -425,7 +425,8 @@ public class Program
                 if (instructions[f] == splitBySpace[0])
                 {
                     Console.Write(DecToHexFilled(f, 2));
-                    outputBytes[memaddr] = DecToBinFilled(f, 5);
+                    outputBytes[memaddr] = DecToHexFilled(f, 2);
+                    break;
                 }
             }
 
@@ -433,15 +434,15 @@ public class Program
             if (splitcode[i] != splitBySpace[0])
             {
                 Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 2));
-                outputBytes[memaddr] += DecToBinFilled(Int32.Parse(splitBySpace[1]), 11);
+                outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 2);
             }
             else
             {
-                Console.Write("0");
-                outputBytes[memaddr] += "00000000000";
+                Console.Write("00");
+                outputBytes[memaddr] += "00";
             }
             Console.Write("\n");
-            outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
+            //outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
             memaddr++;
         }
         return outputBytes;
@@ -473,8 +474,8 @@ public class Program
                 "stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
                 "add( 2=wa,eo,fl & 3=ei", // Add
                 "sub( 2=wa,eo,su,fl & 3=ei", // Subtract
-                "mult( 2=wa,eo,mu,fl & 5=ei", // Multiply
-                "div( 2=wa,eo,di,fl & 5=ei", // Divide
+                "mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
+                "div( 2=wa,eo,di,fl & 3=ei", // Divide
                 "jmp( 2=ir,j & 3=ei", // Jump <addr>
                 "jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
                 "jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
