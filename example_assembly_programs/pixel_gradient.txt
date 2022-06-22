@@ -33,7 +33,7 @@ sta 400
 ldia 63
 bin 400
 sub
-ldib 2
+ldib 4
 div
 sta 302
 ,    output
@@ -48,7 +48,7 @@ ain 298
 ldib 1
 add
 sta 298
-ldia 63
+ldia 62
 bin 298
 sub
 jmpc 0
