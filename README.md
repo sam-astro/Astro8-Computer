@@ -68,23 +68,13 @@ EO : read from ALU to bus
 Multiply program:
 ```
 , Set the first factor
-set 15 3
+ldia 4
 , Set the second factor
-set 14 2
-, Create value of 1
-set 12 1
-,
-loda 15
-sub 12
-jmpc 6
-loda 13
+ldib 5
+, Multiply
+mult
 out
 hlt
-sta 15
-loda 13
-add 14
-sta 13
-jmp 0
 ```
 
 New Assembly (WIP):
