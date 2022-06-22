@@ -1,0 +1,5 @@
+rdexp
+ldia 0
+add
+out
+jmp 0
