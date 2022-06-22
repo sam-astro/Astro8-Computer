@@ -7,6 +7,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 
 using namespace std::chrono;
@@ -30,7 +31,7 @@ int iterations = 0;
 
 vector<int> memoryBytes;
 
-string instructions[16] = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "HLT", "OUT" };
 string action = "";
 vector<vector<int>> microinstructionData;
 
@@ -69,6 +70,37 @@ int BinaryVecRangeToInt(vector<int> vec, int min, int max);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+
+
+string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
+string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
+string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
+string aluInstructionSpecialAddress[] = { "SU", "MU", "DI" };
+string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
+//   "LDAIN", "HLT", "OUT"
+
+string instructioncodes[] = {
+		"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
+		"ain( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
+		"bin( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
+		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
+		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
+		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
+		"rdexp( 2=wb,re & 3=ei", // Read from expansion port to register B
+		"wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
+		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
+		"stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
+		"add( 2=wa,eo,fl & 3=ei", // Add
+		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
+		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
+		"div( 2=wa,eo,di,fl & 3=ei", // Divide
+		"jmp( 2=ir,j & 3=ei", // Jump <addr>
+		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
+		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
+		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
+		"hlt( 2=st & 3=ei", // Stop the computer clock
+		"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
+};
 
 
 void apply_pixels(
@@ -635,40 +667,55 @@ vector<string> parseCode(string input)
 		{
 			if (instructions[f] == splitBySpace[0])
 			{
-				cout << (DecToHexFilled(f, 1));
-				outputBytes[memaddr] = DecToHexFilled(f, 1);
+				cout << DecToBinFilled(f, 5);
+				outputBytes[memaddr] = DecToBinFilled(f, 5);
 			}
 		}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
 		{
-			cout << (DecToHexFilled(stoi(splitBySpace[1]), 3));
-			outputBytes[memaddr] += DecToHexFilled(stoi(splitBySpace[1]), 3);
+			cout << DecToBinFilled(stoi(splitBySpace[1]), 11);
+			outputBytes[memaddr] += DecToBinFilled(stoi(splitBySpace[1]), 11);
 		}
 		else
 		{
-			cout << ("0");
-			outputBytes[memaddr] += "000";
+			cout << " 00000000000";
+			outputBytes[memaddr] += "00000000000";
 		}
-		cout << ("\n");
+		cout << "  " + BinToHexFilled(outputBytes[memaddr], 4) + "\n";
+		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
 	}
 
-	/*
-	cout << ("\n000:");
+
+	// Print the output
+	string processedOutput = "";
+	cout << ("\nv3.0 hex words addressed\n");
+	processedOutput += "\nv3.0 hex words addressed\n";
+	cout << ("000: ");
+	processedOutput += "000: ";
 	for (int outindex = 0; outindex < outputBytes.size(); outindex++)
 	{
 		if (outindex % 8 == 0 && outindex != 0)
 		{
 			string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
-			cout << ("\n" + locationTmp + ":");
+			cout << ("\n" + locationTmp + ": ");
+			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 		}
-		string bytetmp = (" " + outputBytes[outindex]);
-		transform(bytetmp.begin(), bytetmp.end(), bytetmp.begin(), ::toupper);
-		cout << bytetmp;
-	}*/
+		cout << (outputBytes[outindex] + " ");
+		processedOutput += outputBytes[outindex] + " ";
+
+		string ttmp = outputBytes[outindex];
+		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
+	}
+
+	// Save the data to ../../../program_machine_code
+	fstream myStream;
+	myStream.open("../../../program_machine_code", ios::out);
+	myStream << processedOutput;
+
 	return outputBytes;
 }
 
@@ -694,31 +741,61 @@ static inline string trim(std::string s) {
 	return ss;
 }
 
+void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
+
+	for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
+	{
+		// Check if microinstruction matches at index
+		if (stepContents.find(microinstructions[mins]) != std::string::npos)
+		{
+			stepComputedInstruction[mins] = '1'; // activate
+		}
+
+		// Check if microinstruction requires special code
+		for (int minsother = 0; minsother < sizeof(writeInstructionSpecialAddress) / sizeof(writeInstructionSpecialAddress[0]); minsother++)
+		{ // Check all write instruction types
+			if (stepContents.find(writeInstructionSpecialAddress[minsother]) != std::string::npos)
+			{
+				string binaryval = DecToBinFilled(minsother + 1, 4);
+				stepComputedInstruction[5] = binaryval[0];
+				stepComputedInstruction[6] = binaryval[1];
+				stepComputedInstruction[7] = binaryval[2];
+				stepComputedInstruction[8] = binaryval[3];
+			}
+		}
+
+		// Check if microinstruction requires special code
+		for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
+		{ // Check all read instruction types
+			if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
+			{
+				string binaryval = DecToBinFilled(minsother + 1, 3);
+				stepComputedInstruction[9] = binaryval[0];
+				stepComputedInstruction[10] = binaryval[1];
+				stepComputedInstruction[11] = binaryval[2];
+			}
+		}
+
+		// Check if microinstruction requires special code
+		for (int minsother = 0; minsother < sizeof(aluInstructionSpecialAddress) / sizeof(aluInstructionSpecialAddress[0]); minsother++)
+		{ // Check all ALU instruction types
+			if (stepContents.find(aluInstructionSpecialAddress[minsother]) != std::string::npos)
+			{
+				string binaryval = DecToBinFilled(minsother + 1, 2);
+				stepComputedInstruction[12] = binaryval[0];
+				stepComputedInstruction[13] = binaryval[1];
+			}
+		}
+
+	}
+}
+
 void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
 	vector<int> ii;
-	for (int osind = 0; osind < 1024; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
-
-	string microinstructions[] = { "SU", "IW", "DW", "ST", "CE", "WM", "EO", "FL", "J", "WB", "WA", "AW", "EI" };
-	string readInstructionSpecialAddress[] = { "RA", "RM", "IR", "CR" };
-	string flags[] = { "ZEROFLAG", "CARRYFLAG" };
-	string instructioncodes[] = {
-			"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
-			"loda( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
-			"lodb( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
-			"add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl & 5=ei", // Add <addr>
-			"sub( 2=aw,ir & 3=rm,wb & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
-			"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
-			"jmp( 2=ir,j & 3=ei", // Jump <addr>
-			"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-			"ldi( 2=wa,ir & 3=ei", // Load immediate A <val>
-			"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
-			"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
-			"hlt( 2=st & 3=ei", // Stop the computer clock
-			"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
-	};
+	for (int osind = 0; osind < 2048; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
 
 	// Remove spaces from instruction codes and make uppercase
 	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
@@ -730,7 +807,7 @@ void GenerateMicrocode()
 				newStr += instructioncodes[cl][clc];
 		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
-		cout << (newStr) << endl;
+		cout << (newStr) << " ."<<endl;
 		instructioncodes[cl] = newStr;
 	}
 
@@ -759,12 +836,12 @@ void GenerateMicrocode()
 	}
 
 	// Special process fetch instruction
-	cout << ("\n" + instructioncodes[0] + "\n");
+	cout << ("\ngenerate fetch... " + instructioncodes[0] + "\n");
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
 
-		string startaddress = DecToBinFilled(correctedIndex, 4);
+		string startaddress = DecToBinFilled(correctedIndex, 5);
 
 		vector<string> instSteps = explode(instructioncodes[0], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -774,30 +851,12 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[17] = { '0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
-			for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
-			{
-				// Check if microinstruction matches at index
-				if (stepContents.find(microinstructions[mins]) != std::string::npos)
-					stepComputedInstruction[mins] = '1'; // activate
-				else
-				{
-					// Check if microinstruction requires special code
-					for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
-					{
-						if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
-						{
-							string binaryval = DecToBinFilled(minsother + 1, 3);
-							stepComputedInstruction[13] = binaryval[0];
-							stepComputedInstruction[14] = binaryval[1];
-							stepComputedInstruction[15] = binaryval[2];
-						}
-					}
-				}
-			}
+			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			ComputeStepInstructions(stepContents, stepComputedInstruction);
+			
 
 			// Compute flags combinations
-			for (int flagcombinations = 0; flagcombinations < (sizeof(flags) / sizeof(flags[0])) * (sizeof(flags) / sizeof(flags[0])); flagcombinations++)
+			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++)
 			{
 				char endaddress[] = { '0', '0' };
 				// Look for flags
@@ -806,9 +865,9 @@ void GenerateMicrocode()
 					vector<string> inststepFlags = explode(explode(instSteps[step], '|')[1], ',');
 					for (int flag = 0; flag < inststepFlags.size(); flag++) // Iterate through all flags in step
 					{
-						for (int checkflag = 0; checkflag < (sizeof(flags) / sizeof(flags[0])); checkflag++) // What is the index of the flag
+						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++) // What is the index of the flag
 						{
-							if (inststepFlags[flag] == flags[checkflag])
+							if (inststepFlags[flag] == flagtypes[checkflag])
 								endaddress[checkflag] = '1';
 						}
 					}
@@ -828,7 +887,7 @@ void GenerateMicrocode()
 				if (doesntmatch)
 					continue;
 
-				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 5) + "\n");
+				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
@@ -837,13 +896,14 @@ void GenerateMicrocode()
 	}
 
 	// Do actual processing
+	cout << ("\ngenerate general... " + instructioncodes[0] + "\n");
 	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
 
 		cout << (instructioncodes[correctedIndex] + "\n");
 
-		string startaddress = DecToBinFilled(correctedIndex, 4);
+		string startaddress = DecToBinFilled(correctedIndex, 5);
 
 		vector<string> instSteps = explode(instructioncodes[correctedIndex], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -853,30 +913,12 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[17] = { '0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
-			for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
-			{
-				// Check if microinstruction matches at index
-				if (stepContents.find(microinstructions[mins]) != std::string::npos)
-					stepComputedInstruction[mins] = '1'; // activate
-				else
-				{
-					// Check if microinstruction requires special code
-					for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
-					{
-						if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
-						{
-							string binaryval = DecToBinFilled(minsother + 1, 3);
-							stepComputedInstruction[13] = binaryval[0];
-							stepComputedInstruction[14] = binaryval[1];
-							stepComputedInstruction[15] = binaryval[2];
-						}
-					}
-				}
-			}
+			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			ComputeStepInstructions(stepContents, stepComputedInstruction);
+
 
 			// Compute flags combinations
-			for (int flagcombinations = 0; flagcombinations < (sizeof(flags) / sizeof(flags[0])) * (sizeof(flags) / sizeof(flags[0])); flagcombinations++)
+			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++)
 			{
 				char endaddress[] = { '0', '0' };
 				int stepLocked[] = { 0, 0 };
@@ -886,9 +928,9 @@ void GenerateMicrocode()
 					vector<string> inststepFlags = explode(explode(instSteps[step], '|')[1], ',');
 					for (int flag = 0; flag < inststepFlags.size(); flag++) // Iterate through all flags in step
 					{
-						for (int checkflag = 0; checkflag < (sizeof(flags) / sizeof(flags[0])); checkflag++) // What is the index of the flag
+						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++) // What is the index of the flag
 						{
-							if (inststepFlags[flag].find(flags[checkflag]) != std::string::npos)
+							if (inststepFlags[flag].find(flagtypes[checkflag]) != std::string::npos)
 							{
 								if (inststepFlags[flag][0] == '!')
 									endaddress[checkflag] = '0';
@@ -915,7 +957,7 @@ void GenerateMicrocode()
 				if (doesntmatch)
 					continue;
 
-				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 5));
+				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
 				cout << endl;
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
@@ -924,10 +966,8 @@ void GenerateMicrocode()
 		//cout<<Line();
 	}
 
-
-	string processedOutput = "";
-
 	// Print the output
+	string processedOutput = "";
 	cout << ("\nv3.0 hex words addressed\n");
 	processedOutput += "\nv3.0 hex words addressed\n";
 	cout << ("000: ");
@@ -953,4 +993,9 @@ void GenerateMicrocode()
 			microinstructionData[outindex].push_back(binversion[i] == '1');
 		}
 	}
+
+	// Save the data to ../../../microinstructions_cpu_v1
+	fstream myStream;
+	myStream.open("../../../microinstructions_cpu_v1", ios::out);
+	myStream << processedOutput;
 }
