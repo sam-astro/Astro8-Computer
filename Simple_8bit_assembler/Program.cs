@@ -424,8 +424,8 @@ public class Program
             {
                 if (instructions[f] == splitBySpace[0])
                 {
-                    Console.Write(DecToHexFilled(f, 2));
-                    outputBytes[memaddr] = DecToHexFilled(f, 2);
+                    Console.Write(DecToBinFilled(f, 5));
+                    outputBytes[memaddr] = DecToBinFilled(f, 5);
                     break;
                 }
             }
@@ -433,16 +433,16 @@ public class Program
             // Check if any args are after the command
             if (splitcode[i] != splitBySpace[0])
             {
-                Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 2));
-                outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 2);
+                Console.Write(" "+DecToBinFilled(Int32.Parse(splitBySpace[1]), 11));
+                outputBytes[memaddr] += DecToBinFilled(Int32.Parse(splitBySpace[1]), 11);
             }
             else
             {
-                Console.Write("00");
-                outputBytes[memaddr] += "00";
+                Console.Write(" 00000000000");
+                outputBytes[memaddr] += "00000000000";
             }
-            Console.Write("\n");
-            //outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
+            Console.Write("  " +BinToHexFilled(outputBytes[memaddr], 4)+"\n");
+            outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
             memaddr++;
         }
         return outputBytes;
