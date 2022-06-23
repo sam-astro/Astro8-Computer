@@ -1,5 +1,4 @@
 rdexp
-ldia 0
-add
+swp
 out
 jmp 0
