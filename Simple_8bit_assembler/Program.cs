@@ -513,7 +513,7 @@ public class Program
                     if (doesntmatch)
                         continue;
 
-                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 5));
+                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 4));
                     output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(string.Join("", stepComputedInstruction), 5);
                 }
             }

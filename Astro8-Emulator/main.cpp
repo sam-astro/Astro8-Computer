@@ -33,7 +33,6 @@ int iterations = 0;
 
 vector<int> memoryBytes;
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "HLT", "OUT" };
 string action = "";
 vector<vector<int>> microinstructionData;
 
@@ -74,6 +73,8 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "HLT", "OUT" };
+
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
 string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
@@ -100,6 +101,7 @@ string instructioncodes[] = {
 		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
+		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
 		"hlt( 2=st & 3=ei", // Stop the computer clock
 		"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
 };
@@ -435,8 +437,8 @@ bool Update(float deltatime)
 				imgY++;
 				imgX = 0;
 
-				apply_pixels(pixels, texture, 64);
-				DisplayTexture(gRenderer, texture);
+				/*apply_pixels(pixels, texture, 64);
+				DisplayTexture(gRenderer, texture);*/
 			}
 			if (imgY >= 64) // The final layer is done, reset counter and render image
 			{
@@ -446,8 +448,8 @@ bool Update(float deltatime)
 				//SDL_SetRenderDrawColor(gRenderer, 60, 60, 60, SDL_ALPHA_OPAQUE);
 				//SDL_RenderClear(gRenderer);
 
-				//apply_pixels(pixels, texture, 64);
-				//DisplayTexture(gRenderer, texture);
+				apply_pixels(pixels, texture, 64);
+				DisplayTexture(gRenderer, texture);
 
 				cout << "\r                " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(1.0f / renderedFrameTime);
 
@@ -470,7 +472,7 @@ bool Update(float deltatime)
 		else if (writeInstr == 8)
 		{ // AW
 			//cout << ("AW ");
-			memoryIndex = BitRange(bus, 0, 11);
+			memoryIndex = bus;
 		}
 		else if (writeInstr == 9)
 		{ // WE
@@ -711,7 +713,7 @@ vector<string> explode(const string& str, const char& ch) {
 vector<string> parseCode(string input)
 {
 	vector<string> outputBytes;
-	for (int i = 0; i < 4000; i++)
+	for (int i = 0; i < 65535; i++)
 		outputBytes.push_back("0000");
 
 	string icopy = input;
@@ -741,6 +743,11 @@ vector<string> parseCode(string input)
 			outputBytes[stoi(splitBySpace[1])] = hVal;
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 			continue;
+		}
+
+		// Memory address is already used, skip.
+		if (outputBytes[memaddr] != "0000") {
+			memaddr += 1;
 		}
 
 		cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
