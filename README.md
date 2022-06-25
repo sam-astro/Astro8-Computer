@@ -67,6 +67,20 @@ CE : enable incrementing of counter
 EO : read from ALU to bus
 ```
 
+character rom = 1040 bytes
+
+Memory Layout:
+```
+word 0 |                                                       .                                                  | word 65535
+       | Program mem. 0 - 16382    I                           I                          Video memory 61439-65535|
+
+0-25%    (0 - 16382) 16382 bytes    -  Program mem.
+
+93-93%   (61295-61438) 144 bytes    -  Character memory (contains index of character to be displayed at the corresponding location)
+93-100%  (61439-65535) 4096 bytes   -  Video mem. 
+```
+
+
 Multiply program:
 ```
 , Set the first factor
@@ -86,7 +100,6 @@ New Assembly (WIP):
 @A - A register
 @B - B register
 @C - C register
-@D - D register
 @EX - Expansion port
 
 $                            - '$' symbol refers to a variable containing an integer (address in memory)
@@ -102,45 +115,121 @@ jmp <addr>                   - Jumps to the given address or label
 jmpc <valA><C><valB>,<addr>  - Jumps to <addr>, given the logic relationship between <valA> and <valB> given a comparer <C>, ie. (jmpc 0x12==4,0x0)
 ```
 
+High-level:
 ```
-,   Create 0 00000 00001 00000 32 for multiplying G
-const 0x1ff 32
-,   Create 0 00001 00000 00000 1024 for multiplying R
-const 0x1fe 1024
-,   Constant 1
-const 0x3e8 1
-,   0x120 = 0x12a / 2
-div 0x12a,2 -> 0x120
-,   0x121 = 0x12b / 2
-div 0x12b,2 -> 0x121
-,
-,   Red is equal to the x times 10-bit offset of 1024
+const 0x1ff 32    // Create 32 for multiplying G
+const 0x1fe 1024  // Create 1024 for multiplying R
+const 0x3e8 1     // Constant 1
+
+div 0x12a,2 -> 0x120  // Divide x-location by 2
+div 0x12b,2 -> 0x121  // Divide y-location by 2
+
+//   Red is equal to x * 10-bit offset of 1024
 mult 0x120,0x1fe -> 0x12c
-,
-,   Green is equal to the y times 5-bit offset of 32
+
+//   Green is equal to y * 5-bit offset of 32
 mult 0x121,0x1ff -> 0x12d
-,
-,   Blue is equal to 63 minus ( ( x plus y ) divided by 2)
-add 0x120,0x121 -> @D
-div @D,4 -> @D
-sub 63,@D -> 0x12e
-,
-,    output  86 v
-add 0x12c,0x12d -> 0x12c
-add 0x12c,0x12e -> @D
-out @D
-,    incrementer
+
+//   Blue is equal to 63 - ( ( x + y ) / 2)
+add 0x120,0x121 -> @A
+div @A,4 -> @B
+sub 63,@B -> 0x12e
+
+// Add RGB values and output value
+add 0x12c,0x12d -> @A
+add @A,0x12e -> @A
+out @A
+
+
+// Handle incrementing x and y, and resetting when above 64 (screen size)
 add 0x12a,1 -> 0x12a
-jmpc 0x12a==64,#incrementY
-jmp 0x0
-,
+jmpc 0x12a==64,#incrementY  // If X is equal to 64, jump to #incrementY
+jmp 0x0 // Else return to top
+
 #incrementY
-add 0x12b,1 -> 0x12b
+add 0x12b,1 -> 0x12b  // Increment Y by 1, and reset X to 0
 set 0x12a,0
-jmpc 0x12b==64,#resetY
-jmp 0x0
-,
+jmpc 0x12b==64,#resetY // If Y is equal to 64, jump to #resetY
+jmp 0x0 // Else return to top
+
 #resetY
-set 0x12b,0
-jmp 0x0
+set 0x12b,0 // Reset Y to 0
+jmp 0x0 // Finally return to top
+```
+
+Parsed:
+```
+set 511 32    // Create 32 for multiplying G
+set 510 1024  // Create 1024 for multiplying R
+set 1000 1     // Constant 1
+
+// Divide x-location by 2
+ain 298
+ldib 2
+div
+sta 288
+// Divide y-location by 2
+ain 299
+ldib 2
+div
+sta 289
+
+//   Red is equal to x * 10-bit offset of 1024
+ain 288
+bin 510
+mult
+sta 300
+
+//   Green is equal to y * 5-bit offset of 32
+ain 289
+bin 511
+mult
+sta 301
+
+//   Blue is equal to 63 - ( ( x + y ) / 2)
+ain 288
+bin 289
+add
+ldib 4
+div
+swp
+ldia 63
+sub
+sta 302
+
+// Add RGB values and output value
+ain 300
+bin 301
+add
+bin 302
+add
+out
+
+
+// Handle incrementing x and y, and resetting when above 64 (screen size)
+ain 298
+ldib 1
+add
+sta 298
+swp
+ldia 64
+sub
+jmpz 40
+jmp 0
+
+ain 299
+ldib 1
+add
+sta 299
+ldia 0
+sta 298
+bin 299
+ldia 64
+sub
+jmpz 51
+jmp 0
+
+ldia 0
+sta 299
+jmp 0
 ```

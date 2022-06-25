@@ -34,7 +34,7 @@ int iterations = 0;
 vector<int> memoryBytes;
 
 string action = "";
-vector<vector<int>> microinstructionData;
+vector<vector<bool>> microinstructionData;
 
 SDL_Rect r;
 
@@ -67,13 +67,13 @@ static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-int BinaryVecRangeToInt(vector<int> vec, int min, int max);
+int BinaryVecRangeToInt(vector<bool> vec, int min, int max);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -102,6 +102,8 @@ string instructioncodes[] = {
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
+		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
 		"hlt( 2=st & 3=ei", // Stop the computer clock
 		"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
 };
@@ -162,7 +164,7 @@ int main(int argc, char** argv)
 	////int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
 	//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
 	//cout << b << " == 0b" << DecToBin(b) << endl;
-	int i = BinaryVecRangeToInt(vector<int>{0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0}, 13, 15);
+	int i = BinaryVecRangeToInt(vector<bool>{0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0}, 13, 15);
 	cout << i << endl;
 
 	// Gather user inputted code
@@ -269,7 +271,7 @@ bool Update(float deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		vector<int> mcode = microinstructionData[microcodeLocation];
+		vector<bool> mcode = microinstructionData[microcodeLocation];
 
 		//cout << "\n (";
 		//for (size_t i = 0; i < mcode.size(); i++)
@@ -491,7 +493,7 @@ bool Update(float deltatime)
 		{ // ST
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
-			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			system("pause");
 			exit(1);
 		}
@@ -613,7 +615,7 @@ int BinToDec(string input)
 {
 	return stoi(input, nullptr, 2);
 }
-int BinaryVecRangeToInt(vector<int> vec, int min, int max)
+int BinaryVecRangeToInt(vector<bool> vec, int min, int max)
 {
 	int result = 0;
 	int base = 1;
@@ -781,9 +783,7 @@ vector<string> parseCode(string input)
 
 	// Print the output
 	string processedOutput = "";
-	cout << ("\nv3.0 hex words addressed\n");
 	processedOutput += "\nv3.0 hex words addressed\n";
-	cout << ("000: ");
 	processedOutput += "000: ";
 	for (int outindex = 0; outindex < outputBytes.size(); outindex++)
 	{
@@ -791,15 +791,14 @@ vector<string> parseCode(string input)
 		{
 			string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
-			cout << ("\n" + locationTmp + ": ");
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 		}
-		cout << (outputBytes[outindex] + " ");
 		processedOutput += outputBytes[outindex] + " ";
 
 		string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 	}
+	cout << processedOutput << endl << endl;
 
 	// Save the data to ../../../program_machine_code
 	fstream myStream;
@@ -884,7 +883,7 @@ void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
-	vector<int> ii;
+	vector<bool> ii;
 	for (int osind = 0; osind < 2048; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
 
 	// Remove spaces from instruction codes and make uppercase
@@ -926,7 +925,7 @@ void GenerateMicrocode()
 	}
 
 	// Special process fetch instruction
-	cout << ("\ngenerate fetch... " + instructioncodes[0] + "\n");
+	cout << "\n\ngenerate fetch... \n";
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
@@ -986,7 +985,7 @@ void GenerateMicrocode()
 	}
 
 	// Do actual processing
-	cout << ("\ngenerate general... " + instructioncodes[0] + "\n");
+	cout << "\n\ngenerate general... \n";
 	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
@@ -1058,9 +1057,7 @@ void GenerateMicrocode()
 
 	// Print the output
 	string processedOutput = "";
-	cout << ("\nv3.0 hex words addressed\n");
 	processedOutput += "\nv3.0 hex words addressed\n";
-	cout << ("000: ");
 	processedOutput += "000: ";
 	for (int outindex = 0; outindex < output.size(); outindex++)
 	{
@@ -1068,10 +1065,8 @@ void GenerateMicrocode()
 		{
 			string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
-			cout << ("\n" + locationTmp + ": ");
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 		}
-		cout << (output[outindex] + " ");
 		processedOutput += output[outindex] + " ";
 
 		string ttmp = output[outindex];
@@ -1083,6 +1078,7 @@ void GenerateMicrocode()
 			microinstructionData[outindex].push_back(binversion[i] == '1');
 		}
 	}
+	cout << processedOutput << endl << endl;
 
 	// Save the data to ../../../microinstructions_cpu_v1
 	fstream myStream;
