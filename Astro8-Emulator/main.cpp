@@ -73,7 +73,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -102,6 +102,7 @@ string instructioncodes[] = {
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+		"stlge( 2=cr,aw & 3=rm,aw & 4=ra,wm,ce & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
 		"hlt( 2=st & 3=ei", // Stop the computer clock
@@ -715,7 +716,7 @@ vector<string> explode(const string& str, const char& ch) {
 vector<string> parseCode(string input)
 {
 	vector<string> outputBytes;
-	for (int i = 0; i < 65535; i++)
+	for (int i = 0; i < 16383; i++)
 		outputBytes.push_back("0000");
 
 	string icopy = input;
