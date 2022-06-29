@@ -33,7 +33,7 @@ sta 400
 ldia 63
 bin 400
 sub
-ldib 4
+ldib 2
 div
 sta 302
 ,    output
