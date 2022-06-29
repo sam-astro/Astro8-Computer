@@ -36,6 +36,8 @@ vector<int> memoryBytes;
 string action = "";
 vector<vector<bool>> microinstructionData;
 
+vector<bool> characterRom;
+
 SDL_Rect r;
 
 //The window we'll be rendering to

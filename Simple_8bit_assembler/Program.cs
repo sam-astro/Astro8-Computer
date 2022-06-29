@@ -21,6 +21,8 @@ public class Program
         Console.Write("Action >  ");
         action = Console.ReadLine().ToLower();
 
+        MakeCharacterRom();
+
         if (action != "microcode" & action != "emulator" & action != "imggen")
         {
             Console.Write("v Code input v\n");
@@ -175,6 +177,57 @@ public class Program
     {
         return int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
     }
+
+    static void MakeCharacterRom()
+    {
+        string path = "../../../../character-set.png";
+        Bitmap img = new Bitmap((Bitmap)Image.FromFile(path));
+        List<int> l = new List<int>();
+        for (int i = 0; i < 65535; i++)
+            l.Add(0);
+
+        int charCode = 0;
+        int charX = 0;
+        int charY = 0;
+
+        for (int y = 0; y < img.Height; y++)
+        {
+            charX = 0;
+            for (int x = 0; x < img.Width; x++)
+            {
+                l[BinToDec(DecToBinFilled(charCode, 7)+DecToBinFilled(charY, 3)+DecToBinFilled(charX, 3))] = img.GetPixel(x, y).R/255;
+                charX++;
+                if (charX == 6)
+                {
+                    charCode++;
+                    charX = 0;
+                }
+            }
+            charY++;
+            if (charY<6)
+                charCode -= 13;
+            else
+                charY = 0;
+        }
+
+        string processedOutput = "";
+
+        // Print the output
+        processedOutput += "\nv3.0 hex words addressed\n";
+        processedOutput += "000: ";
+        for (int outindex = 0; outindex < l.Count; outindex++)
+        {
+            if (outindex % 8 == 0 && outindex != 0)
+            {
+                processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
+            }
+            processedOutput += l[outindex] + " ";
+        }
+        Console.Write(processedOutput);
+
+        File.WriteAllText("../../../../char_set_processed.hex", processedOutput);
+    }
+
     static List<string> parseCode(string input)
     {
         List<string> outputBytes = new List<string>();
