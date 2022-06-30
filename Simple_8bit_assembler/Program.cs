@@ -210,6 +210,7 @@ public class Program
                 charY = 0;
         }
 
+        string mt = "";
         string processedOutput = "";
 
         // Print the output
@@ -222,10 +223,13 @@ public class Program
                 processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
             }
             processedOutput += l[outindex] + " ";
+            mt+=l[outindex];
         }
-        Console.Write(processedOutput);
+        Console.WriteLine(processedOutput);
+        Console.WriteLine(mt);
 
         File.WriteAllText("../../../../char_set_processed.hex", processedOutput);
+        File.WriteAllText("../../../../char_set_memtape", mt);
     }
 
     static List<string> parseCode(string input)

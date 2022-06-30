@@ -27,11 +27,15 @@ int programCounter = 0;
 
 int imgX = 0;
 int imgY = 0;
+int charPixX = 0;
+int charPixY = 0;
+int characterRamIndex = 0;
 
 float slowdownAmnt = 1;
 int iterations = 0;
 
 vector<int> memoryBytes;
+vector<int> charRam;
 
 string action = "";
 vector<vector<bool>> microinstructionData;
@@ -167,8 +171,10 @@ int main(int argc, char** argv)
 	////int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
 	//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
 	//cout << b << " == 0b" << DecToBin(b) << endl;
-	int i = BinaryVecRangeToInt(vector<bool>{0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0}, 13, 15);
-	cout << i << endl;
+
+	for (int i = 0; i < 144; i++)
+		charRam.push_back(0);
+
 
 	// Gather user inputted code
 	cout << ("v Emu. Code input v\n");
@@ -182,19 +188,30 @@ int main(int argc, char** argv)
 		code += line + "\n";
 	}
 
+	// Generate character rom from existing generated file (generate first using C# assembler)
+	string chline;
+	ifstream charset("D:\\Code\\Basic-CPU-In-Logisim\\char_set_memtape");
+	//ifstream charset("../../../char_set_memtape");
+	if (charset.is_open())
+	{
+		getline(charset, chline);
+		chline.erase(chline.find_last_not_of(" \n\r\t") + 1);
+		for (int i = 0; i < chline.length(); i++)
+		{
+			characterRom.push_back(chline[i] == '1');
+		}
+		charset.close();
+	}
+
 	// Generate memory from code and convert from hex to decimal
 	vector<string> mbytes = parseCode(code);
 	for (int memindex = 0; memindex < mbytes.size(); memindex++)
 		memoryBytes.push_back(HexToDec(mbytes[memindex]));
 
+	// Generate microcode
 	GenerateMicrocode();
 
-	cout << endl;
-	cout << DecToBin(16) << endl;
-	cout << HexToDec("ffff") << endl;
-	cout << HexToBin("ffff", 17) << endl;
-	cout << endl;
-
+	// Start graphics
 	InitGraphics("Astro-8 Emulator", 64, 64, 6);
 
 
@@ -423,31 +440,67 @@ bool Update(float deltatime)
 		}
 		else if (writeInstr == 5)
 		{ // DW
-			//cout << ("DW ");
-			outputReg = bus;
-			//cout << ("\no: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			int characterRamValue = charRam[characterRamIndex];
+			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-			// Write to LED screen
-			int r = BitRange(outputReg, 10, 5) * 8; // Get first 5 bits
-			int g = BitRange(outputReg, 5, 5) * 8; // get middle bits
-			int b = BitRange(outputReg, 0, 5) * 8; // Gets last 5 bits
+			outputReg = bus;
+
+			int r, g, b = 0;
+
+			if (charPixRomVal == true) {
+				r = 255;
+				g = 255;
+				b = 255;
+			}
+			else {
+				r = BitRange(outputReg, 10, 5) * 8; // Get first 5 bits
+				g = BitRange(outputReg, 5, 5) * 8; // get middle bits
+				b = BitRange(outputReg, 0, 5) * 8; // Gets last 5 bits
+			}
 			//cout << "rgb: (" << r << ", " << g << ", " << b << ")" << endl;
 
 			set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
 			//DrawPixel(imgX, imgY, r, g, b);
 
+
 			imgX++;
+			charPixX++;
+			if (charPixX >= 6) {
+				charPixX = 0;
+				//if (imgX < 62)
+				characterRamIndex++;
+			}
+			/*if (characterRamIndex >= 100)
+				characterRamIndex = 0;*/
+
+			// If x-coord is max, reset and increment y-coord
 			if (imgX >= 64)
 			{
 				imgY++;
+				charPixY++;
+				charPixX = 0;
 				imgX = 0;
+
+				if (charPixY < 6)
+					characterRamIndex -= 10;
+
 
 				/*apply_pixels(pixels, texture, 64);
 				DisplayTexture(gRenderer, texture);*/
 			}
+
+			if (charPixY >= 6) {
+				charPixY = 0;
+			}
+
+
 			if (imgY >= 64) // The final layer is done, reset counter and render image
 			{
 				imgY = 0;
+
+				characterRamIndex = 0;
+				charPixY = 0;
+				charPixX = 0;
 
 				// Apply pixels and render
 				//SDL_SetRenderDrawColor(gRenderer, 60, 60, 60, SDL_ALPHA_OPAQUE);

@@ -1,14 +1,14 @@
 ﻿  main.cpp
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(544,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(544,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(624,31): warning C4018: '>=': signed/unsigned mismatch
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(679,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(682,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(685,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(923,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(599,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(599,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(679,31): warning C4018: '>=': signed/unsigned mismatch
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(734,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(737,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(740,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(978,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  1 of 714 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+  30 of 713 functions ( 4.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    72 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
