@@ -11,6 +11,11 @@ ain 50
 ldib 1
 add
 sta 50
+swp
+ldia 50
+sub
+jmpz 16
+jmp 0
 ,
 out
-jmp 10
+jmp 16
