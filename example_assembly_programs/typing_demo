@@ -1,0 +1,15 @@
+set 12 16383
+out
+rdexp
+swp
+ldib 0
+jmpz 0
+sta 400
+ain 12
+ldib 1
+add
+sta 12
+ain 400
+stlge
+, addr stored here
+jmp 0
