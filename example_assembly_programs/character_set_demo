@@ -14,8 +14,8 @@ sta 50
 swp
 ldia 50
 sub
-jmpz 16
+jmpz 15
 jmp 0
 ,
 out
-jmp 16
+jmp 15
