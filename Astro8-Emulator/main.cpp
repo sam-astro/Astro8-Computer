@@ -74,6 +74,8 @@ static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
 int BinaryVecRangeToInt(vector<bool> vec, int min, int max);
+string CompileCode(string inputcode);
+vector<string> split(string str, string token);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
@@ -175,7 +177,6 @@ int main(int argc, char** argv)
 	for (int i = 0; i < 144; i++)
 		charRam.push_back(0);
 
-
 	// Gather user inputted code
 	cout << ("v Emu. Code input v\n");
 	string code = "";
@@ -186,6 +187,12 @@ int main(int argc, char** argv)
 			break;
 		}
 		code += line + "\n";
+	}
+	// If the code inputted is marked as written in armstrong with #AS
+	if (split(code, "\n")[0] == "#AS")
+	{
+		cout<<CompileCode(code)<<endl;
+		exit(1);
 	}
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
@@ -324,7 +331,12 @@ bool Update(float deltatime)
 		else if (readInstr == 4)
 		{ // RM
 			//cout << ("RM ");
-			bus = memoryBytes[memoryIndex];
+			//bus = memoryBytes[memoryIndex];
+
+			if (memoryIndex <= 16382)
+				bus = memoryBytes[memoryIndex];
+			else
+				bus = charRam[memoryIndex - 16383];
 		}
 		else if (readInstr == 5)
 		{ // IR
@@ -447,7 +459,7 @@ bool Update(float deltatime)
 
 			int r, g, b = 0;
 
-			if (charPixRomVal == true) {
+			if (charPixRomVal == true && imgX < 60) {
 				r = 255;
 				g = 255;
 				b = 255;
@@ -467,13 +479,13 @@ bool Update(float deltatime)
 			charPixX++;
 			if (charPixX >= 6) {
 				charPixX = 0;
-				//if (imgX < 62)
+				//if (imgX < 61)
 				characterRamIndex++;
 			}
 			/*if (characterRamIndex >= 100)
 				characterRamIndex = 0;*/
 
-			// If x-coord is max, reset and increment y-coord
+				// If x-coord is max, reset and increment y-coord
 			if (imgX >= 64)
 			{
 				imgY++;
@@ -518,7 +530,11 @@ bool Update(float deltatime)
 		else if (writeInstr == 6)
 		{ // WM
 			//cout << ("WM ");
-			memoryBytes[memoryIndex] = bus;
+			//memoryBytes[memoryIndex] = bus;
+			if (memoryIndex <= 16382)
+				memoryBytes[memoryIndex] = bus;
+			else
+				charRam[memoryIndex - 16383] = bus;
 		}
 		else if (writeInstr == 7)
 		{ // J
@@ -616,19 +632,23 @@ string charToString(char* a)
 	string s(a);
 	return s;
 }
-/*unsigned createMask(unsigned a, unsigned b)
-{
-	unsigned r = 0;
-	for (unsigned i = a; i <= b; i++)
-		r |= 1 << i;
 
-	return r;
-}
-unsigned BitRange(unsigned x, unsigned min, unsigned max) {
-	unsigned r = createMask(min, max);
-	unsigned result = r & x;
+vector<string> split(string str, string token) {
+	vector<string>result;
+	while (str.size()) {
+		int index = str.find(token);
+		if (index != string::npos) {
+			result.push_back(str.substr(0, index));
+			str = str.substr(index + token.size());
+			if (str.size() == 0)result.push_back(str);
+		}
+		else {
+			result.push_back(str);
+			str = "";
+		}
+	}
 	return result;
-}*/
+}
 
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
 unsigned BitRange(unsigned value, unsigned offset, unsigned n)
@@ -768,6 +788,30 @@ vector<string> explode(const string& str, const char& ch) {
 	return result;
 }
 
+string CompileCode(string inputcode) {
+	vector<string> codelines = split(inputcode, "\n");
+	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
+
+	for (size_t i = 0; i < codelines.size(); i++)
+	{
+		// Remove line if it is blank or is just a comment
+		if (codelines[i] == "" || (codelines[i][0] == '/' && codelines[i][1] == '/'))
+			codelines.erase(codelines.begin() + i);
+
+		// Remove comments from end of lines and trim whitespace
+		codelines[i] = trim(split(codelines[i], "//")[0]);
+	}
+
+
+
+	string outStr = "";
+	for (size_t i = 0; i < codelines.size(); i++)
+	{
+		outStr += codelines[i] + "\n";
+	}
+	return outStr;
+}
+
 vector<string> parseCode(string input)
 {
 	vector<string> outputBytes;
@@ -797,8 +841,12 @@ vector<string> parseCode(string input)
 		}
 		if (splitBySpace[0] == "SET")
 		{
+			int addr = stoi(splitBySpace[1]);
 			string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			outputBytes[stoi(splitBySpace[1])] = hVal;
+			if (addr <= 16382)
+				outputBytes[addr] = hVal;
+			else
+				charRam[addr - 16383] = stoi(splitBySpace[2]);
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 			continue;
 		}
