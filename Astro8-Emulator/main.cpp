@@ -165,6 +165,15 @@ void destroy(SDL_Renderer* renderer, SDL_Window* window)
 	SDL_Quit();
 }
 
+int clamp(int x, int min, int max) {
+	if (x < min)
+		return min;
+	if (x > max)
+		return max;
+
+	return x;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -191,7 +200,8 @@ int main(int argc, char** argv)
 	// If the code inputted is marked as written in armstrong with #AS
 	if (split(code, "\n")[0] == "#AS")
 	{
-		cout<<CompileCode(code)<<endl;
+		cout << "Compiling AS..." << endl;
+		cout << CompileCode("#AS\n\nHello!\n// Comment\nTest // Comment again\n") << endl;
 		exit(1);
 	}
 
@@ -336,7 +346,7 @@ bool Update(float deltatime)
 			if (memoryIndex <= 16382)
 				bus = memoryBytes[memoryIndex];
 			else
-				bus = charRam[memoryIndex - 16383];
+				bus = charRam.at(clamp(memoryIndex - 16383, 0, 143));
 		}
 		else if (readInstr == 5)
 		{ // IR
@@ -452,7 +462,7 @@ bool Update(float deltatime)
 		}
 		else if (writeInstr == 5)
 		{ // DW
-			int characterRamValue = charRam[characterRamIndex];
+			int characterRamValue = charRam.at(clamp(characterRamIndex, 0, 143));
 			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
 			outputReg = bus;
@@ -534,7 +544,7 @@ bool Update(float deltatime)
 			if (memoryIndex <= 16382)
 				memoryBytes[memoryIndex] = bus;
 			else
-				charRam[memoryIndex - 16383] = bus;
+				charRam.at(clamp(memoryIndex - 16383, 0, 143)) = bus;
 		}
 		else if (writeInstr == 7)
 		{ // J
@@ -787,25 +797,193 @@ vector<string> explode(const string& str, const char& ch) {
 		result.push_back(next);
 	return result;
 }
+bool IsDec(string in) {
+	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in))
+		return true;
+	return false;
+}
+bool IsHex(string in) {
+	if (in.size() > 2)
+		if (in[0] == '0' && in[1] == 'x')
+			return true;
+	return false;
+}
+bool IsBin(string in) {
+	if (in.size() > 2)
+		if (in[0] == '0' && in[1] == 'b')
+			return true;
+	return false;
+}
+bool IsReg(string in) {
+	if (in.size() > 1)
+		if (in[0] == '@')
+			return true;
+	return false;
+}
+bool IsVar(string in) {
+	if (in.size() > 1)
+		if (in[0] == '$')
+			return true;
+	return false;
+}
+
+int GetVariableAddress(string id, vector<string>& vars) {
+	// Search all variable names to get index
+	for (int i = 0; i < vars.size(); i++)
+	{
+		if (id == vars[i])
+			return i + 16528;
+	}
+
+	// Not found, add to list and return size-1
+	vars.push_back(id);
+	return vars.size() - 1;
+}
+
+
+int ParseValue(string input) {
+	if (input.size() > 2) {
+		if (IsHex(input))      // If preceded by '0x', then it is a hex number
+			return HexToDec(split(input, "0x")[1]);
+		else if (IsBin(input)) // If preceded by '0b', then it is a binary number
+			return BinToDec(split(input, "0b")[1]);
+	}
+	if (IsDec(input)) // If a decimal number
+		return stoi(input);
+
+	return -1;
+}
 
 string CompileCode(string inputcode) {
+
+	// Pre-process lines of code
+
 	vector<string> codelines = split(inputcode, "\n");
 	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
 
-	for (size_t i = 0; i < codelines.size(); i++)
+	for (int i = 0; i < codelines.size(); i++)
 	{
 		// Remove line if it is blank or is just a comment
-		if (codelines[i] == "" || (codelines[i][0] == '/' && codelines[i][1] == '/'))
+		if (codelines[i] == "")
 			codelines.erase(codelines.begin() + i);
-
+		else if (codelines[i][0] == '/' && codelines[i][1] == '/')
+			codelines.erase(codelines.begin() + i);
+	}
+	for (int i = 0; i < codelines.size(); i++)
+	{
 		// Remove comments from end of lines and trim whitespace
 		codelines[i] = trim(split(codelines[i], "//")[0]);
 	}
 
 
+	vector<string> outputLines;
+	vector<string> vars;
+
+	// Begin actual parsing and compilation
+
+	for (int i = 0; i < codelines.size(); i++)
+	{
+		string command = split(codelines[i], " ")[0];
+
+		if (command == "set")
+		{
+			string addrPre = split(codelines[i], " ")[1];
+			string valuePre = split(codelines[i], " ")[2];
+
+			int addr = ParseValue(addrPre);
+			int value = ParseValue(valuePre);
+
+			outputLines.push_back("set " + addr + ' ' + value);
+			continue;
+		}
+		else if (command == "change")
+		{
+			string addrPre = split(codelines[i], " = ")[1];
+			string valuePre = split(codelines[i], " = ")[2];
+
+			int addr = ParseValue(addrPre);
+			int value = ParseValue(valuePre);
+
+			outputLines.push_back("");
+
+
+			//
+			// If the value is an INT
+			//
+
+			// If changing memory value at an address and setting to a new integer value
+			if (IsHex(addrPre) && IsDec(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\n" + "sta " + to_string(addr);
+			}
+			// If changing a register value and setting to a new integer value
+			else if (IsReg(addrPre) && IsDec(valuePre)) {
+				if (addrPre == "@A")
+					outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value);
+				else if (addrPre == "@B")
+					outputLines.at(outputLines.size() - 1) += "ldib " + to_string(value);
+				else if (addrPre == "@C")
+					outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\nswpc";
+			}
+			// If changing a variable value and setting to a new integer value
+			else if (IsVar(addrPre) && IsDec(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+			}
+
+
+			//
+			// If the value is a MEMORY LOCATION
+			//
+			
+			// If changing memory value at an address and setting to another memory location
+			if (IsHex(addrPre) && IsHex(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
+			}
+			// If changing a register value and setting to another memory location
+			else if (IsReg(addrPre) && IsHex(valuePre)) {
+				if (addrPre == "@A")
+					outputLines.at(outputLines.size() - 1) += "ain " + to_string(value);
+				else if (addrPre == "@B")
+					outputLines.at(outputLines.size() - 1) += "bin " + to_string(value);
+				else if (addrPre == "@C")
+					outputLines.at(outputLines.size() - 1) += "cin " + to_string(value);
+			}
+			// If changing a variable value and setting to another memory location
+			else if (IsVar(addrPre) && IsHex(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+			}
+
+
+			//
+			// If the value is a VARIABLE
+			//
+
+			// If changing memory value at an address and setting equal to a variable
+			if (IsHex(addrPre) && IsVar(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(addr);
+			}
+			// If changing a register value and setting equal to a variable
+			else if (IsReg(addrPre) && IsVar(valuePre)) {
+				if (addrPre == "@A")
+					outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars));
+				else if (addrPre == "@B")
+					outputLines.at(outputLines.size() - 1) += "bin " + to_string(GetVariableAddress(valuePre, vars));
+				else if (addrPre == "@C")
+					outputLines.at(outputLines.size() - 1) += "cin " + to_string(GetVariableAddress(valuePre, vars));
+			}
+			// If changing a variable value and setting equal to a variable
+			else if (IsVar(addrPre) && IsVar(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+			}
+
+
+			continue;
+		}
+	}
+
+
 
 	string outStr = "";
-	for (size_t i = 0; i < codelines.size(); i++)
+	for (int i = 0; i < codelines.size(); i++)
 	{
 		outStr += codelines[i] + "\n";
 	}
@@ -846,7 +1024,7 @@ vector<string> parseCode(string input)
 			if (addr <= 16382)
 				outputBytes[addr] = hVal;
 			else
-				charRam[addr - 16383] = stoi(splitBySpace[2]);
+				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 			continue;
 		}
