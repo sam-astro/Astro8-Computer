@@ -12,10 +12,10 @@ ldib 1
 add
 sta 50
 swp
-ldia 50
+ldia 144
 sub
-jmpz 15
+jmpz 16
 jmp 0
 ,
 out
-jmp 15
+jmp 16
