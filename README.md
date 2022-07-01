@@ -113,6 +113,8 @@ mult <valA>,<valB> -> <addr> - Multiply the values <valA> and <valB>, then store
 div <valA>,<valB> -> <addr>  - Divide the values <valA> and <valB> (valA / valB), then store the result in <addr>
 jmp <addr>                   - Jumps to the given address or label
 jmpc <valA><C><valB>,<addr>  - Jumps to <addr>, given the logic relationship between <valA> and <valB> given a comparer <C>, ie. (jmpc 0x12==4,0x0)
+if <valA><C><valB>           - Continues if the logic relationship between <valA> and <valB> given a comparer <C> is true, ie. (if 0x12==4)
+endif                        - Marks the ending of the contents of an if statement
 ```
 
 High-level:
