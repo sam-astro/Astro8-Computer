@@ -74,10 +74,11 @@ Memory Layout:
 word 0 |                                                       .                                                  | word 65535
        | Program mem. 0 - 16382    I                           I                          Video memory 61439-65535|
 
-0-25%    (0 - 16382) 16382 bytes    -  Program mem.
+0-25%    (0 - 16382)   16382 words  -  Program mem.
+25-25%   (16383-16527) 144 words    -  Character mem. (contains index of character to be displayed at the corresponding location)
+25-25%   (16528-16656) 128 words    -  Variable mem.
 
-93-93%   (61295-61438) 144 bytes    -  Character memory (contains index of character to be displayed at the corresponding location)
-93-100%  (61439-65535) 4096 bytes   -  Video mem. 
+93-100%  (61439-65535) 4096 words   -  Video mem. 
 ```
 
 
@@ -105,21 +106,23 @@ New Assembly (WIP):
 $                            - '$' symbol refers to a variable containing an integer (address in memory)
 @                            - '@' symbol refers to a register, ie. ('@A' for register 'A')
 #                            - '#' symbol refers to a label, which is a point the program can jump to ie. ('#main') (address in program counter)
-const <addr> <val>           - Assembler sets <addr> to <val>. Sets memory values before the program is executed, then is removed.
-set <addr> <val>             - Change <addr> to <val> at any time
+set <addr> <val>           - Assembler sets <addr> to <val>. Sets memory values before the program is executed, then is removed.
+change <addr> = <val>        - Change <addr> to <val> at any time
 add <valA>,<valB> -> <addr>  - Add the values <valA> and <valB>, then store the result in <addr>
 sub <valA>,<valB> -> <addr>  - Subtract the values <valA> and <valB> (valA - valB), then store the result in <addr>
 mult <valA>,<valB> -> <addr> - Multiply the values <valA> and <valB>, then store the result in <addr>
 div <valA>,<valB> -> <addr>  - Divide the values <valA> and <valB> (valA / valB), then store the result in <addr>
 jmp <addr>                   - Jumps to the given address or label
 jmpc <valA><C><valB>,<addr>  - Jumps to <addr>, given the logic relationship between <valA> and <valB> given a comparer <C>, ie. (jmpc 0x12==4,0x0)
+if <valA><C><valB>           - Continues if the logic relationship between <valA> and <valB> given a comparer <C> is true, ie. (if 0x12==4)
+endif                        - Marks the ending of the contents of an if statement
 ```
 
 High-level:
 ```
-const 0x1ff 32    // Create 32 for multiplying G
-const 0x1fe 1024  // Create 1024 for multiplying R
-const 0x3e8 1     // Constant 1
+set 0x1ff 32    // Create 32 for multiplying G
+set 0x1fe 1024  // Create 1024 for multiplying R
+set 0x3e8 1     // Constant 1
 
 div 0x12a,2 -> 0x120  // Divide x-location by 2
 div 0x12b,2 -> 0x121  // Divide y-location by 2
@@ -148,12 +151,12 @@ jmp 0x0 // Else return to top
 
 #incrementY
 add 0x12b,1 -> 0x12b  // Increment Y by 1, and reset X to 0
-set 0x12a,0
+change 0x12a = 0
 jmpc 0x12b==64,#resetY // If Y is equal to 64, jump to #resetY
 jmp 0x0 // Else return to top
 
 #resetY
-set 0x12b,0 // Reset Y to 0
+change 0x12b = 0 // Reset Y to 0
 jmp 0x0 // Finally return to top
 ```
 
