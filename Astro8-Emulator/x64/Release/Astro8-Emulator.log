@@ -6,10 +6,11 @@ D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(709,31): warning C4018: '>
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(764,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(767,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(770,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(1104,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(901,24): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(1275,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  3 of 733 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
-    1 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+  28 of 742 functions ( 3.8%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    43 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Release\Astro8-Emulator.exe

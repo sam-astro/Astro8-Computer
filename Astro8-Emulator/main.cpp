@@ -81,7 +81,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -108,7 +108,8 @@ string instructioncodes[] = {
 		"jmp( 2=ir,j & 3=ei", // Jump <addr>
 		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
-		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
+		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
+		"staout( 2=ra,aw & 3=ra,wm & 4=ei", // Use reg A as memory address, then copy value from A into memory
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
 		"stlge( 2=cr,aw & 3=rm,aw & 4=ra,wm,ce & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
@@ -201,8 +202,8 @@ int main(int argc, char** argv)
 	if (split(code, "\n")[0] == "#AS")
 	{
 		cout << "Compiling AS..." << endl;
-		cout << CompileCode("#AS\n\nHello!\n// Comment\nTest // Comment again\n") << endl;
-		exit(1);
+		cout << CompileCode("#AS\n\nset 0xff 3\nchange @A = 6\nchange @A = @B\nchange @EX = @C\nchange @B = 0x2f\n") << endl;
+		exit(0);
 	}
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
@@ -797,11 +798,6 @@ vector<string> explode(const string& str, const char& ch) {
 		result.push_back(next);
 	return result;
 }
-bool IsDec(string in) {
-	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in))
-		return true;
-	return false;
-}
 bool IsHex(string in) {
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'x')
@@ -825,6 +821,72 @@ bool IsVar(string in) {
 		if (in[0] == '$')
 			return true;
 	return false;
+}
+bool IsDec(string in) {
+	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in))
+		return true;
+	return false;
+}
+
+string RegIdToLDI(string in, string followingValue) {
+	if (in == "@A")
+		return "ldia " + followingValue;
+	if (in == "@B")
+		return "ldib " + followingValue;
+	if (in == "@C")
+		return "ldia " + followingValue + "\n" + "swpc";
+	if (in == "@EX")
+		return "ldia " + followingValue + "\n" + "wrexp";
+
+	return "";
+}
+
+string RegIdToMRead(string in, string followingValue) {
+	if (in == "@A")
+		return "ain " + followingValue;
+	if (in == "@B")
+		return "bin " + followingValue;
+	if (in == "@C")
+		return "cin " + followingValue;
+	if (in == "@EX")
+		return "ain " + followingValue + "\n" + "wrexp";
+
+	return "";
+}
+
+string MoveFromRegToReg(string from, string destination) {
+	if (from == destination)
+		return "";
+
+	if (destination == "@A" && from == "@B")
+		return "swp";
+	if (destination == "@A" && from == "@C")
+		return "swpc";
+	if (destination == "@A" && from == "@EX")
+		return "rdexp\nswp";
+
+	if (destination == "@B" && from == "@A")
+		return "swp";
+	if (destination == "@B" && from == "@C")
+		return "swpc\nswp";
+	if (destination == "@B" && from == "@EX")
+		return "rdexp";
+
+	if (destination == "@C" && from == "@A")
+		return "swpc";
+	if (destination == "@C" && from == "@B")
+		return "swp\nswpc";
+	if (destination == "@C" && from == "@EX")
+		return "rdexp\nswp\nswpc";
+
+	if (destination == "@EX" && from == "@A")
+		return "wrexp";
+	if (destination == "@EX" && from == "@B")
+		return "swp\nwrexp";
+	if (destination == "@EX" && from == "@C")
+		return "swpc\nwrexp";
+
+	return "";
 }
 
 int GetVariableAddress(string id, vector<string>& vars) {
@@ -858,6 +920,7 @@ string CompileCode(string inputcode) {
 
 	// Pre-process lines of code
 
+	cout << "Preprocessing...";
 	vector<string> codelines = split(inputcode, "\n");
 	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
 
@@ -874,6 +937,7 @@ string CompileCode(string inputcode) {
 		// Remove comments from end of lines and trim whitespace
 		codelines[i] = trim(split(codelines[i], "//")[0]);
 	}
+	cout << "  Done\n";
 
 
 	vector<string> outputLines;
@@ -881,25 +945,32 @@ string CompileCode(string inputcode) {
 
 	// Begin actual parsing and compilation
 
+	cout << "Parsing...\n";
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		string command = split(codelines[i], " ")[0];
 
+
+		// "set" command (set <addr> <value>)
 		if (command == "set")
 		{
+			cout << "	'set' command\n";
 			string addrPre = split(codelines[i], " ")[1];
 			string valuePre = split(codelines[i], " ")[2];
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
 
-			outputLines.push_back("set " + addr + ' ' + value);
+			outputLines.push_back("set " + to_string(addr) + " " + to_string(value));
 			continue;
 		}
+
+		// "change" command (change <location> = <value or location>)
 		else if (command == "change")
 		{
-			string addrPre = split(codelines[i], " = ")[1];
-			string valuePre = split(codelines[i], " = ")[2];
+			cout << "	'change' command\n";
+			string addrPre = split(split(codelines[i], "change ")[1], " = ")[0];
+			string valuePre = split(split(codelines[i], "change ")[1], " = ")[1];
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
@@ -917,12 +988,7 @@ string CompileCode(string inputcode) {
 			}
 			// If changing a register value and setting to a new integer value
 			else if (IsReg(addrPre) && IsDec(valuePre)) {
-				if (addrPre == "@A")
-					outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value);
-				else if (addrPre == "@B")
-					outputLines.at(outputLines.size() - 1) += "ldib " + to_string(value);
-				else if (addrPre == "@C")
-					outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\nswpc";
+				outputLines.at(outputLines.size() - 1) += RegIdToLDI(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to a new integer value
 			else if (IsVar(addrPre) && IsDec(valuePre)) {
@@ -933,19 +999,14 @@ string CompileCode(string inputcode) {
 			//
 			// If the value is a MEMORY LOCATION
 			//
-			
+
 			// If changing memory value at an address and setting to another memory location
-			if (IsHex(addrPre) && IsHex(valuePre)) {
+			else if (IsHex(addrPre) && IsHex(valuePre)) {
 				outputLines.at(outputLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
 			}
 			// If changing a register value and setting to another memory location
 			else if (IsReg(addrPre) && IsHex(valuePre)) {
-				if (addrPre == "@A")
-					outputLines.at(outputLines.size() - 1) += "ain " + to_string(value);
-				else if (addrPre == "@B")
-					outputLines.at(outputLines.size() - 1) += "bin " + to_string(value);
-				else if (addrPre == "@C")
-					outputLines.at(outputLines.size() - 1) += "cin " + to_string(value);
+				outputLines.at(outputLines.size() - 1) += RegIdToMRead(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
@@ -958,21 +1019,108 @@ string CompileCode(string inputcode) {
 			//
 
 			// If changing memory value at an address and setting equal to a variable
-			if (IsHex(addrPre) && IsVar(valuePre)) {
+			else if (IsHex(addrPre) && IsVar(valuePre)) {
 				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(addr);
 			}
 			// If changing a register value and setting equal to a variable
 			else if (IsReg(addrPre) && IsVar(valuePre)) {
-				if (addrPre == "@A")
-					outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars));
-				else if (addrPre == "@B")
-					outputLines.at(outputLines.size() - 1) += "bin " + to_string(GetVariableAddress(valuePre, vars));
-				else if (addrPre == "@C")
-					outputLines.at(outputLines.size() - 1) += "cin " + to_string(GetVariableAddress(valuePre, vars));
+				outputLines.at(outputLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
 				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+			}
+
+
+			//
+			// If the value is a REGISTER
+			//
+
+			// If changing memory value at an address and setting equal to a register
+			else if (IsHex(addrPre) && IsReg(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
+				outputLines.at(outputLines.size() - 1) += "\nsta " + to_string(addr);
+			}
+			// If changing a register value and setting equal to a register
+			else if (IsReg(addrPre) && IsReg(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, addrPre);
+			}
+			// If changing a variable value and setting equal to a register
+			else if (IsVar(addrPre) && IsReg(valuePre)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
+				outputLines.at(outputLines.size() - 1) += "\nsta " + to_string(GetVariableAddress(addrPre, vars));
+			}
+
+
+			continue;
+		}
+
+		// "add" command (add <val>,<val> -> <location>)
+		else if (command == "add")
+		{
+			cout << "	'add' command\n";
+			string valAPre = split(split(codelines[i], "add ")[1], ",")[0];
+			string valBPre = split(split(trim(split(codelines[i], "add ")[1]), ",")[1], "->")[0];
+			string outLoc = split(split(trim(split(codelines[i], "add ")[1]), ",")[1], "->")[1];
+
+			int valAProcessed = ParseValue(valAPre);
+			int valBProcessed = ParseValue(valBPre);
+			int outLocProcessed = ParseValue(outLoc);
+
+			outputLines.push_back("");
+
+
+
+			// If first argument is an address
+			if (IsHex(valAPre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
+			}
+			// If first argument is a register
+			else if (IsReg(valAPre)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valAPre, "@A") + "\n";
+			}
+			// If first argument is a variable
+			else if (IsVar(valAPre)) {
+				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valAPre, vars)) + "\n";
+			}
+			// If first argument is a new decimal value
+			else if (IsDec(valAPre)) {
+				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
+			}
+
+
+			// If second argument is an address
+			if (IsHex(valBPre)) {
+				outputLines.at(outputLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
+			}
+			// If second argument is a register
+			else if (IsReg(valBPre)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valBPre, "@B") + "\n";
+			}
+			// If second argument is a variable
+			else if (IsVar(valBPre)) {
+				outputLines.at(outputLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre, vars)) + "\n";
+			}
+			// If second argument is a new decimal value
+			else if (IsDec(valBPre)) {
+				outputLines.at(outputLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
+			}
+
+			// Add instruction
+			outputLines.at(outputLines.size() - 1) += "add\n";
+
+
+			// If output argument is an address
+			if (IsHex(outLoc)) {
+				outputLines.at(outputLines.size() - 1) += "sta " + to_string(outLocProcessed) + "\n";
+			}
+			// If output argument is a register
+			else if (IsReg(outLoc)) {
+				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg("@A", outLoc) + "\n";
+			}
+			// If output argument is a variable
+			else if (IsVar(outLoc)) {
+				outputLines.at(outputLines.size() - 1) += "sta " + to_string(GetVariableAddress(outLoc, vars)) + "\n";
 			}
 
 
@@ -983,9 +1131,9 @@ string CompileCode(string inputcode) {
 
 
 	string outStr = "";
-	for (int i = 0; i < codelines.size(); i++)
+	for (int i = 0; i < outputLines.size(); i++)
 	{
-		outStr += codelines[i] + "\n";
+		outStr += outputLines[i] + "\n";
 	}
 	return outStr;
 }
