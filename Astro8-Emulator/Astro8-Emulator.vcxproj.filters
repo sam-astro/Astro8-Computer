@@ -20,7 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="olcPixelGameEngine.h">
+    <ClInclude Include="color.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="colorprint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
