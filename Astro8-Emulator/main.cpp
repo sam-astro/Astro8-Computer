@@ -18,6 +18,7 @@ using namespace std;
 vector<string> vars;
 vector<string> labels;
 vector<int> labelLineValues;
+vector<string> compiledLines;
 
 int AReg = 0;
 int BReg = 0;
@@ -81,6 +82,9 @@ string SimplifiedHertz(float input);
 int BinaryVecRangeToInt(vector<bool> vec, int min, int max);
 string CompileCode(string inputcode);
 vector<string> splitByComparator(string str);
+int ParseValue(string input);
+string MoveFromRegToReg(string from, string destination);
+int GetLineNumber();
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
@@ -207,7 +211,7 @@ int main(int argc, char** argv)
 	if (split(code, "\n")[0] == "#AS")
 	{
 		cout << "Compiling AS..." << endl;
-		code = CompileCode("#AS\n\ndefine 0xff 3\nmult @C,0x2f -> 0xff\nchange $variable = 6\nadd @A,$variable -> 0x20\nchange @A = @B\n#jmpHere\nchange @EX = @C\ndefine 4 3\n#anotherlabel\nif @A==@C:\nchange @B = 0x2f\ngoto 0x0\nendif\ngoto #jmpHere\ngotoif @A==0x13,0x0");
+		code = CompileCode("#AS\nmult @C,0x2f -> 0xfff\nchange $variable = 6\nadd @A,$variable -> 0xfff\nchange $variable = @B\n#jmpHere\nchange @EX = @C\nchange $variable = 123\nchange $variable = 3\ndefine 400 3\n#anotherlabel\nchange $variable = 234\nchange $variable = 3\nif @A==@C:\nchange $variable = 0x2f\ngoto 0x0\nendif\ngoto #jmpHere\ngotoif @A==0x13,0x0\nchange $variable = @C\nchange @C = $variable\n");
 
 		if (code != "") {
 			cout << "Output:\n";
@@ -864,10 +868,15 @@ bool IsDec(string in) {
 	return false;
 }
 
+void PutSetOnCurrentLine(string value) {
+	compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + value);
+}
+
 // Loading of memory value into register, automatically allowing large addressing as needed
-string LoadAddress(vector<string>& lines, string reg, string address, int actualLineNum) {
+void LoadAddress(string reg, string address) {
 	int actualVal = ParseValue(address);
 	string addrInWord = "ain ";
+	int actualLineNum = GetLineNumber();
 
 	if (reg == "@A")
 		addrInWord = "ain ";
@@ -875,27 +884,41 @@ string LoadAddress(vector<string>& lines, string reg, string address, int actual
 		addrInWord = "bin ";
 	else if (reg == "@C")
 		addrInWord = "cin ";
+	else if (reg == "@EX")
+		addrInWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
-	if (actualVal <= 2047)
-		return addrInWord + to_string(actualVal);
+	if (actualVal <= 2047) {
+		compiledLines.push_back(addrInWord + to_string(actualVal));
+		if (reg == "@EX")
+			compiledLines.push_back("wrexp");
+	}
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
 	else if (actualVal > 2047) {
-
-		return "ldlge\nset " + to_string(actualLineNum) + " " + to_string(actualVal) + "\n" + MoveFromRegToReg("@B", reg);
+		compiledLines.push_back("ldlge");
+		PutSetOnCurrentLine(to_string(actualVal));
+		compiledLines.push_back(MoveFromRegToReg("@A", reg));
 	}
+
 }
 
 // Storing of register into memory, automatically allowing large addressing as needed
-string StoreAddress(vector<string>& lines, string address, int actualLineNum) {
+void StoreAddress(string reg, string address) {
+	int actualLineNum = GetLineNumber();
 	int actualVal = ParseValue(address);
+	string addrOutWord = "ain ";
+
+	cout << "store " << address << " which is " << to_string(actualVal) << ". hold at " << to_string(actualLineNum + 2) << endl;
 
 	// Value is small enough to be accessible through normal r/w instructions
 	if (actualVal <= 2047)
-		return "sta " + to_string(actualVal);
+		compiledLines.push_back(MoveFromRegToReg(reg, "@A") + "sta " + to_string(actualVal));
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
-	else if (actualVal > 2047)
-		return "stlge\nset " + to_string(actualLineNum) + " " + to_string(actualVal);
+	else if (actualVal > 2047) {
+		compiledLines.push_back(MoveFromRegToReg(reg, "@A"));
+		compiledLines.push_back("stlge");
+		PutSetOnCurrentLine(to_string(actualVal));
+	}
 }
 
 string RegIdToLDI(string in, string followingValue) {
@@ -911,18 +934,18 @@ string RegIdToLDI(string in, string followingValue) {
 	return "";
 }
 
-string RegIdToMRead(string in, string followingValue) {
-	if (in == "@A")
-		return "ain " + followingValue;
-	if (in == "@B")
-		return "bin " + followingValue;
-	if (in == "@C")
-		return "cin " + followingValue;
-	if (in == "@EX")
-		return "ain " + followingValue + "\n" + "wrexp";
-
-	return "";
-}
+//string RegIdToMRead(string in, string followingValue) {
+//	if (in == "@A")
+//		return "ain " + followingValue;
+//	if (in == "@B")
+//		return "bin " + followingValue;
+//	if (in == "@C")
+//		return "cin " + followingValue;
+//	if (in == "@EX")
+//		return "ain " + followingValue + "\n" + "wrexp";
+//
+//	return "";
+//}
 
 string MoveFromRegToReg(string from, string destination) {
 	if (from == destination)
@@ -959,49 +982,56 @@ string MoveFromRegToReg(string from, string destination) {
 	return "";
 }
 
-int GetLineNumber(vector<string> lines) {
+int GetLineNumber() {
 	string outStr = "";
-	for (int i = 0; i < lines.size(); i++)
+	for (int i = 0; i < compiledLines.size(); i++)
 	{
-		outStr += lines[i] + "\n";
+		outStr += trim(compiledLines[i]) + "\n";
 	}
 
-	vector<string> actualLines = split(outStr, "\n");
+	compiledLines = split(outStr, "\n");
 	int outInt = 0;
-	for (int i = 0; i < actualLines.size(); i++)
+	for (int i = 0; i < compiledLines.size(); i++)
 	{
-		if (trim(actualLines[i]) != "" && split(actualLines[i], " ")[0] != "set" && split(actualLines[i], " ")[0] != "endif" && split(actualLines[i], " ")[0][0] != ',')
+		if (trim(compiledLines[i]) != "" && AccomodateSetInProgramRange(compiledLines[i], outInt) && split(compiledLines[i], " ")[0] != "endif" && compiledLines[i][0] != ',')
+		{
 			outInt++;
+			//PrintColored(compiledLines[i] + "  ^ INC ^\n", redFGColor, "");
+		}
+		//else
+		//	PrintColored(compiledLines[i] + "  - STAY -\n", blueFGColor, "");
 	}
 
 	return outInt;
 }
 
-int ActualLineNumFromNum(vector<string> lines, int x) {
+int ActualLineNumFromNum(int x) {
 	string outStr = "";
-	for (int i = 0; i < lines.size(); i++)
+	for (int i = 0; i < compiledLines.size(); i++)
 	{
-		outStr += lines[i] + "\n";
+		outStr += trim(compiledLines[i]) + "\n";
 	}
 
-	vector<string> actualLines = split(outStr, "\n");
-	//cout << "sajnfjlkshf : " << actualLines.size()<<endl;
+	compiledLines = split(outStr, "\n");
+	//cout << "sajnfjlkshf : " << compiledLines.size()<<endl;
 	int outInt = 1;
 	int i = 0;
-	while (i < actualLines.size() && i <= x)
+	while (i < compiledLines.size() && i <= x)
 	{
-		if (trim(actualLines[i]) != "" && split(actualLines[i], " ")[0] != "set" && split(actualLines[i], " ")[0] != "endif" && split(actualLines[i], " ")[0][0] != ',')
+		if (trim(compiledLines[i]) != "" && AccomodateSetInProgramRange(compiledLines[i], outInt) && split(compiledLines[i], " ")[0] != "endif" && split(compiledLines[i], " ")[0][0] != ',')
 			outInt++;
+		//else
+		//	PrintColored(compiledLines[i] + "  - STAY -\n", blueFGColor, "");
 
 		i++;
 	}
-	if (trim(actualLines[i]) == "" || split(actualLines[i], " ")[0] == "set" || split(actualLines[i], " ")[0] == "endif" || split(actualLines[i], " ")[0][0] == ',')
+	if (trim(compiledLines[i]) == "" || !AccomodateSetInProgramRange(compiledLines[i], outInt) || split(compiledLines[i], " ")[0] == "endif" || split(compiledLines[i], " ")[0][0] == ',')
 		outInt += 1;
 
 	return outInt;
 }
 
-int GetVariableAddress(string id, vector<string>& vars) {
+int GetVariableAddress(string id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 	{
@@ -1031,6 +1061,8 @@ int ParseValue(string input) {
 		else if (IsBin(input)) // If preceded by '0b', then it is a binary number
 			return BinToDec(split(input, "0b")[1]);
 	}
+	if (IsVar(input)) // If a variable
+		return GetVariableAddress(input);
 	if (IsDec(input)) // If a decimal number
 		return stoi(input);
 	if (IsLabel(input)) // If a label
@@ -1061,29 +1093,29 @@ string InvertExpression(string expression) {
 	return valAPre + newComparer + valBPre;
 }
 
-void CompareValues(string valA, string comparer, string valB, vector<string> vars, vector<string>& outputLines) {
+void CompareValues(string valA, string comparer, string valB, vector<string> vars) {
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
 
 	// Check if two values are equal
-	if (comparer == "==") {
+	if (comparer == "==" || comparer == "!=") {
 		// Get into A reg
 
 		// If A is memory address
 		if (IsHex(valA)) {
-			outputLines.at(outputLines.size() - 1) += "ain " + to_string(procA) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
 		}
 		// If A is register
 		else if (IsReg(valA)) {
-			outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valA, "@A");
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
 		}
 		// If A is variable
 		else if (IsVar(valA)) {
-			outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA, vars)) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
 		}
 		// If A is decimal
 		else if (IsDec(valA)) {
-			outputLines.at(outputLines.size() - 1) += "ldia " + to_string(procA) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
 		}
 
 
@@ -1091,23 +1123,23 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 
 		// If B is memory address
 		if (IsHex(valB)) {
-			outputLines.at(outputLines.size() - 1) += "bin " + to_string(procB) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
 		}
 		// If B is register
 		else if (IsReg(valB)) {
-			outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valB, "@B");
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
 		}
 		// If B is variable
 		else if (IsVar(valB)) {
-			outputLines.at(outputLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB, vars)) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
 		}
 		// If B is decimal
 		else if (IsDec(valB)) {
-			outputLines.at(outputLines.size() - 1) += "ldib " + to_string(procB) + "\n";
+			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
 		}
 
 		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
-		outputLines.at(outputLines.size() - 1) += "sub\n";
+		compiledLines.at(compiledLines.size() - 1) += "sub\n";
 	}
 
 }
@@ -1136,7 +1168,6 @@ string CompileCode(string inputcode) {
 	PrintColored("  Done!\n", brightGreenFGColor, "");
 
 
-	vector<string> outputLines;
 	int issues = 0; // Number of problems faced while compiling
 
 	// Begin actual parsing and compilation
@@ -1151,14 +1182,14 @@ string CompileCode(string inputcode) {
 		if (command[0] == '#')
 		{
 			labels.push_back(command);
-			labelLineValues.push_back(GetLineNumber(outputLines));
+			labelLineValues.push_back(GetLineNumber());
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "label:      ";
 			PrintColored("'" + command + "'", brightBlueFGColor, "");
 			PrintColored(" line: ", brightBlackFGColor, "");
 			PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
 
-			outputLines.push_back(",\n, == " + command + " ==");
+			compiledLines.push_back(",\n, == " + command + " ==");
 
 			continue;
 		}
@@ -1177,8 +1208,8 @@ string CompileCode(string inputcode) {
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
 
-			outputLines.push_back(",\n, " + string("define:  '") + addrPre + "' as '" + valuePre + "'");
-			outputLines.push_back("set " + to_string(addr) + " " + to_string(value));
+			compiledLines.push_back(",\n, " + string("define:  '") + addrPre + "' as '" + valuePre + "'");
+			compiledLines.push_back("set " + to_string(addr) + " " + to_string(value));
 			continue;
 		}
 
@@ -1196,8 +1227,8 @@ string CompileCode(string inputcode) {
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
 
-			outputLines.push_back(",\n, " + string("change:  '") + addrPre + "' to '" + valuePre + "'");
-			outputLines.push_back("");
+			compiledLines.push_back(",\n, " + string("change:  '") + addrPre + "' to '" + valuePre + "'");
+			compiledLines.push_back("");
 
 
 			//
@@ -1206,15 +1237,17 @@ string CompileCode(string inputcode) {
 
 			// If changing memory value at an address and setting to a new integer value
 			if (IsHex(addrPre) && IsDec(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\n" + "sta " + to_string(addr);
+				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(value);
+				StoreAddress("@A", addrPre);
 			}
 			// If changing a register value and setting to a new integer value
 			else if (IsReg(addrPre) && IsDec(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += RegIdToLDI(addrPre, to_string(value));
+				compiledLines.at(compiledLines.size() - 1) += RegIdToLDI(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to a new integer value
 			else if (IsVar(addrPre) && IsDec(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(value);
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -1224,15 +1257,20 @@ string CompileCode(string inputcode) {
 
 			// If changing memory value at an address and setting to another memory location
 			else if (IsHex(addrPre) && IsHex(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
+				LoadAddress("@A", to_string(value));
+				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting to another memory location
 			else if (IsReg(addrPre) && IsHex(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += RegIdToMRead(addrPre, to_string(value));
+				LoadAddress(addrPre, to_string(value));
+				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+				LoadAddress("@A", to_string(value));
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -1242,15 +1280,20 @@ string CompileCode(string inputcode) {
 
 			// If changing memory value at an address and setting equal to a variable
 			else if (IsHex(addrPre) && IsVar(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(addr);
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre)) + "\n" + "sta " + to_string(addr);
+				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
+				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting equal to a variable
 			else if (IsReg(addrPre) && IsVar(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
+				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
+				LoadAddress(addrPre, to_string(GetVariableAddress(valuePre)));
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre));
+				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -1260,17 +1303,19 @@ string CompileCode(string inputcode) {
 
 			// If changing memory value at an address and setting equal to a register
 			else if (IsHex(addrPre) && IsReg(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				outputLines.at(outputLines.size() - 1) += "sta " + to_string(addr);
+				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
+				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(addr);
+				StoreAddress(valuePre, to_string(addr));
 			}
 			// If changing a register value and setting equal to a register
 			else if (IsReg(addrPre) && IsReg(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, addrPre);
+				compiledLines.push_back(MoveFromRegToReg(valuePre, addrPre));
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				outputLines.at(outputLines.size() - 1) += "sta " + to_string(GetVariableAddress(addrPre, vars));
+				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
+				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(addrPre));
+				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -1296,61 +1341,71 @@ string CompileCode(string inputcode) {
 			int valBProcessed = ParseValue(valBPre);
 			int outLocProcessed = ParseValue(outLoc);
 
-			outputLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
-			outputLines.push_back("");
+			compiledLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
+			compiledLines.push_back("");
 
 
 
 			// If first argument is an address
 			if (IsHex(valAPre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
+				LoadAddress("@A", to_string(valAProcessed));
+				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
 			// If first argument is a register
 			else if (IsReg(valAPre)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valAPre, "@A");
+				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valAPre, "@A");
 			}
 			// If first argument is a variable
 			else if (IsVar(valAPre)) {
-				outputLines.at(outputLines.size() - 1) += "ain " + to_string(GetVariableAddress(valAPre, vars)) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valAPre)) + "\n";
+				LoadAddress("@A", valAPre);
+				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
 			// If first argument is a new decimal value
 			else if (IsDec(valAPre)) {
-				outputLines.at(outputLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
+				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
 			}
 
 
 			// If second argument is an address
 			if (IsHex(valBPre)) {
-				outputLines.at(outputLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
+				LoadAddress("@B", to_string(valBProcessed));
+				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
 			// If second argument is a register
 			else if (IsReg(valBPre)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
+				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
 			}
 			// If second argument is a variable
 			else if (IsVar(valBPre)) {
-				outputLines.at(outputLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre, vars)) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre)) + "\n";
+				LoadAddress("@B", valBPre);
+				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
 			// If second argument is a new decimal value
 			else if (IsDec(valBPre)) {
-				outputLines.at(outputLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
+				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 			}
 
 			// Add instruction
-			outputLines.at(outputLines.size() - 1) += command + "\n";
+			compiledLines.at(compiledLines.size() - 1) += command + "\n";
 
 
 			// If output argument is an address
 			if (IsHex(outLoc)) {
-				outputLines.at(outputLines.size() - 1) += "sta " + to_string(outLocProcessed) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(outLocProcessed) + "\n";
+				StoreAddress("@A", to_string(outLocProcessed));
 			}
 			// If output argument is a register
 			else if (IsReg(outLoc)) {
-				outputLines.at(outputLines.size() - 1) += MoveFromRegToReg("@A", outLoc);
+				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg("@A", outLoc);
 			}
 			// If output argument is a variable
 			else if (IsVar(outLoc)) {
-				outputLines.at(outputLines.size() - 1) += "sta " + to_string(GetVariableAddress(outLoc, vars)) + "\n";
+				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(outLoc)) + "\n";
+				StoreAddress("@A", outLoc);
 			}
 
 
@@ -1367,11 +1422,11 @@ string CompileCode(string inputcode) {
 
 			int valAProcessed = ParseValue(valAPre);
 
-			outputLines.push_back(",\n, " + string("goto:    '") + command + "' '" + valAPre + "'");
-			outputLines.push_back("");
+			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + valAPre + "'");
+			compiledLines.push_back("");
 
 
-			outputLines.at(outputLines.size() - 1) += "jmp " + to_string(valAProcessed);
+			compiledLines.at(compiledLines.size() - 1) += "jmp " + to_string(valAProcessed);
 
 
 			continue;
@@ -1390,15 +1445,19 @@ string CompileCode(string inputcode) {
 			PrintColored(" -> ", brightBlackFGColor, "");
 			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
 
-			outputLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'");
-			outputLines.push_back("");
-			CompareValues(valAPre, comparer, valBPre, vars, outputLines);
+			compiledLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'");
+			CompareValues(valAPre, comparer, valBPre, vars);
 
 			int addrProcessed = ParseValue(addrPre);
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
-				outputLines.at(outputLines.size() - 1) += "jmpz " + to_string(addrProcessed);
+				compiledLines.push_back("jmpz " + to_string(addrProcessed));
+			}
+			// If using not equal to '!=' comparer
+			else if (comparer == "!=") {
+				int lineNum = GetLineNumber();
+				compiledLines.push_back("jmpz " +to_string(lineNum+2) + "\njmp " + to_string(addrProcessed)); // Jump past normal jump if they are equal
 			}
 
 
@@ -1415,8 +1474,8 @@ string CompileCode(string inputcode) {
 			cout << "if:         ";
 			PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'\n", brightBlueFGColor, "");
 
-			outputLines.push_back(",\n, " + string("if:   '") + valAPre + " " + comparer + " " + valBPre + "'");
-			outputLines.push_back(codelines[i]);
+			compiledLines.push_back(",\n, " + string("if:   '") + valAPre + " " + comparer + " " + valBPre + "'");
+			compiledLines.push_back(codelines[i]);
 			continue;
 		}
 
@@ -1426,8 +1485,8 @@ string CompileCode(string inputcode) {
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "endif:\n";
 
-			outputLines.push_back(",\n, " + string("endif"));
-			outputLines.push_back(codelines[i]);
+			compiledLines.push_back(",\n, " + string("endif"));
+			compiledLines.push_back(codelines[i]);
 			continue;
 		}
 
@@ -1440,65 +1499,65 @@ string CompileCode(string inputcode) {
 	}
 
 	string formattedstr = "";
-	for (int l = 0; l < outputLines.size(); l++)
+	for (int l = 0; l < compiledLines.size(); l++)
 	{
-		formattedstr += trim(outputLines[l]) + "\n";
+		formattedstr += trim(compiledLines[l]) + "\n";
 	}
-	outputLines = split(formattedstr, "\n");
-	cout << outputLines.size() << endl;
+	compiledLines = split(formattedstr, "\n");
+	cout << compiledLines.size() << endl;
 
-	// Replace 'if' statements with 'gotoif' alternatives
-	int openIfs = 0;
-	int foundIfs = 0;
-	int currentNumber = 0;
-	for (int i = 0; i < outputLines.size(); i++)
-	{
-		if (outputLines[i] == "")
-			continue;
+	//// Replace 'if' statements with 'gotoif' alternatives
+	//int openIfs = 0;
+	//int foundIfs = 0;
+	//int currentNumber = 0;
+	//for (int i = 0; i < compiledLines.size(); i++)
+	//{
+	//	if (compiledLines[i] == "")
+	//		continue;
 
-		//cout << currentNumber << endl;
-		if (trim(split(outputLines[i], " ")[0]) == "if") {
-			openIfs++;
-			foundIfs++;
-			if (openIfs == 1) {
-				cout << i << " " << outputLines[i] << endl;
-				currentNumber = i;
-				outputLines[i] = "gotoif " + InvertExpression(split(split(outputLines[i], " ")[1], ":")[0]) + ",";
-			}
-		}
-		if (trim(outputLines[i]) == "endif") {
-			openIfs--;
-			// found matching, get location and remove endif
-			if (openIfs == 0) {
-				cout << "match at " << i << " " << outputLines[i] << " real: " << ActualLineNumFromNum(outputLines, i) << endl;
-				outputLines[currentNumber] += to_string(ActualLineNumFromNum(outputLines, i));
-				outputLines.erase(outputLines.begin() + i);
-				break;
-			}
-		}
+	//	//cout << currentNumber << endl;
+	//	if (trim(split(compiledLines[i], " ")[0]) == "if") {
+	//		openIfs++;
+	//		foundIfs++;
+	//		if (openIfs == 1) {
+	//			cout << i << " " << compiledLines[i] << endl;
+	//			currentNumber = i;
+	//			compiledLines[i] = "gotoif " + InvertExpression(split(split(compiledLines[i], " ")[1], ":")[0]) + ",";
+	//		}
+	//	}
+	//	if (trim(compiledLines[i]) == "endif") {
+	//		openIfs--;
+	//		// found matching, get location and remove endif
+	//		if (openIfs == 0) {
+	//			cout << "match at " << i << " " << compiledLines[i] << " real: " << ActualLineNumFromNum(i) << endl;
+	//			compiledLines[currentNumber] += to_string(ActualLineNumFromNum(i));
+	//			compiledLines.erase(compiledLines.begin() + i);
+	//			break;
+	//		}
+	//	}
 
-		// If there are still more 'if' statements, restart
-		if (i == outputLines.size() - 1 && foundIfs > 0) {
-			if (openIfs > 0) {
-				PrintColored("Missing matching 'endif'\n", redFGColor, "");
-				exit(0);
-			}
+	//	// If there are still more 'if' statements, restart
+	//	if (i == compiledLines.size() - 1 && foundIfs > 0) {
+	//		if (openIfs > 0) {
+	//			PrintColored("Missing matching 'endif'\n", redFGColor, "");
+	//			exit(0);
+	//		}
 
-			openIfs = 0;
-			foundIfs = 0;
-			i = 0;
-			currentNumber = 0;
-		}
-	}
+	//		openIfs = 0;
+	//		foundIfs = 0;
+	//		i = 0;
+	//		currentNumber = 0;
+	//	}
+	//}
 
 	cout << "Parsing ";
 	if (issues == 0) {
 		PrintColored("Done!\n\n", greenFGColor, "");
 
 		string outStr = "";
-		for (int i = 0; i < outputLines.size(); i++)
+		for (int i = 0; i < compiledLines.size(); i++)
 		{
-			outStr += trim(outputLines[i]) + "\n";
+			outStr += trim(compiledLines[i]) + "\n";
 		}
 		return outStr;
 	}
@@ -1610,28 +1669,6 @@ vector<string> parseCode(string input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
-
-// trim from start (in place)
-static inline void ltrim(std::string& s) {
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-		return !std::isspace(ch);
-		}));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string& s) {
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-		return !std::isspace(ch);
-		}).base(), s.end());
-}
-
-// trim from both ends (in place)
-static inline string trim(std::string s) {
-	string ss = s;
-	ltrim(ss);
-	rtrim(ss);
-	return ss;
 }
 
 void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {

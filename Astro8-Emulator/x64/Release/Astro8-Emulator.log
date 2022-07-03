@@ -1,22 +1,22 @@
 ﻿  main.cpp
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\colorprint.h(58,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(641,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(641,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(668,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(669,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(670,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(671,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(672,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(673,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(740,31): warning C4018: '>=': signed/unsigned mismatch
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(795,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(798,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(801,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(980,30): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(1700,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\colorprint.h(80,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(645,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(645,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(672,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(673,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(674,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(675,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(676,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(677,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(744,31): warning C4018: '>=': signed/unsigned mismatch
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(799,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(802,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(805,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(1044,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\main.cpp(1763,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  3 of 853 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  3 of 861 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
+    14 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Basic-CPU-In-Logisim\Astro8-Emulator\x64\Release\Astro8-Emulator.exe

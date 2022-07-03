@@ -52,6 +52,28 @@ const std::string brightWhiteBGColor = "\x1B[107m";
 const std::string resetColor = "\033[0m";
 
 
+// trim from start (in place)
+static inline void ltrim(std::string& s) {
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+		return !std::isspace(ch);
+		}));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string& s) {
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+		return !std::isspace(ch);
+		}).base(), s.end());
+}
+
+// trim from both ends (in place)
+static inline string trim(std::string s) {
+	string ss = s;
+	ltrim(ss);
+	rtrim(ss);
+	return ss;
+}
+
 vector<string> split(string str, string token) {
 	vector<string>result;
 	while (str.size()) {
@@ -78,6 +100,32 @@ string IndentText(string text) {
 	}
 
 	return outStr;
+}
+
+string JoinRange(vector<string> strs, int start, int max) {
+	string outStr = "";
+	for (size_t i = start; i < strs.size()&&i<=max; i++)
+	{
+		outStr += strs[i]+" ";
+	}
+
+	return outStr;
+}
+
+
+bool AccomodateSetInProgramRange(string entireLine, int currentLineCount) {
+	string command = split(entireLine, " ")[0];
+	if (trim(command) != "set") // Not 'set', passes test
+		return true;
+
+	int memAddr = stoi(trim(split(entireLine, " ")[1]));
+	//PrintColored(entireLine, yellowFGColor, "");
+	//cout  << endl;
+
+	if (memAddr <= currentLineCount + 1) // If it is 'set', then it will increment counter IF the memory location is in program mem
+		return true;
+	else
+		return false; // If just a normal 'set', passes and doesn't increment counter.
 }
 
 void PrintColored(std::string text, std::string fgColor, std::string bgColor)
@@ -134,12 +182,18 @@ void ColorAndPrintAssembly(std::string asmb) {
 		// If line is a comment
 		if (nstr[i][0] == ',')
 			PrintColored("\t\t"+nstr[i] + "\n", brightBlackFGColor, "");
+		// Else if uncounted set
+		else if(!AccomodateSetInProgramRange(nstr[i], actualNum)) {
+				//PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
+				PrintColored("\t\t"+split(nstr[i], " ")[0], greenFGColor, "");
+				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+		}
 		// Else
 		else {
 			if (split(nstr[i], " ").size() > 1) {
 				PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
 				PrintColored("\t"+split(nstr[i], " ")[0], cyanFGColor, "");
-				PrintColored(" " + split(nstr[i], " ")[1] + "\n", brightMagentaFGColor, "");
+				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
 			}
 			else {
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
