@@ -908,7 +908,7 @@ void StoreAddress(string reg, string address) {
 	int actualVal = ParseValue(address);
 	string addrOutWord = "ain ";
 
-	cout << "store " << address << " which is " << to_string(actualVal) << ". hold at " << to_string(actualLineNum + 2) << endl;
+	//cout << "store " << address << " which is " << to_string(actualVal) << ". hold at " << to_string(actualLineNum + 2) << endl;
 
 	// Value is small enough to be accessible through normal r/w instructions
 	if (actualVal <= 2047)
@@ -1051,7 +1051,8 @@ int FindLabelLine(string labelName, vector<string> labels, vector<int>labelLineV
 			return labelLineValues[i];
 		}
 	}
-	return 0;
+	// Not found return -1
+	return -1;
 }
 
 int ParseValue(string input) {
@@ -1165,6 +1166,49 @@ string CompileCode(string inputcode) {
 	for (int i = 0; i < codelines.size(); i++)
 		codelines[i] = trim(split(codelines[i], "//")[0]);
 
+	// Replace 'if' statements with 'gotoif' alternatives,
+	// and replace 'endif' with custom label to jump to
+	int ifID = 0;
+	int openIfs = 0;
+	int foundIfs = 0;
+	int currentNumber = 0;
+	for (int i = 0; i < codelines.size(); i++)
+	{
+		if (codelines[i] == "")
+			continue;
+
+		//cout << currentNumber << endl;
+		if (trim(split(codelines[i], " ")[0]) == "if") {
+			openIfs++;
+			foundIfs++;
+			if (openIfs == 1) {
+				ifID++;
+				codelines[i] = "gotoif " + InvertExpression(split(split(codelines[i], " ")[1], ":")[0]) + ",#__IF-ID" + to_string(ifID) + "__";
+			}
+		}
+		if (trim(codelines[i]) == "endif") {
+			openIfs--;
+			// found matching, get location and remove endif
+			if (openIfs == 0) {
+				codelines[i] = "#__IF-ID" + to_string(ifID) + "__";
+				break;
+			}
+		}
+
+		// If there are still more 'if' statements, restart
+		if (i == codelines.size() - 1 && foundIfs > 0) {
+			if (openIfs > 0) {
+				PrintColored("Missing matching 'endif'\n", redFGColor, "");
+				exit(0);
+			}
+
+			openIfs = 0;
+			foundIfs = 0;
+			i = 0;
+			currentNumber = 0;
+		}
+	}
+
 	PrintColored("  Done!\n", brightGreenFGColor, "");
 
 
@@ -1181,8 +1225,9 @@ string CompileCode(string inputcode) {
 		// "#" label marker ex. #JumpToHere
 		if (command[0] == '#')
 		{
+			int labelLineVal = GetLineNumber();
 			labels.push_back(command);
-			labelLineValues.push_back(GetLineNumber());
+			labelLineValues.push_back(labelLineVal);
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "label:      ";
 			PrintColored("'" + command + "'", brightBlueFGColor, "");
@@ -1190,6 +1235,22 @@ string CompileCode(string inputcode) {
 			PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
 
 			compiledLines.push_back(",\n, == " + command + " ==");
+
+			// Replace any uses of this label with the labelLineVal
+			for (int h = 0; h < compiledLines.size(); h++)
+			{
+				vector<string> splitBySpace = split(trim(compiledLines[h]), " ");
+
+				// No second argument, skip
+				if (splitBySpace.size() <= 1)
+					continue;
+
+				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
+				if (splitBySpace[0].size() >= 3)
+					if (splitBySpace[0][0] == 'j' && splitBySpace[0][1] == 'm' && splitBySpace[0][2] == 'p')
+						if (splitBySpace[1] == command) // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal);// Replace
+			}
 
 			continue;
 		}
@@ -1445,19 +1506,24 @@ string CompileCode(string inputcode) {
 			PrintColored(" -> ", brightBlackFGColor, "");
 			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
 
-			compiledLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'");
+			compiledLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'\n");
 			CompareValues(valAPre, comparer, valBPre, vars);
 
-			int addrProcessed = ParseValue(addrPre);
+			string addrProcessed = to_string(ParseValue(addrPre));
+
+			// If label has not been defined yet, write after jump to go back to later.
+			if (addrProcessed == "-1") {
+				addrProcessed = addrPre;
+			}
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
-				compiledLines.push_back("jmpz " + to_string(addrProcessed));
+				compiledLines.push_back("jmpz " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " +to_string(lineNum+2) + "\njmp " + to_string(addrProcessed)); // Jump past normal jump if they are equal
+				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past normal jump if they are equal
 			}
 
 
@@ -1506,49 +1572,6 @@ string CompileCode(string inputcode) {
 	compiledLines = split(formattedstr, "\n");
 	cout << compiledLines.size() << endl;
 
-	//// Replace 'if' statements with 'gotoif' alternatives
-	//int openIfs = 0;
-	//int foundIfs = 0;
-	//int currentNumber = 0;
-	//for (int i = 0; i < compiledLines.size(); i++)
-	//{
-	//	if (compiledLines[i] == "")
-	//		continue;
-
-	//	//cout << currentNumber << endl;
-	//	if (trim(split(compiledLines[i], " ")[0]) == "if") {
-	//		openIfs++;
-	//		foundIfs++;
-	//		if (openIfs == 1) {
-	//			cout << i << " " << compiledLines[i] << endl;
-	//			currentNumber = i;
-	//			compiledLines[i] = "gotoif " + InvertExpression(split(split(compiledLines[i], " ")[1], ":")[0]) + ",";
-	//		}
-	//	}
-	//	if (trim(compiledLines[i]) == "endif") {
-	//		openIfs--;
-	//		// found matching, get location and remove endif
-	//		if (openIfs == 0) {
-	//			cout << "match at " << i << " " << compiledLines[i] << " real: " << ActualLineNumFromNum(i) << endl;
-	//			compiledLines[currentNumber] += to_string(ActualLineNumFromNum(i));
-	//			compiledLines.erase(compiledLines.begin() + i);
-	//			break;
-	//		}
-	//	}
-
-	//	// If there are still more 'if' statements, restart
-	//	if (i == compiledLines.size() - 1 && foundIfs > 0) {
-	//		if (openIfs > 0) {
-	//			PrintColored("Missing matching 'endif'\n", redFGColor, "");
-	//			exit(0);
-	//		}
-
-	//		openIfs = 0;
-	//		foundIfs = 0;
-	//		i = 0;
-	//		currentNumber = 0;
-	//	}
-	//}
 
 	cout << "Parsing ";
 	if (issues == 0) {
