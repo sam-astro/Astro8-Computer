@@ -8,6 +8,15 @@
 #include <limits>
 #include <algorithm>
 
+#if defined(__unix__)
+#define UNIX true
+#define WINDOWS false
+#elif defined(_MSC_VER)
+#define UNIX false
+#define WINDOWS true
+#endif
+
+
 #if WINDOWS
 #include "color.hpp"
 #endif

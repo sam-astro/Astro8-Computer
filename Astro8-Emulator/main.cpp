@@ -10,6 +10,8 @@
 #include <fstream>
 #include "colorprint.h"
 
+#define DEV_MODE false
+
 
 using namespace std::chrono;
 using namespace std;
@@ -36,10 +38,10 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
-int pixelRamIndex = 61439;
+int pixelRamIndex = 0xffff;
 
-int frameSpeed = 2; // ^ Higher = lower FPS, but faster instruction processing
-					// v Lower = higher FPS, but slower instruction processing
+int frameSpeed = 1;	// ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
+						// v Lower = higher FPS, but slower instruction processing
 
 float slowdownAmnt = 1;
 int iterations = 0;
@@ -89,6 +91,7 @@ vector<string> splitByComparator(string str);
 int ParseValue(string input);
 string MoveFromRegToReg(string from, string destination);
 int GetLineNumber();
+int ConvertAsciiToSdcii(int asciiCode);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
@@ -110,7 +113,7 @@ string instructioncodes[] = {
 		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
 		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
 		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
-		"rdexp( 2=wb,re & 3=ei", // Read from expansion port to register B
+		"rdexp( 2=wa,re & 3=ei", // Read from expansion port to register A
 		"wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
 		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
 		"stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
@@ -191,15 +194,6 @@ int clamp(int x, int min, int max) {
 
 int main(int argc, char** argv)
 {
-
-	//InstructionReg = 100;
-	////int b = (BitRange(InstructionReg, 6, 4) * 64) + (0 * 4) + (flags[0] * 2) + flags[1];
-	//unsigned b = BitRange(640, 6, 4); // Should output 10011010010 to 1101 (13)
-	//cout << b << " == 0b" << DecToBin(b) << endl;
-
-	for (int i = 0; i < 144; i++)
-		charRam.push_back(0);
-
 	// Gather user inputted code
 	cout << ("v Emu. Code input v\n");
 	string code = "";
@@ -211,6 +205,24 @@ int main(int argc, char** argv)
 		}
 		code += line + "\n";
 	}
+
+	// If the input is a path to a file
+	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
+		string path = trim(split(code, "\n")[0]);
+		code = "";
+
+		// Open and read file
+		string li;
+		ifstream fileStr(path);
+		if (fileStr.is_open())
+		{
+			while (getline(fileStr, li)) {
+				code += li + "\n";
+			}
+			fileStr.close();
+		}
+	}
+
 	// If the code inputted is marked as written in armstrong with #AS
 	if (split(code, "\n")[0] == "#AS")
 	{
@@ -257,6 +269,8 @@ int main(int argc, char** argv)
 	InitGraphics("Astro-8 Emulator", 64, 64, 6);
 
 
+	int cyclesKeyPressed = 0;
+	bool keyPress = false;
 
 	float dt = 0;
 	bool running = true;
@@ -274,14 +288,23 @@ int main(int argc, char** argv)
 			else if (event.type == SDL_KEYDOWN) {
 
 				// Keyboard support
-				expansionPort = event.key.keysym.scancode;
+				expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+				keyPress = true;
+				cout << "  expansionPort: " << expansionPort << endl;
 			}
 			else if (event.type == SDL_KEYUP) {
 
 				// Keyboard support
-				expansionPort = 0;
+				expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+				keyPress = false;
+				cyclesKeyPressed = 0;
+				//cout << "  expansionPort: " << expansionPort << endl;
 			}
 		}
+		if (cyclesKeyPressed >= 25)
+			expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+		if (keyPress)
+			cyclesKeyPressed++;
 
 
 		Update(dt);
@@ -289,10 +312,6 @@ int main(int argc, char** argv)
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
 		dt = std::chrono::duration<float, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0f;
-
-		pixelRamIndex++;
-		if (pixelRamIndex > 65535)
-			pixelRamIndex = 61439;
 	}
 
 
@@ -370,12 +389,12 @@ bool Update(float deltatime)
 		else if (readInstr == 4)
 		{ // RM
 			//cout << ("RM ");
-			//bus = memoryBytes[memoryIndex];
+			bus = memoryBytes[memoryIndex];
 
-			if (memoryIndex <= 16382)
-				bus = memoryBytes[memoryIndex];
-			else
-				bus = charRam.at(clamp(memoryIndex - 16383, 0, 143));
+			//if (memoryIndex <= 16382 || memoryIndex > 16527)
+			//	bus = memoryBytes[memoryIndex];
+			//else
+			//	bus = charRam.at(clamp(memoryIndex - 16383, 0, 143));
 		}
 		else if (readInstr == 5)
 		{ // IR
@@ -489,14 +508,44 @@ bool Update(float deltatime)
 			//cout << ("IW ");
 			InstructionReg = bus;
 		}
-		else if (writeInstr == 5)
-		{ // DW
-			int characterRamValue = charRam.at(clamp(characterRamIndex, 0, 143));
+		else if (writeInstr == 6)
+		{ // WM
+			//cout << ("WM ");
+			memoryBytes[memoryIndex] = bus;
+			//if (memoryIndex <= 16382 || memoryIndex > 16527)
+			//	memoryBytes[memoryIndex] = bus;
+			//else
+			//	charRam.at(clamp(memoryIndex - 16383, 0, 143)) = bus;
+		}
+		else if (writeInstr == 7)
+		{ // J
+			//cout << ("J ");
+			//cout<<Line(DecToBinFilled(InstructionReg, 16));
+			//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
+			programCounter = BitRange(InstructionReg, 0, 11);
+		}
+		else if (writeInstr == 8)
+		{ // AW
+			//cout << ("AW ");
+			memoryIndex = bus;
+		}
+		else if (writeInstr == 9)
+		{ // WE
+			//cout << ("WE ");
+			expansionPort = bus;
+		}
+
+
+		// Display current pixel
+		if (iterations % frameSpeed == 0)
+		{
+			int characterRamValue = memoryBytes.at(characterRamIndex + 16382);
 			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-			outputReg = bus;
-
-			int r, g, b = 0;
+			int pixelVal = memoryBytes[pixelRamIndex];
+			int r, g, b;
+			//r= g=b = 0;
+			//b = 128;
 
 			if (charPixRomVal == true && imgX < 60) {
 				r = 255;
@@ -504,9 +553,9 @@ bool Update(float deltatime)
 				b = 255;
 			}
 			else {
-				r = BitRange(outputReg, 10, 5) * 8; // Get first 5 bits
-				g = BitRange(outputReg, 5, 5) * 8; // get middle bits
-				b = BitRange(outputReg, 0, 5) * 8; // Gets last 5 bits
+				r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
+				g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
+				b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
 			}
 			//cout << "rgb: (" << r << ", " << g << ", " << b << ")" << endl;
 
@@ -560,39 +609,17 @@ bool Update(float deltatime)
 				apply_pixels(pixels, texture, 64);
 				DisplayTexture(gRenderer, texture);
 
-				cout << "\r                " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(1.0f / renderedFrameTime);
+				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(1.0f / renderedFrameTime) << "  rval: " + to_string(pixelRamIndex);
 
 				renderedFrameTime = 0;
 			}
 
-		}
-		else if (writeInstr == 6)
-		{ // WM
-			//cout << ("WM ");
-			//memoryBytes[memoryIndex] = bus;
-			if (memoryIndex <= 16382)
-				memoryBytes[memoryIndex] = bus;
-			else
-				charRam.at(clamp(memoryIndex - 16383, 0, 143)) = bus;
-		}
-		else if (writeInstr == 7)
-		{ // J
-			//cout << ("J ");
-			//cout<<Line(DecToBinFilled(InstructionReg, 16));
-			//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-			programCounter = BitRange(InstructionReg, 0, 11);
-		}
-		else if (writeInstr == 8)
-		{ // AW
-			//cout << ("AW ");
-			memoryIndex = bus;
-		}
-		else if (writeInstr == 9)
-		{ // WE
-			//cout << ("WE ");
-			expansionPort = bus;
-		}
+			pixelRamIndex++;
 
+			if (pixelRamIndex >= 65535)
+				pixelRamIndex = 61439;
+
+		}
 
 		// Standalone microinstructions (ungrouped)
 		if (mcode[1] == 1)
@@ -615,9 +642,9 @@ bool Update(float deltatime)
 		}
 	}
 
-	//cout << ("o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-//}
 	iterations += 1;
+	if (iterations >= 0xFFFFFFFF)
+		iterations = 1;
 
 	return true;
 }
@@ -670,6 +697,68 @@ string charToString(char* a)
 {
 	string s(a);
 	return s;
+}
+
+int ConvertAsciiToSdcii(int asciiCode) {
+	int conversionTable[100];  // [ascii] = sdcii
+
+	// Special characters
+	conversionTable[0] = 0;	// space -> blank
+	conversionTable[58] = 1;	// f1 -> smaller solid square
+	conversionTable[59] = 2;	// f2 -> full solid square
+	conversionTable[87] = 3;	// num+ -> +
+	conversionTable[86] = 4;	// num- -> -
+	conversionTable[85] = 5;	// num* -> *
+	conversionTable[84] = 6;	// num/ -> /
+	conversionTable[60] = 7;	// f3 -> full hollow square
+	conversionTable[45] = 8;	// _ -> _
+	conversionTable[80] = 9;	// l-arr -> <
+	conversionTable[79] = 10;	// r-arr -> >
+	conversionTable[49] = 11;	// | -> vertical line |
+	conversionTable[66] = 12;	// f9 -> horizontal line --
+
+	// Letters
+	conversionTable[4] = 13;	// a -> a
+	conversionTable[5] = 14;	// b -> b
+	conversionTable[6] = 15;	// c -> c
+	conversionTable[7] = 16;	// d -> d
+	conversionTable[8] = 17;	// e -> e
+	conversionTable[9] = 18;	// f -> f
+	conversionTable[10] = 19;	// g -> g
+	conversionTable[11] = 20;	// h -> h
+	conversionTable[12] = 21;	// i -> i
+	conversionTable[13] = 22;	// j -> j
+	conversionTable[14] = 23;	// k -> k
+	conversionTable[15] = 24;	// l -> l
+	conversionTable[16] = 25;	// m -> m
+	conversionTable[17] = 26;	// n -> n
+	conversionTable[18] = 27;	// o -> o
+	conversionTable[19] = 28;	// p -> p
+	conversionTable[20] = 29;	// q -> q
+	conversionTable[21] = 30;	// r -> r
+	conversionTable[22] = 31;	// s -> s
+	conversionTable[23] = 32;	// t -> t
+	conversionTable[24] = 33;	// u -> u
+	conversionTable[25] = 34;	// v -> v
+	conversionTable[26] = 35;	// w -> w
+	conversionTable[27] = 36;	// x -> x
+	conversionTable[28] = 37;	// y -> y
+	conversionTable[29] = 38;	// z -> z
+
+	// Numbers
+	conversionTable[39] = 39;	// 0 -> 0
+	conversionTable[30] = 40;	// 1 -> 1
+	conversionTable[31] = 41;	// 2 -> 2
+	conversionTable[32] = 42;	// 3 -> 3
+	conversionTable[33] = 43;	// 4 -> 4
+	conversionTable[34] = 44;	// 5 -> 5
+	conversionTable[35] = 45;	// 6 -> 6
+	conversionTable[36] = 46;	// 7 -> 7
+	conversionTable[37] = 47;	// 8 -> 8
+	conversionTable[38] = 48;	// 9 -> 9
+
+
+	return conversionTable[asciiCode];
 }
 
 
@@ -923,8 +1012,6 @@ void StoreAddress(string reg, string address) {
 	int actualVal = ParseValue(address);
 	string addrOutWord = "ain ";
 
-	//cout << "store " << address << " which is " << to_string(actualVal) << ". hold at " << to_string(actualLineNum + 2) << endl;
-
 	// Value is small enough to be accessible through normal r/w instructions
 	if (actualVal <= 2047)
 		compiledLines.push_back(MoveFromRegToReg(reg, "@A") + "sta " + to_string(actualVal));
@@ -936,17 +1023,44 @@ void StoreAddress(string reg, string address) {
 	}
 }
 
-string RegIdToLDI(string in, string followingValue) {
-	if (in == "@A")
-		return "ldia " + followingValue;
-	if (in == "@B")
-		return "ldib " + followingValue;
-	if (in == "@C")
-		return "ldia " + followingValue + "\n" + "swpc";
-	if (in == "@EX")
-		return "ldia " + followingValue + "\n" + "wrexp";
+void RegIdToLDI(string in, string followingValue) {
+	int actualValue = ParseValue(followingValue);
 
-	return "";
+	if (actualValue < 2047) {
+		if (in == "@A") {
+			compiledLines.push_back("ldia " + to_string(actualValue));
+		}
+		else if (in == "@B") {
+			compiledLines.push_back("ldib " + to_string(actualValue));
+		}
+		else if (in == "@C") {
+			compiledLines.push_back("ldia " + to_string(actualValue));
+			compiledLines.push_back("swpc");
+		}
+		else if (in == "@EX") {
+			compiledLines.push_back("ldia " + to_string(actualValue));
+			compiledLines.push_back("wrexp");
+		}
+	}
+	else {
+		if (in == "@A") {
+			compiledLines.push_back("ain " + to_string(GetLineNumber() + 1));
+			PutSetOnCurrentLine(followingValue);
+		}
+		else if (in == "@B") {
+			compiledLines.push_back("bin " + to_string(GetLineNumber() + 1));
+			PutSetOnCurrentLine(followingValue);
+		}
+		else if (in == "@C") {
+			compiledLines.push_back("cin " + to_string(GetLineNumber() + 1));
+			PutSetOnCurrentLine(followingValue);
+		}
+		else if (in == "@EX") {
+			compiledLines.push_back("ain " + to_string(GetLineNumber() + 1));
+			PutSetOnCurrentLine(followingValue);
+			compiledLines.push_back("wrexp");
+		}
+	}
 }
 
 //string RegIdToMRead(string in, string followingValue) {
@@ -971,21 +1085,21 @@ string MoveFromRegToReg(string from, string destination) {
 	if (destination == "@A" && from == "@C")
 		return "swpc\n";
 	if (destination == "@A" && from == "@EX")
-		return "rdexp\nswp\n";
+		return "rdexp\n";
 
 	if (destination == "@B" && from == "@A")
 		return "swp\n";
 	if (destination == "@B" && from == "@C")
 		return "swpc\nswp\n";
 	if (destination == "@B" && from == "@EX")
-		return "rdexp\n";
+		return "rdexp\nswp\n";
 
 	if (destination == "@C" && from == "@A")
 		return "swpc\n";
 	if (destination == "@C" && from == "@B")
 		return "swp\nswpc\n";
 	if (destination == "@C" && from == "@EX")
-		return "rdexp\nswp\nswpc\n";
+		return "rdexp\nswpc\n";
 
 	if (destination == "@EX" && from == "@A")
 		return "wrexp\n";
@@ -1028,15 +1142,12 @@ int ActualLineNumFromNum(int x) {
 	}
 
 	compiledLines = split(outStr, "\n");
-	//cout << "sajnfjlkshf : " << compiledLines.size()<<endl;
 	int outInt = 1;
 	int i = 0;
 	while (i < compiledLines.size() && i <= x)
 	{
 		if (trim(compiledLines[i]) != "" && AccomodateSetInProgramRange(compiledLines[i], outInt) && split(compiledLines[i], " ")[0] != "endif" && split(compiledLines[i], " ")[0][0] != ',')
 			outInt++;
-		//else
-		//	PrintColored(compiledLines[i] + "  - STAY -\n", blueFGColor, "");
 
 		i++;
 	}
@@ -1129,6 +1240,31 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 
 	// Check if two values are equal
 	if (comparer == "==" || comparer == "!=") {
+		// Get into B reg
+
+		// If B is pointer to a memory address
+		if (IsPointer(valB)) {
+			LoadPointer(valB);
+			compiledLines.push_back("swp\n");
+		}
+		// If B is memory address
+		else if (IsHex(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
+		}
+		// If B is register
+		else if (IsReg(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
+		}
+		// If B is variable
+		else if (IsVar(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
+		}
+		// If B is decimal
+		else if (IsDec(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
+		}
+
+
 		// Get into A reg
 
 		// If A is pointer to a memory address
@@ -1153,11 +1289,18 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 		}
 
 
+		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
+		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+	}
+
+	// Check if A is greater than B
+	if (comparer == ">" || comparer == ">=") {
 		// Get into B reg
 
-		// If A is pointer to a memory address
+		// If B is pointer to a memory address
 		if (IsPointer(valB)) {
 			LoadPointer(valB);
+			compiledLines.push_back("swp\n");
 		}
 		// If B is memory address
 		else if (IsHex(valB)) {
@@ -1176,7 +1319,87 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
 		}
 
-		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
+
+		// Get into A reg
+
+		// If A is pointer to a memory address
+		if (IsPointer(valA)) {
+			LoadPointer(valA);
+		}
+		// If A is memory address
+		else if (IsHex(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
+		}
+		// If A is register
+		else if (IsReg(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
+		}
+		// If A is variable
+		else if (IsVar(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
+		}
+		// If A is decimal
+		else if (IsDec(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
+		}
+
+
+		// Finally compare with a subtract, which will NOT activate the ZERO flag OR the CARRY flag if A is greater than B
+		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+	}
+
+	// Check if B is greater than A (A less than B <)
+	if (comparer == "<" || comparer == "<=") {
+		// Get into B reg
+
+		// If B is pointer to a memory address
+		if (IsPointer(valB)) {
+			LoadPointer(valB);
+			compiledLines.push_back("swp\n");
+		}
+		// If B is memory address
+		if (IsHex(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
+		}
+		// If B is register
+		else if (IsReg(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
+		}
+		// If B is variable
+		else if (IsVar(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
+		}
+		// If B is decimal
+		else if (IsDec(valB)) {
+			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
+		}
+
+
+		// Get into A reg
+
+		// If A is pointer to a memory address
+		if (IsPointer(valA)) {
+			LoadPointer(valA);
+		}
+		// If A is memory address
+		else if (IsHex(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
+		}
+		// If A is register
+		else if (IsReg(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
+		}
+		// If A is variable
+		else if (IsVar(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
+		}
+		// If A is decimal
+		else if (IsDec(valA)) {
+			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
+		}
+
+
+		// Finally compare with a subtract, which WILL activate the CARRY flag if A is less than B
 		compiledLines.at(compiledLines.size() - 1) += "sub\n";
 	}
 
@@ -1193,15 +1416,18 @@ string CompileCode(string inputcode) {
 	// Remove line if it is blank or is just a comment
 	for (int i = 0; i < codelines.size(); i++)
 	{
-		if (codelines[i] == "")
+		if (trim(codelines[i]).find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
 			codelines.erase(codelines.begin() + i);
-		else if (codelines[i][0] == '/' && codelines[i][1] == '/')
+			i--;
+		}
+		else if (trim(codelines[i])[0] == '/' && trim(codelines[i])[1] == '/')
 			codelines.erase(codelines.begin() + i);
 	}
 
 	// Remove comments from end of lines and trim whitespace
-	for (int i = 0; i < codelines.size(); i++)
+	for (int i = 0; i < codelines.size(); i++) {
 		codelines[i] = trim(split(codelines[i], "//")[0]);
+	}
 
 	// Replace 'if' statements with 'gotoif' alternatives,
 	// and replace 'endif' with custom label to jump to
@@ -1209,6 +1435,7 @@ string CompileCode(string inputcode) {
 	int openIfs = 0;
 	int foundIfs = 0;
 	int currentNumber = 0;
+	int i = 0;
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		if (codelines[i] == "")
@@ -1228,7 +1455,7 @@ string CompileCode(string inputcode) {
 			// found matching, get location and remove endif
 			if (openIfs == 0) {
 				codelines[i] = "#__IF-ID" + to_string(ifID) + "__";
-				break;
+				//break;
 			}
 		}
 
@@ -1335,21 +1562,21 @@ string CompileCode(string inputcode) {
 
 			// If changing a value pointed to by a pointer to a new integer value
 			if (IsPointer(addrPre) && IsDec(valuePre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(value);
+				RegIdToLDI("@B", to_string(value));
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting to a new integer value
 			if (IsHex(addrPre) && IsDec(valuePre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(value);
+				RegIdToLDI("@A", to_string(value));
 				StoreAddress("@A", addrPre);
 			}
 			// If changing a register value and setting to a new integer value
 			else if (IsReg(addrPre) && IsDec(valuePre)) {
-				compiledLines.at(compiledLines.size() - 1) += RegIdToLDI(addrPre, to_string(value));
+				RegIdToLDI(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to a new integer value
 			else if (IsVar(addrPre) && IsDec(valuePre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(value);
+				RegIdToLDI("@A", to_string(value));
 				StoreAddress("@A", addrPre);
 			}
 
@@ -1416,7 +1643,7 @@ string CompileCode(string inputcode) {
 
 			// If changing a value pointed to by a pointer to a register
 			else if (IsPointer(addrPre) && IsReg(valuePre)) {
-				MoveFromRegToReg(valuePre, "@B");
+				compiledLines.push_back(MoveFromRegToReg(valuePre, "@B"));
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting equal to a register
@@ -1491,6 +1718,28 @@ string CompileCode(string inputcode) {
 
 
 
+			// If second argument is an address
+			if (IsHex(valBPre)) {
+				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
+				LoadAddress("@B", to_string(valBProcessed));
+				compiledLines.at(compiledLines.size() - 1) += "\n";
+			}
+			// If second argument is a register
+			else if (IsReg(valBPre)) {
+				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
+			}
+			// If second argument is a variable
+			else if (IsVar(valBPre)) {
+				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre)) + "\n";
+				LoadAddress("@B", valBPre);
+				compiledLines.at(compiledLines.size() - 1) += "\n";
+			}
+			// If second argument is a new decimal value
+			else if (IsDec(valBPre)) {
+				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
+			}
+
+
 			// If first argument is an address
 			if (IsHex(valAPre)) {
 				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
@@ -1512,27 +1761,6 @@ string CompileCode(string inputcode) {
 				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
 			}
 
-
-			// If second argument is an address
-			if (IsHex(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
-				LoadAddress("@B", to_string(valBProcessed));
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a register
-			else if (IsReg(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
-			}
-			// If second argument is a variable
-			else if (IsVar(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre)) + "\n";
-				LoadAddress("@B", valBPre);
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a new decimal value
-			else if (IsDec(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
-			}
 
 			// Add instruction
 			compiledLines.at(compiledLines.size() - 1) += command + "\n";
@@ -1607,7 +1835,27 @@ string CompileCode(string inputcode) {
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past normal jump if they are equal
+				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+			}
+			// If using greater than '>' comparer
+			else if (comparer == ">") {
+				int lineNum = GetLineNumber();
+				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+			}
+			// If using greater equal to '>=' comparer
+			else if (comparer == ">=") {
+				int lineNum = GetLineNumber();
+				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+			}
+			// If using less than '<' comparer
+			else if (comparer == "<") {
+				int lineNum = GetLineNumber();
+				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+			}
+			// If using less equal to '<=' comparer
+			else if (comparer == "<=") {
+				int lineNum = GetLineNumber();
+				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
 			}
 
 
@@ -1692,14 +1940,16 @@ string CompileCode(string inputcode) {
 vector<string> parseCode(string input)
 {
 	vector<string> outputBytes;
-	for (int i = 0; i < 16383; i++)
+	for (int i = 0; i < 65535; i++)
 		outputBytes.push_back("0000");
 
 	string icopy = input;
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 	vector<string> splitcode = explode(icopy, '\n');
 
+#if DEV_MODE
 	cout << endl;
+#endif
 
 	int memaddr = 0;
 	for (int i = 0; i < splitcode.size(); i++)
@@ -1713,7 +1963,9 @@ vector<string> parseCode(string input)
 
 		if (splitBySpace[0][0] == ',')
 		{
+#if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\n");
+#endif
 			continue;
 		}
 		if (splitBySpace[0] == "SET")
@@ -1724,7 +1976,9 @@ vector<string> parseCode(string input)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
+#if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
+#endif
 			continue;
 		}
 
@@ -1733,33 +1987,43 @@ vector<string> parseCode(string input)
 			memaddr += 1;
 		}
 
+#if DEV_MODE
 		cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
+#endif
 
 		// Find index of instruction
 		for (int f = 0; f < sizeof(instructions) / sizeof(instructions[0]); f++)
 		{
 			if (instructions[f] == splitBySpace[0])
 			{
+#if DEV_MODE
 				cout << DecToBinFilled(f, 5);
+#endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
 			}
-		}
+			}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
 		{
+#if DEV_MODE
 			cout << DecToBinFilled(stoi(splitBySpace[1]), 11);
+#endif
 			outputBytes[memaddr] += DecToBinFilled(stoi(splitBySpace[1]), 11);
 		}
 		else
 		{
+#if DEV_MODE
 			cout << " 00000000000";
+#endif
 			outputBytes[memaddr] += "00000000000";
 		}
+#if DEV_MODE
 		cout << "  " + BinToHexFilled(outputBytes[memaddr], 4) + "\n";
+#endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1778,8 +2042,10 @@ vector<string> parseCode(string input)
 
 		string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
-	}
+		}
+#if DEV_MODE
 	cout << processedOutput << endl << endl;
+#endif
 
 	// Save the data to ../../../program_machine_code
 	fstream myStream;
@@ -1787,7 +2053,7 @@ vector<string> parseCode(string input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
 
@@ -1855,7 +2121,9 @@ void GenerateMicrocode()
 				newStr += instructioncodes[cl][clc];
 		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
+#if DEV_MODE
 		cout << (newStr) << " ." << endl;
+#endif
 		instructioncodes[cl] = newStr;
 	}
 
@@ -1884,7 +2152,9 @@ void GenerateMicrocode()
 	}
 
 	// Special process fetch instruction
+#if DEV_MODE
 	cout << "\n\ngenerate fetch... \n";
+#endif
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
@@ -1935,21 +2205,26 @@ void GenerateMicrocode()
 				if (doesntmatch)
 					continue;
 
+#if DEV_MODE
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
+#endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
+			}
+
 		}
 
-		//cout<<Line();
-	}
-
 	// Do actual processing
+#if DEV_MODE
 	cout << "\n\ngenerate general... \n";
+#endif
 	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = instIndexes[ins];
 
+#if DEV_MODE
 		cout << (instructioncodes[correctedIndex] + "\n");
+#endif
 
 		string startaddress = DecToBinFilled(correctedIndex, 5);
 
@@ -2001,18 +2276,18 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-				}
+					}
 				if (doesntmatch)
 					continue;
 
+#if DEV_MODE
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
 				cout << endl;
+#endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+				}
 			}
 		}
-
-		//cout<<Line();
-	}
 
 	// Print the output
 	string processedOutput = "";
@@ -2037,10 +2312,10 @@ void GenerateMicrocode()
 			microinstructionData[outindex].push_back(binversion[i] == '1');
 		}
 	}
-	cout << processedOutput << endl << endl;
+	//cout << processedOutput << endl << endl;
 
 	// Save the data to ../../../microinstructions_cpu_v1
 	fstream myStream;
 	myStream.open("../../../microinstructions_cpu_v1", ios::out);
 	myStream << processedOutput;
-}
+	}
