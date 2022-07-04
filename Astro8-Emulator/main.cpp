@@ -36,6 +36,10 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
+int pixelRamIndex = 61439;
+
+int frameSpeed = 2; // ^ Higher = lower FPS, but faster instruction processing
+					// v Lower = higher FPS, but slower instruction processing
 
 float slowdownAmnt = 1;
 int iterations = 0;
@@ -118,7 +122,7 @@ string instructioncodes[] = {
 		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
-		"staout( 2=ra,aw & 3=ra,wm & 4=ei", // Use reg A as memory address, then copy value from A into memory
+		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
 		"stlge( 2=cr,aw & 3=rm,aw & 4=ra,wm,ce & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
@@ -211,7 +215,8 @@ int main(int argc, char** argv)
 	if (split(code, "\n")[0] == "#AS")
 	{
 		cout << "Compiling AS..." << endl;
-		code = CompileCode("#AS\nmult @C,0x2f -> 0xfff\nchange $variable = 6\nadd @A,$variable -> 0xfff\nchange $variable = @B\n#jmpHere\nchange @EX = @C\nchange $variable = 123\nchange $variable = 3\ndefine 400 3\n#anotherlabel\nchange $variable = 234\nchange $variable = 3\nif @A==@C:\nchange $variable = 0x2f\ngoto 0x0\nendif\ngoto #jmpHere\ngotoif @A==0x13,0x0\nchange $variable = @C\nchange @C = $variable\n");
+		code = CompileCode(code);
+		//code = CompileCode("#AS\nmult @C,0x2f -> 0xfff\nchange $variable = 6\nadd @A,$variable -> 0xfff\nchange $variable = @B\n#jmpHere\nchange @EX = @C\nchange $variable = 123\nchange $variable = 3\ndefine 400 3\n#anotherlabel\nchange $variable = 234\nchange $variable = 3\nif @A==@C:\nchange $variable = 0x2f\ngoto 0x0\nendif\ngoto #jmpHere\ngotoif @A==0x13,0x0\nchange $variable = @C\nchange @C = $variable\n");
 
 		if (code != "") {
 			cout << "Output:\n";
@@ -222,7 +227,7 @@ int main(int argc, char** argv)
 		else
 			exit(0);
 
-		exit(0);
+		//exit(0);
 	}
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
@@ -284,6 +289,10 @@ int main(int argc, char** argv)
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
 		dt = std::chrono::duration<float, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0f;
+
+		pixelRamIndex++;
+		if (pixelRamIndex > 65535)
+			pixelRamIndex = 61439;
 	}
 
 
@@ -862,8 +871,14 @@ bool IsLabel(string in) {
 			return true;
 	return false;
 }
+bool IsPointer(string in) {
+	if (in.size() > 1)
+		if (in[0] == '*')
+			return true;
+	return false;
+}
 bool IsDec(string in) {
-	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in))
+	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }
@@ -1068,8 +1083,22 @@ int ParseValue(string input) {
 		return stoi(input);
 	if (IsLabel(input)) // If a label
 		return FindLabelLine(input, labels, labelLineValues);
+	if (IsPointer(input)) // If a pointer
+		return ParseValue(split(input, "*")[1]);
 
 	return -1;
+}
+
+// Reads from mem at the address stored in pointer, into REG A
+void LoadPointer(string str) {
+	LoadAddress("@A", split(str, "*")[1]);
+	compiledLines.push_back("ldain");
+}
+
+// Writes from REG B to mem at the address stored in pointer
+void StoreIntoPointer(string str) {
+	LoadAddress("@A", split(str, "*")[1]);
+	compiledLines.push_back("staout");
 }
 
 string InvertExpression(string expression) {
@@ -1102,8 +1131,12 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 	if (comparer == "==" || comparer == "!=") {
 		// Get into A reg
 
+		// If A is pointer to a memory address
+		if (IsPointer(valA)) {
+			LoadPointer(valA);
+		}
 		// If A is memory address
-		if (IsHex(valA)) {
+		else if (IsHex(valA)) {
 			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
 		}
 		// If A is register
@@ -1122,8 +1155,12 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 
 		// Get into B reg
 
+		// If A is pointer to a memory address
+		if (IsPointer(valB)) {
+			LoadPointer(valB);
+		}
 		// If B is memory address
-		if (IsHex(valB)) {
+		else if (IsHex(valB)) {
 			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
 		}
 		// If B is register
@@ -1296,6 +1333,11 @@ string CompileCode(string inputcode) {
 			// If the value is an INT
 			//
 
+			// If changing a value pointed to by a pointer to a new integer value
+			if (IsPointer(addrPre) && IsDec(valuePre)) {
+				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(value);
+				StoreIntoPointer(addrPre);
+			}
 			// If changing memory value at an address and setting to a new integer value
 			if (IsHex(addrPre) && IsDec(valuePre)) {
 				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(value);
@@ -1316,6 +1358,11 @@ string CompileCode(string inputcode) {
 			// If the value is a MEMORY LOCATION
 			//
 
+			// If changing a value pointed to by a pointer to another memory location
+			else if (IsPointer(addrPre) && IsHex(valuePre)) {
+				LoadAddress("@B", to_string(value));
+				StoreIntoPointer(addrPre);
+			}
 			// If changing memory value at an address and setting to another memory location
 			else if (IsHex(addrPre) && IsHex(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
@@ -1339,22 +1386,27 @@ string CompileCode(string inputcode) {
 			// If the value is a VARIABLE
 			//
 
+			// If changing a value pointed to by a pointer to a variable
+			else if (IsPointer(addrPre) && IsVar(valuePre)) {
+				LoadAddress("@B", to_string(value));
+				StoreIntoPointer(addrPre);
+			}
 			// If changing memory value at an address and setting equal to a variable
 			else if (IsHex(addrPre) && IsVar(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre)) + "\n" + "sta " + to_string(addr);
-				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
+				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting equal to a variable
 			else if (IsReg(addrPre) && IsVar(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
-				LoadAddress(addrPre, to_string(GetVariableAddress(valuePre)));
+				LoadAddress(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre));
-				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				LoadAddress("@A", to_string(value));
+				StoreAddress("@A", to_string(value));
 			}
 
 
@@ -1362,6 +1414,11 @@ string CompileCode(string inputcode) {
 			// If the value is a REGISTER
 			//
 
+			// If changing a value pointed to by a pointer to a register
+			else if (IsPointer(addrPre) && IsReg(valuePre)) {
+				MoveFromRegToReg(valuePre, "@B");
+				StoreIntoPointer(addrPre);
+			}
 			// If changing memory value at an address and setting equal to a register
 			else if (IsHex(addrPre) && IsReg(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
@@ -1377,6 +1434,33 @@ string CompileCode(string inputcode) {
 				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
 				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(addrPre));
 				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
+			}
+
+
+			//
+			// If the value is a POINTER
+			//
+
+			// If changing a value pointed to by a pointer to a pointer		(＝ω＝.)
+			else if (IsPointer(addrPre) && IsPointer(valuePre)) {
+				LoadPointer(valuePre); // Load pointer val to change TO into A
+				compiledLines.push_back("swp"); // Move val into B for writing
+				StoreIntoPointer(addrPre); // Store B into other pointer
+			}
+			// If changing memory value at an address and setting equal to a pointer
+			else if (IsHex(addrPre) && IsPointer(valuePre)) {
+				LoadPointer(valuePre); // Load pointer val to change TO into A
+				StoreAddress("@A", to_string(addr));
+			}
+			// If changing a register value and setting equal to a pointer
+			else if (IsReg(addrPre) && IsPointer(valuePre)) {
+				LoadPointer(valuePre); // Load pointer val to change TO into A
+				compiledLines.push_back(MoveFromRegToReg("@A", addrPre));
+			}
+			// If changing a variable value and setting equal to a pointer
+			else if (IsVar(addrPre) && IsPointer(valuePre)) {
+				LoadPointer(valuePre); // Load pointer val to change TO into A
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -1553,6 +1637,17 @@ string CompileCode(string inputcode) {
 
 			compiledLines.push_back(",\n, " + string("endif"));
 			compiledLines.push_back(codelines[i]);
+			continue;
+		}
+
+		// 'stop' statement
+		else if (command == "stop")
+		{
+			PrintColored("ok.	", greenFGColor, "");
+			cout << "stop:\n";
+
+			compiledLines.push_back(",\n, " + string("stop"));
+			compiledLines.push_back("hlt");
 			continue;
 		}
 
