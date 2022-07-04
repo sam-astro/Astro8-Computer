@@ -427,11 +427,20 @@
       <a name="value" val="0x3ffe"/>
       <a name="width" val="16"/>
     </comp>
-    <comp lib="0" loc="(3030,1340)" name="Probe">
-      <a name="appearance" val="NewPins"/>
-    </comp>
-    <comp lib="0" loc="(3070,1330)" name="Constant">
+    <comp lib="0" loc="(3070,1310)" name="Constant">
       <a name="value" val="0x3ffe"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="0" loc="(3070,1360)" name="Constant">
+      <a name="value" val="0x4090"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="0" loc="(3070,1410)" name="Constant">
+      <a name="value" val="0x4110"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="0" loc="(3070,1460)" name="Constant">
+      <a name="value" val="0xefff"/>
       <a name="width" val="16"/>
     </comp>
     <comp lib="0" loc="(3080,1650)" name="Tunnel">
@@ -466,11 +475,17 @@
       <a name="bit9" val="1"/>
       <a name="incoming" val="16"/>
     </comp>
-    <comp lib="0" loc="(3130,1310)" name="Tunnel">
+    <comp lib="0" loc="(3140,1480)" name="Tunnel">
+      <a name="label" val="VID_MEM"/>
+    </comp>
+    <comp lib="0" loc="(3160,1310)" name="Tunnel">
+      <a name="label" val="N_MEM"/>
+    </comp>
+    <comp lib="0" loc="(3160,1350)" name="Tunnel">
       <a name="label" val="C_MEM"/>
     </comp>
-    <comp lib="0" loc="(3140,1340)" name="Tunnel">
-      <a name="label" val="N_MEM"/>
+    <comp lib="0" loc="(3180,1400)" name="Tunnel">
+      <a name="label" val="VAR_MEM"/>
     </comp>
     <comp lib="0" loc="(3220,760)" name="Constant"/>
     <comp lib="0" loc="(3280,1190)" name="Tunnel">
@@ -1154,6 +1169,18 @@
       <a name="control" val="left"/>
       <a name="width" val="16"/>
     </comp>
+    <comp lib="1" loc="(3150,1310)" name="OR Gate">
+      <a name="size" val="30"/>
+    </comp>
+    <comp lib="1" loc="(3150,1380)" name="OR Gate">
+      <a name="size" val="30"/>
+    </comp>
+    <comp lib="1" loc="(3160,1350)" name="AND Gate">
+      <a name="size" val="30"/>
+    </comp>
+    <comp lib="1" loc="(3180,1400)" name="AND Gate">
+      <a name="size" val="30"/>
+    </comp>
     <comp lib="1" loc="(3320,610)" name="Controlled Buffer">
       <a name="width" val="2"/>
     </comp>
@@ -1275,6 +1302,18 @@
       <a name="width" val="16"/>
     </comp>
     <comp lib="3" loc="(3110,1320)" name="Comparator">
+      <a name="mode" val="unsigned"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="3" loc="(3110,1370)" name="Comparator">
+      <a name="mode" val="unsigned"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="3" loc="(3110,1420)" name="Comparator">
+      <a name="mode" val="unsigned"/>
+      <a name="width" val="16"/>
+    </comp>
+    <comp lib="3" loc="(3110,1470)" name="Comparator">
       <a name="mode" val="unsigned"/>
       <a name="width" val="16"/>
     </comp>
@@ -1532,6 +1571,26 @@
       <a name="height" val="64"/>
       <a name="scale" val="4"/>
       <a name="width" val="64"/>
+    </comp>
+    <comp lib="8" loc="(3017,1483)" name="Text">
+      <a name="font" val="SansSerif bolditalic 12"/>
+      <a name="halign" val="right"/>
+      <a name="text" val="If: 0xeffff&lt;x&lt;0xffff  video memory"/>
+    </comp>
+    <comp lib="8" loc="(3019,1335)" name="Text">
+      <a name="font" val="SansSerif bolditalic 12"/>
+      <a name="halign" val="right"/>
+      <a name="text" val="If: 0&lt;x&lt;0x3ffe  normal memory"/>
+    </comp>
+    <comp lib="8" loc="(3019,1383)" name="Text">
+      <a name="font" val="SansSerif bolditalic 12"/>
+      <a name="halign" val="right"/>
+      <a name="text" val="If: 0x3ffe&lt;x&lt;0x4090  char memory"/>
+    </comp>
+    <comp lib="8" loc="(3019,1434)" name="Text">
+      <a name="font" val="SansSerif bolditalic 12"/>
+      <a name="halign" val="right"/>
+      <a name="text" val="If: 0x4090&lt;x&lt;0x4110  variable memory"/>
     </comp>
     <comp lib="8" loc="(619,2574)" name="Text">
       <a name="text" val="DISPLAY / OUTPUT"/>
@@ -1846,27 +1905,44 @@
     <wire from="(3020,1250)" to="(3030,1250)"/>
     <wire from="(3020,1560)" to="(3030,1560)"/>
     <wire from="(3030,1250)" to="(3030,1260)"/>
-    <wire from="(3030,1260)" to="(3030,1310)"/>
+    <wire from="(3030,1260)" to="(3030,1330)"/>
     <wire from="(3030,1260)" to="(3120,1260)"/>
-    <wire from="(3030,1310)" to="(3030,1340)"/>
-    <wire from="(3030,1310)" to="(3070,1310)"/>
-    <wire from="(3030,1340)" to="(3030,1510)"/>
+    <wire from="(3030,1330)" to="(3030,1380)"/>
+    <wire from="(3030,1330)" to="(3070,1330)"/>
+    <wire from="(3030,1380)" to="(3030,1430)"/>
+    <wire from="(3030,1380)" to="(3070,1380)"/>
+    <wire from="(3030,1430)" to="(3030,1480)"/>
+    <wire from="(3030,1430)" to="(3070,1430)"/>
+    <wire from="(3030,1480)" to="(3030,1510)"/>
+    <wire from="(3030,1480)" to="(3070,1480)"/>
     <wire from="(3030,1560)" to="(3030,1600)"/>
     <wire from="(3030,1600)" to="(3100,1600)"/>
     <wire from="(3070,1300)" to="(3070,1310)"/>
+    <wire from="(3070,1350)" to="(3070,1360)"/>
+    <wire from="(3070,1400)" to="(3070,1410)"/>
+    <wire from="(3070,1450)" to="(3070,1460)"/>
     <wire from="(3080,1650)" to="(3100,1650)"/>
-    <wire from="(3110,1310)" to="(3130,1310)"/>
+    <wire from="(3110,1300)" to="(3110,1310)"/>
+    <wire from="(3110,1300)" to="(3120,1300)"/>
+    <wire from="(3110,1320)" to="(3120,1320)"/>
     <wire from="(3110,1330)" to="(3130,1330)"/>
+    <wire from="(3110,1360)" to="(3130,1360)"/>
+    <wire from="(3110,1370)" to="(3120,1370)"/>
+    <wire from="(3110,1380)" to="(3110,1390)"/>
+    <wire from="(3110,1390)" to="(3120,1390)"/>
+    <wire from="(3110,1410)" to="(3150,1410)"/>
+    <wire from="(3110,1480)" to="(3140,1480)"/>
     <wire from="(3110,1590)" to="(3110,1620)"/>
     <wire from="(3120,1240)" to="(3130,1240)"/>
     <wire from="(3120,1650)" to="(3200,1650)"/>
     <wire from="(3130,1240)" to="(3130,1250)"/>
     <wire from="(3130,1330)" to="(3130,1340)"/>
-    <wire from="(3130,1340)" to="(3140,1340)"/>
     <wire from="(3140,1260)" to="(3150,1260)"/>
     <wire from="(3140,1610)" to="(3200,1610)"/>
     <wire from="(3150,1100)" to="(3150,1260)"/>
     <wire from="(3150,1100)" to="(3400,1100)"/>
+    <wire from="(3150,1310)" to="(3160,1310)"/>
+    <wire from="(3150,1380)" to="(3150,1390)"/>
     <wire from="(3180,650)" to="(3210,650)"/>
     <wire from="(3200,1610)" to="(3200,1650)"/>
     <wire from="(3200,1610)" to="(3400,1610)"/>
