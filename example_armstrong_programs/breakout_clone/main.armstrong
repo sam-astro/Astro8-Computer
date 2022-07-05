@@ -1,0 +1,34 @@
+#AS
+
+#start
+change $playerMin = 0
+change $playerMax = 9
+change $playerPosition = 4 // Offset from $playerMin, horizontal position of player
+change $charOffset = 16382 // Beginning of character memory
+change @EX = 168 // 'Zero' out keypresses
+change $playerChar = 13 // The SDCII character that indicates the player
+
+#update
+add 91,$playerPosition -> $tmpAdd
+add $tmpAdd,$charOffset -> $memoryPosition
+
+change *$memoryPosition = $playerChar
+
+// If 'A' key is pressed, decrease player position
+if @EX==13:
+    if $playerPosition>$playerMin: // Make sure the player is not on the left edge
+        sub $playerPosition,1 -> $playerPosition
+        // Clear the last position
+        change *$memoryPosition = 0
+    endif
+endif
+// If 'D' key is pressed, increase player position
+if @EX==16:
+    if $playerPosition<$playerMax: // Make sure the player is not on the right edge
+        add $playerPosition,1 -> $playerPosition
+        // Clear the last position
+        change *$memoryPosition = 0
+    endif
+endif
+
+goto #update

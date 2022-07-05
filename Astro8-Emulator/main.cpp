@@ -243,8 +243,9 @@ int main(int argc, char** argv)
 	}
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
+	cout << "Generating Character ROM...";
 	string chline;
-	ifstream charset("D:\\Code\\Basic-CPU-In-Logisim\\char_set_memtape");
+	ifstream charset("..\\..\\..\\char_set_memtape");
 	//ifstream charset("../../../char_set_memtape");
 	if (charset.is_open())
 	{
@@ -256,6 +257,7 @@ int main(int argc, char** argv)
 		}
 		charset.close();
 	}
+	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
 
 	// Generate memory from code and convert from hex to decimal
 	vector<string> mbytes = parseCode(code);
@@ -263,7 +265,11 @@ int main(int argc, char** argv)
 		memoryBytes.push_back(HexToDec(mbytes[memindex]));
 
 	// Generate microcode
+	cout << "Generating microcode from instruction set...";
 	GenerateMicrocode();
+	PrintColored("  Done!\n\n", greenFGColor, "");
+
+	cout << "\nStarting Emulation...\n";
 
 	// Start graphics
 	InitGraphics("Astro-8 Emulator", 64, 64, 6);
@@ -345,7 +351,7 @@ bool Update(float deltatime)
 			//cout << ("CR AW ");
 			// RM
 			// IW
-			InstructionReg = memoryBytes[memoryIndex];
+			InstructionReg = memoryBytes.at(memoryIndex);
 			// CE
 			programCounter += 1;
 			//cout << "\n     step: 1" << endl;
@@ -356,7 +362,7 @@ bool Update(float deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		vector<bool> mcode = microinstructionData[microcodeLocation];
+		vector<bool> mcode = microinstructionData.at(microcodeLocation);
 
 		//cout << "\n (";
 		//for (size_t i = 0; i < mcode.size(); i++)
@@ -389,7 +395,7 @@ bool Update(float deltatime)
 		else if (readInstr == 4)
 		{ // RM
 			//cout << ("RM ");
-			bus = memoryBytes[memoryIndex];
+			bus = memoryBytes.at(memoryIndex);
 
 			//if (memoryIndex <= 16382 || memoryIndex > 16527)
 			//	bus = memoryBytes[memoryIndex];
@@ -511,7 +517,7 @@ bool Update(float deltatime)
 		else if (writeInstr == 6)
 		{ // WM
 			//cout << ("WM ");
-			memoryBytes[memoryIndex] = bus;
+			memoryBytes.at(memoryIndex) = bus;
 			//if (memoryIndex <= 16382 || memoryIndex > 16527)
 			//	memoryBytes[memoryIndex] = bus;
 			//else
@@ -540,9 +546,9 @@ bool Update(float deltatime)
 		if (iterations % frameSpeed == 0)
 		{
 			int characterRamValue = memoryBytes.at(characterRamIndex + 16382);
-			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
+			bool charPixRomVal = characterRom.at((characterRamValue * 64) + (charPixY * 8) + charPixX);
 
-			int pixelVal = memoryBytes[pixelRamIndex];
+			int pixelVal = 0;
 			int r, g, b;
 			//r= g=b = 0;
 			//b = 128;
@@ -1238,167 +1244,68 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
 
-	// Check if two values are equal
-	if (comparer == "==" || comparer == "!=") {
-		// Get into B reg
+	// Get into B reg
 
 		// If B is pointer to a memory address
-		if (IsPointer(valB)) {
-			LoadPointer(valB);
-			compiledLines.push_back("swp\n");
-		}
-		// If B is memory address
-		else if (IsHex(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
-		}
-		// If B is register
-		else if (IsReg(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
-		}
-		// If B is variable
-		else if (IsVar(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
-		}
-		// If B is decimal
-		else if (IsDec(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
-		}
+	if (IsPointer(valB)) {
+		LoadPointer(valB);
+		compiledLines.push_back("swp\n");
+	}
+	// If B is memory address
+	else if (IsHex(valB)) {
+		LoadAddress("@B", valB);
+	}
+	// If B is register
+	else if (IsReg(valB)) {
+		compiledLines.push_back(MoveFromRegToReg(valB, "@B"));
+	}
+	// If B is variable
+	else if (IsVar(valB)) {
+		LoadAddress("@B", to_string(GetVariableAddress(valB)));
+	}
+	// If B is decimal
+	else if (IsDec(valB)) {
+		RegIdToLDI("@B", to_string(procB));
+	}
 
 
-		// Get into A reg
+	// Get into A reg
 
-		// If A is pointer to a memory address
-		if (IsPointer(valA)) {
-			LoadPointer(valA);
-		}
-		// If A is memory address
-		else if (IsHex(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
-		}
-		// If A is register
-		else if (IsReg(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
-		}
-		// If A is variable
-		else if (IsVar(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
-		}
-		// If A is decimal
-		else if (IsDec(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
-		}
+	// If A is pointer to a memory address
+	if (IsPointer(valA)) {
+		LoadPointer(valA);
+	}
+	// If A is memory address
+	else if (IsHex(valA)) {
+		LoadAddress("@A", valA);
+	}
+	// If A is register
+	else if (IsReg(valA)) {
+		compiledLines.push_back(MoveFromRegToReg(valA, "@A"));
+	}
+	// If A is variable
+	else if (IsVar(valA)) {
+		LoadAddress("@A", to_string(GetVariableAddress(valA)));
+	}
+	// If A is decimal
+	else if (IsDec(valA)) {
+		RegIdToLDI("@A", to_string(procA));
+	}
 
-
+	// Check if two values are equal
+	if (comparer == "==" || comparer == "!=") {
 		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
 		compiledLines.at(compiledLines.size() - 1) += "sub\n";
 	}
 
 	// Check if A is greater than B
 	if (comparer == ">" || comparer == ">=") {
-		// Get into B reg
-
-		// If B is pointer to a memory address
-		if (IsPointer(valB)) {
-			LoadPointer(valB);
-			compiledLines.push_back("swp\n");
-		}
-		// If B is memory address
-		else if (IsHex(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
-		}
-		// If B is register
-		else if (IsReg(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
-		}
-		// If B is variable
-		else if (IsVar(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
-		}
-		// If B is decimal
-		else if (IsDec(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
-		}
-
-
-		// Get into A reg
-
-		// If A is pointer to a memory address
-		if (IsPointer(valA)) {
-			LoadPointer(valA);
-		}
-		// If A is memory address
-		else if (IsHex(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
-		}
-		// If A is register
-		else if (IsReg(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
-		}
-		// If A is variable
-		else if (IsVar(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
-		}
-		// If A is decimal
-		else if (IsDec(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
-		}
-
-
 		// Finally compare with a subtract, which will NOT activate the ZERO flag OR the CARRY flag if A is greater than B
 		compiledLines.at(compiledLines.size() - 1) += "sub\n";
 	}
 
 	// Check if B is greater than A (A less than B <)
 	if (comparer == "<" || comparer == "<=") {
-		// Get into B reg
-
-		// If B is pointer to a memory address
-		if (IsPointer(valB)) {
-			LoadPointer(valB);
-			compiledLines.push_back("swp\n");
-		}
-		// If B is memory address
-		if (IsHex(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(procB) + "\n";
-		}
-		// If B is register
-		else if (IsReg(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valB, "@B");
-		}
-		// If B is variable
-		else if (IsVar(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valB)) + "\n";
-		}
-		// If B is decimal
-		else if (IsDec(valB)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(procB) + "\n";
-		}
-
-
-		// Get into A reg
-
-		// If A is pointer to a memory address
-		if (IsPointer(valA)) {
-			LoadPointer(valA);
-		}
-		// If A is memory address
-		else if (IsHex(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(procA) + "\n";
-		}
-		// If A is register
-		else if (IsReg(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valA, "@A");
-		}
-		// If A is variable
-		else if (IsVar(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valA)) + "\n";
-		}
-		// If A is decimal
-		else if (IsDec(valA)) {
-			compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(procA) + "\n";
-		}
-
-
 		// Finally compare with a subtract, which WILL activate the CARRY flag if A is less than B
 		compiledLines.at(compiledLines.size() - 1) += "sub\n";
 	}
@@ -1840,22 +1747,22 @@ string CompileCode(string inputcode) {
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmpc " + addrProcessed); // Jump past jump to endif if false
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpc " + addrProcessed); // Jump past jump to endif if false
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz " + to_string(lineNum + 3) + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
 			}
 
 
@@ -2001,7 +1908,7 @@ vector<string> parseCode(string input)
 #endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
 			}
-			}
+		}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
@@ -2023,7 +1930,7 @@ vector<string> parseCode(string input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -2042,7 +1949,7 @@ vector<string> parseCode(string input)
 
 		string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
-		}
+	}
 #if DEV_MODE
 	cout << processedOutput << endl << endl;
 #endif
@@ -2053,7 +1960,7 @@ vector<string> parseCode(string input)
 	myStream << processedOutput;
 
 	return outputBytes;
-	}
+}
 
 void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
 
@@ -2088,7 +1995,7 @@ void ComputeStepInstructions(string stepContents, char* stepComputedInstruction)
 				stepComputedInstruction[10] = binaryval[1];
 				stepComputedInstruction[11] = binaryval[2];
 			}
-		}
+			}
 
 		// Check if microinstruction requires special code
 		for (int minsother = 0; minsother < sizeof(aluInstructionSpecialAddress) / sizeof(aluInstructionSpecialAddress[0]); minsother++)
@@ -2101,8 +2008,8 @@ void ComputeStepInstructions(string stepContents, char* stepComputedInstruction)
 			}
 		}
 
-	}
-}
+		}
+			}
 
 void GenerateMicrocode()
 {
@@ -2125,7 +2032,7 @@ void GenerateMicrocode()
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-	}
+		}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -2149,7 +2056,7 @@ void GenerateMicrocode()
 			instIndexes[cl] = seenNames.size() - 1;
 		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2210,9 +2117,9 @@ void GenerateMicrocode()
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
-			}
-
 		}
+
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2261,9 +2168,9 @@ void GenerateMicrocode()
 									endaddress[checkflag] = '1';
 								stepLocked[checkflag] = 1;
 							}
-						}
 					}
 				}
+			}
 				string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
@@ -2276,7 +2183,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-					}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -2285,9 +2192,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-				}
-			}
 		}
+	}
+	}
 
 	// Print the output
 	string processedOutput = "";
@@ -2318,4 +2225,4 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("../../../microinstructions_cpu_v1", ios::out);
 	myStream << processedOutput;
-	}
+		}
