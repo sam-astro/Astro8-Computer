@@ -1,0 +1,29 @@
+#AS
+change $chMemOffset = 16382
+change $charCount = 0
+change @EX = 168
+
+#mainLoop
+
+// Get any key press
+change $key = @EX
+
+// If the user is pressing a key
+if $key!=168:
+	// Get actual address by adding the offset and current position
+	add $chMemOffset,$charCount -> $actualAddress
+
+	// Put character into memory
+	change *$actualAddress = $key
+	
+	// Increment character position
+	add $charCount,1 -> $charCount
+
+	// Reset character count if exceeds char limit
+	if $charCount==110:
+		change $charCount = 0
+	endif
+endif
+
+
+goto #mainLoop

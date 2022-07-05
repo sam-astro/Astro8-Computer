@@ -12,14 +12,16 @@ using System.Drawing;
 
 public class Program
 {
-    static string[] instructions = { "NOP", "LODA", "LODB", "ADD", "SUB", "OUT", "JMP", "STA", "LDI", "JMPZ", "JMPC", "HLT", "LDAIN", "", "", "" };
+    static string[] instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "HLT", "OUT" };
     static string action = "";
-    static string[] microinstructionData = new string[1024];
+    static string[] microinstructionData = new string[2048];
 
     public static void Main(string[] args)
     {
         Console.Write("Action >  ");
         action = Console.ReadLine().ToLower();
+
+        MakeCharacterRom();
 
         if (action != "microcode" & action != "emulator" & action != "imggen")
         {
@@ -64,7 +66,7 @@ public class Program
             string path = Console.ReadLine().Replace("\"", "");
             Bitmap img = ResizeBitmap(new Bitmap((Bitmap)Image.FromFile(path)), 32, 32);
 
-            string code = File.ReadAllText("../../../../draw_image.txt") + "\n";
+            string code = File.ReadAllText("../../../../draw_image.txt") + "\r";
             int currentMemIndex = 0;
             for (int pos = 0; pos < img.Width * img.Height; pos++)
             {
@@ -81,217 +83,6 @@ public class Program
             code += "\n";
             File.WriteAllText("../../../../code_text_val.txt", code, Encoding.UTF8);
 
-        }
-        if (action == "emulator")
-        {
-            int AReg = 0;
-            int BReg = 0;
-            int InstructionReg = 0;
-            int[] flags = { 0, 0, 0 };
-            int bus = 0;
-            int outputReg = 0;
-            int memoryIndex = 0;
-            int programCounter = 0;
-
-            int imgX = 0;
-            int imgY = 0;
-
-            // Gather user inputted code
-            Console.Write("v Emu. Code input v\n");
-            string code = "";
-            string line;
-            while (!String.IsNullOrWhiteSpace(line = Console.ReadLine())) { code += line + "\n"; }
-
-            // Generate memory from code and convert from hex to decimal
-            List<int> memoryBytes = new List<int>();
-            List<string> mbytes = parseCode(code);
-            for (int memindex = 0; memindex < mbytes.Count; memindex++)
-                memoryBytes.Add(HexToDec(mbytes[memindex]));
-
-            // Output Image
-            Bitmap ledScreen = new Bitmap(new Bitmap((Bitmap)Image.FromFile("./blank.png"), 32, 32));
-
-            GenerateMicrocode();
-
-            Console.WriteLine();
-
-            float slowdownAmnt = 1;
-            int iterations = 0;
-            while (true)
-            {
-                //InstructionReg = DecToBinFilled(memoryBytes[programCounter], 16);
-                //string instruction = instructions[BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4))];
-                if (iterations % slowdownAmnt == 0)
-                {
-                    for (int step = 0; step < 16; step++)
-                    {
-
-                        int microcodeLocation = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
-                        string mcode = microinstructionData[microcodeLocation];
-
-                        //Console.WriteLine("     microcode: " + mcode);
-
-                        //Console.WriteLine("mcLoc- "+DecToBinFilled(InstructionReg, 16).Substring(0, 4) + DecToBinFilled(step, 4) + flags[0] + flags[1]);
-                        //Console.WriteLine("mcDat- "+mcode);
-
-                        if (step == 0)
-                        {
-                            // CR
-                            // AW
-                            memoryIndex = programCounter;
-                            // RM
-                            // IW
-                            InstructionReg = memoryBytes[memoryIndex];
-                            // CE
-                            programCounter += 1;
-                            step = 1;
-                            continue;
-                        }
-
-                        //while (memoryIndex >= 4000)
-                        //    memoryIndex -= 4000;
-                        //if (memoryIndex < 0)
-                        //    memoryIndex = -memoryIndex;
-
-                        //Console.Write("ftmem=" + memoryIndex);
-                        // 0-su  1-iw  2-dw  3-st  4-ce  5-cr  6-wm  7-ra  8-eo  9-fl  10-j  11-wb  12-wa  13-rm  14-aw  15-ir  16-ei
-                        // Execute microinstructions
-                        if (mcode[8] == '1')
-                        { // EO
-                            //Console.Write("EO ");
-                            if (mcode[0] == '1') // SU
-                            {
-                                flags[0] = 0;
-                                flags[1] = 1;
-                                if (AReg - BReg == 0)
-                                    flags[0] = 1;
-                                bus = AReg - BReg;
-                                if (bus < 0)
-                                {
-                                    bus = 65535 + bus;
-                                    flags[1] = 0;
-                                }
-                            }
-                            else
-                            {
-                                flags[0] = 0;
-                                flags[1] = 0;
-                                if (AReg + BReg == 0)
-                                    flags[0] = 1;
-                                bus = AReg + BReg;
-                                if (bus >= 65535)
-                                {
-                                    bus = bus - 65535;
-                                    flags[1] = 1;
-                                }
-                            }
-                        }
-                        if (mcode[5] == '1')
-                        { // CR
-                            //Console.Write("CR ");
-                            bus = programCounter;
-                        }
-                        if (mcode[7] == '1')
-                        { // RA
-                            //Console.Write("RA ");
-                            bus = AReg;
-                        }
-                        if (mcode[13] == '1')
-                        { // RM
-                            //Console.Write("RM ");
-                            //Console.WriteLine(memoryIndex + " " + memoryBytes[memoryIndex]);
-                            bus = memoryBytes[memoryIndex];
-                        }
-                        if (mcode[15] == '1')
-                        { // IR
-                            //Console.Write("IR ");
-                            bus = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-                        }
-                        if (mcode[1] == '1')
-                        { // IW
-                            //Console.Write("IW ");
-                            InstructionReg = bus;
-                        }
-                        if (mcode[2] == '1')
-                        { // DW
-                            //Console.Write("DW ");
-                            outputReg = bus;
-                            Console.WriteLine("\no: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")");
-
-                            // Write to LED screen
-                            int r = BinToDec(DecToBinFilled(bus, 16).Substring(1, 5)) * 8;
-                            int g = BinToDec(DecToBinFilled(bus, 16).Substring(6, 5)) * 8;
-                            int b = BinToDec(DecToBinFilled(bus, 16).Substring(11, 5)) * 8;
-                            ledScreen.SetPixel(imgX, imgY, Color.FromArgb(r, g, b));
-
-                            imgX++;
-                            if (imgX >= 32)
-                            {
-                                imgY++;
-                                imgX = 0;
-                            }
-                            if (imgY >= 32)
-                            {
-                                imgY = 0;
-                                ledScreen.Save("../../../../out_display.jpg");
-                            }
-
-                        }
-                        if (mcode[4] == '1')
-                        { // CE
-                            //Console.Write("CE ");
-                            programCounter += 1;
-                        }
-                        if (mcode[6] == '1')
-                        { // WM
-                            //Console.Write("WM ");
-                            memoryBytes[memoryIndex] = bus;
-                        }
-                        if (mcode[10] == '1')
-                        { // J
-                            //Console.Write("J ");
-                            //Console.WriteLine(DecToBinFilled(InstructionReg, 16));
-                            //Console.WriteLine(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-                            programCounter = BinToDec(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-                        }
-                        if (mcode[11] == '1')
-                        { // WB
-                            //Console.Write("WB ");
-                            BReg = bus;
-                        }
-                        if (mcode[12] == '1')
-                        { // WA
-                            //Console.Write("WA ");
-                            AReg = bus;
-                        }
-                        if (mcode[14] == '1')
-                        { // AW
-                            //Console.Write("AW ");
-                            memoryIndex = BinToDec(DecToBinFilled(bus, 16).Substring(4, 12));
-                        }
-                        if (mcode[3] == '1')
-                        { // ST
-                            //Console.Write("ST ");
-                            Console.WriteLine("\n== PAUSED from HLT ==\n");
-                            Console.WriteLine("FINAL VALUES |=  o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")");
-                            ledScreen.Save("../../../../out_display.jpg");
-                            Console.ReadLine();
-                        }
-
-                        if (mcode[16] == '1')
-                        { // EI
-                            //Console.Write("EI ");
-                            //Console.WriteLine();
-                            break;
-                        }
-                        //else
-                        //Console.WriteLine();
-                    }
-
-                    //Console.WriteLine(programCounter + " | o: " + outputReg + " A: " + AReg + " B: " + BReg + " bus: " + bus + " Ins: " + InstructionReg + " img:(" + imgX + ", " + imgY + ")" + "\n");
-                }
-                iterations++;
-            }
         }
 
         Console.WriteLine("\nSTOP EXECUTING\n");
@@ -386,6 +177,61 @@ public class Program
     {
         return int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
     }
+
+    static void MakeCharacterRom()
+    {
+        string path = "../../../../character-set.png";
+        Bitmap img = new Bitmap((Bitmap)Image.FromFile(path));
+        List<int> l = new List<int>();
+        for (int i = 0; i < 65535; i++)
+            l.Add(0);
+
+        int charCode = 0;
+        int charX = 0;
+        int charY = 0;
+
+        for (int y = 0; y < img.Height; y++)
+        {
+            charX = 0;
+            for (int x = 0; x < img.Width; x++)
+            {
+                l[BinToDec(DecToBinFilled(charCode, 7)+DecToBinFilled(charY, 3)+DecToBinFilled(charX, 3))] = img.GetPixel(x, y).R/255;
+                charX++;
+                if (charX == 6)
+                {
+                    charCode++;
+                    charX = 0;
+                }
+            }
+            charY++;
+            if (charY<6)
+                charCode -= 13;
+            else
+                charY = 0;
+        }
+
+        string mt = "";
+        string processedOutput = "";
+
+        // Print the output
+        processedOutput += "\nv3.0 hex words addressed\n";
+        processedOutput += "000: ";
+        for (int outindex = 0; outindex < l.Count; outindex++)
+        {
+            if (outindex % 8 == 0 && outindex != 0)
+            {
+                processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
+            }
+            processedOutput += l[outindex] + " ";
+            mt+=l[outindex];
+        }
+        Console.WriteLine(processedOutput);
+        Console.WriteLine(mt);
+
+        File.WriteAllText("../../../../char_set_processed.hex", processedOutput);
+        File.WriteAllText("../../../../char_set_memtape", mt);
+    }
+
     static List<string> parseCode(string input)
     {
         List<string> outputBytes = new List<string>();
@@ -424,23 +270,25 @@ public class Program
             {
                 if (instructions[f] == splitBySpace[0])
                 {
-                    Console.Write(DecToHexFilled(f, 1));
-                    outputBytes[memaddr] = DecToHexFilled(f, 1);
+                    Console.Write(DecToBinFilled(f, 5));
+                    outputBytes[memaddr] = DecToBinFilled(f, 5);
+                    break;
                 }
             }
 
             // Check if any args are after the command
             if (splitcode[i] != splitBySpace[0])
             {
-                Console.Write(DecToHexFilled(Int32.Parse(splitBySpace[1]), 3));
-                outputBytes[memaddr] += DecToHexFilled(Int32.Parse(splitBySpace[1]), 3);
+                Console.Write(" "+DecToBinFilled(Int32.Parse(splitBySpace[1]), 11));
+                outputBytes[memaddr] += DecToBinFilled(Int32.Parse(splitBySpace[1]), 11);
             }
             else
             {
-                Console.Write("0");
-                outputBytes[memaddr] += "000";
+                Console.Write(" 00000000000");
+                outputBytes[memaddr] += "00000000000";
             }
-            Console.Write("\n");
+            Console.Write("  " +BinToHexFilled(outputBytes[memaddr], 4)+"\n");
+            outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
             memaddr++;
         }
         return outputBytes;
@@ -449,26 +297,37 @@ public class Program
     static void GenerateMicrocode()
     {
         // Generate zeros in data
-        string[] output = new string[1024];
+        string[] output = new string[2048];
         for (int osind = 0; osind < output.Length; osind++) { output[osind] = "00000"; }
 
-        string[] microinstructions = { "SU", "IW", "DW", "ST", "CE", "WM", "EO", "FL", "J", "WB", "WA", "AW", "EI"};
-        string[] readInstructionSpecialAddress = { "RA", "RM", "IR", "CR" };
+        string[] microinstructions = { "EO", "CE", "ST", "EI", "FL" };
+        string[] writeInstructionSpecialAddress = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
+        string[] readInstructionSpecialAddress = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
+        string[] aluInstructionSpecialAddress = { "SU", "MU", "DI" };
         string[] flags = { "ZEROFLAG", "CARRYFLAG" };
+        //   "LDAIN", "HLT", "OUT"
+
         string[] instructioncodes = {
                 "fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
-                "loda( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
-                "lodb( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
-                "add( 2=aw,ir & 3=wb,rm & 4=wa,eo,fl & 5=ei", // Add <addr>
-                "sub( 2=aw,ir & 3=wb,rm & 4=wa,eo,su,fl & 5=ei", // Subtract <addr>
-                "out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
-                "jmp( 2=ir,j & 3=ei", // Jump <addr>
+                "ain( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
+                "bin( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
+                "cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
+                "ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
+                "ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
+                "rdexp( 2=wb,re & 3=ei", // Read from expansion port to register B
+                "wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
                 "sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-                "ldi( 2=wa,ir & 3=ei", // Load immediate A <val>
+                "stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
+                "add( 2=wa,eo,fl & 3=ei", // Add
+                "sub( 2=wa,eo,su,fl & 3=ei", // Subtract
+                "mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
+                "div( 2=wa,eo,di,fl & 3=ei", // Divide
+                "jmp( 2=ir,j & 3=ei", // Jump <addr>
                 "jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
                 "jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
-                "hlt( 2=st & 3=ei", // Stop the computer clock
                 "ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Load from reg A as memory address, then copy value from memory into A
+                "hlt( 2=st & 3=ei", // Stop the computer clock
+                "out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
             };
 
         // Remove spaces from instruction codes and make uppercase
@@ -514,7 +373,7 @@ public class Program
         {
             int correctedIndex = instIndexes[ins];
 
-            string startaddress = DecToBinFilled(correctedIndex, 4);
+            string startaddress = DecToBinFilled(correctedIndex, 5);
 
             string[] instSteps = instructioncodes[0].Split('&');
             for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
@@ -524,24 +383,48 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+                char[] stepComputedInstruction = new char[14] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
                     // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction[mins] = '1'; // activate
-                    else
                     {
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        stepComputedInstruction[mins] = '1'; // activate
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
+                    { // Check all write instruction types
+                        if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
                         {
-                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother+1, 3);
-                                stepComputedInstruction[13] = binaryval[0];
-                                stepComputedInstruction[14] = binaryval[1];
-                                stepComputedInstruction[15] = binaryval[2];
-                            }
+                            string binaryval = DecToBinFilled(minsother + 1, 4);
+                            stepComputedInstruction[5] = binaryval[0];
+                            stepComputedInstruction[6] = binaryval[1];
+                            stepComputedInstruction[7] = binaryval[2];
+                            stepComputedInstruction[8] = binaryval[3];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                    { // Check all read instruction types
+                        if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 3);
+                            stepComputedInstruction[9] = binaryval[0];
+                            stepComputedInstruction[10] = binaryval[1];
+                            stepComputedInstruction[11] = binaryval[2];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
+                    { // Check all ALU instruction types
+                        if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 2);
+                            stepComputedInstruction[12] = binaryval[0];
+                            stepComputedInstruction[13] = binaryval[1];
                         }
                     }
                 }
@@ -592,7 +475,7 @@ public class Program
 
             Console.WriteLine(instructioncodes[correctedIndex]);
 
-            string startaddress = DecToBinFilled(correctedIndex, 4);
+            string startaddress = DecToBinFilled(correctedIndex, 5);
 
             string[] instSteps = instructioncodes[correctedIndex].Split('&');
             for (int step = 0; step < instSteps.Length; step++) // Iterate through every step
@@ -602,24 +485,48 @@ public class Program
 
                 string midaddress = DecToBinFilled(actualStep, 4);
 
-                char[] stepComputedInstruction = new char[17] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+                char[] stepComputedInstruction = new char[14] { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
                 for (int mins = 0; mins < microinstructions.Length; mins++)
                 {
                     // Check if microinstruction matches at index
                     if (stepContents.Contains(microinstructions[mins]))
-                        stepComputedInstruction[mins] = '1'; // activate
-                    else
                     {
-                        // Check if microinstruction requires special code
-                        for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                        stepComputedInstruction[mins] = '1'; // activate
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < writeInstructionSpecialAddress.Length; minsother++)
+                    { // Check all write instruction types
+                        if (stepContents.Contains(writeInstructionSpecialAddress[minsother]))
                         {
-                            if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
-                            {
-                                string binaryval = DecToBinFilled(minsother+1, 3);
-                                stepComputedInstruction[13] = binaryval[0];
-                                stepComputedInstruction[14] = binaryval[1];
-                                stepComputedInstruction[15] = binaryval[2];
-                            }
+                            string binaryval = DecToBinFilled(minsother + 1, 4);
+                            stepComputedInstruction[5] = binaryval[0];
+                            stepComputedInstruction[6] = binaryval[1];
+                            stepComputedInstruction[7] = binaryval[2];
+                            stepComputedInstruction[8] = binaryval[3];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < readInstructionSpecialAddress.Length; minsother++)
+                    { // Check all read instruction types
+                        if (stepContents.Contains(readInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 3);
+                            stepComputedInstruction[9] = binaryval[0];
+                            stepComputedInstruction[10] = binaryval[1];
+                            stepComputedInstruction[11] = binaryval[2];
+                        }
+                    }
+
+                    // Check if microinstruction requires special code
+                    for (int minsother = 0; minsother < aluInstructionSpecialAddress.Length; minsother++)
+                    { // Check all ALU instruction types
+                        if (stepContents.Contains(aluInstructionSpecialAddress[minsother]))
+                        {
+                            string binaryval = DecToBinFilled(minsother + 1, 2);
+                            stepComputedInstruction[12] = binaryval[0];
+                            stepComputedInstruction[13] = binaryval[1];
                         }
                     }
                 }
@@ -663,7 +570,7 @@ public class Program
                     if (doesntmatch)
                         continue;
 
-                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 5));
+                    Console.WriteLine("\t& " + startaddress + " " + midaddress + " " + new string(newendaddress) + "  =  " + BinToHexFilled(string.Join("", stepComputedInstruction), 4));
                     output[BinToDec(startaddress + midaddress + new string(newendaddress))] = BinToHexFilled(string.Join("", stepComputedInstruction), 5);
                 }
             }

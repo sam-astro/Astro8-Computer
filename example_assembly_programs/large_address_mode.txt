@@ -1,0 +1,5 @@
+set 3999 23
+set 1 3999
+ldlge
+out
+hlt

@@ -3,50 +3,60 @@ set 100 200
 set 62 1
 set 66 2
 ,
-ldi 1
-add 60
+ldia 1
+bin 60
+add
 sta 60
 ,
-loda 100
+ain 100
 ldain
 out
 ,
-ldi 1
-sub 60
+ldia 1
+bin 60
+sub
 jmpc 0
-ldi 1
-add 61
+ldia 1
+bin 61
+add
 sta 61
-ldi 1
-add 100
+ldia 1
+bin 100
+add
 sta 100
-ldi 1
-add 61
+ldia 1
+bin 61
+add
 sta 61
-ldi 0
+ldia 0
 sta 60
 ,
-ldi 1223
-sub 100
-jmpc 25
-,
-ldi 200
+ldia 1223
+bin 100
+sub
+jmpc 31
+,    ^ jumps to final
+ldia 200
 sta 100
-,
-ldi 31
-sub 61
+,    v final
+ldia 31
+bin 61
+sub
 jmpc 0
-ldi 1
-add 66
+ldia 1
+bin 66
+add
 sta 66
-ldi 0
+ldia 0
 sta 61
-ldi 3
-sub 66
+ldia 3
+bin 66
+sub
 jmpc 0
-loda 100
-sub 69
+ain 100
+bin 69
+sub
 sta 100
-ldi 0
+ldia 0
 sta 66
 jmp 0

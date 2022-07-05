@@ -1,0 +1,21 @@
+set 6 16383
+set 50 0
+ain 6
+bin 50
+add
+sta 6
+ain 50
+stlge
+, large addr stored here
+ain 50
+ldib 1
+add
+sta 50
+swp
+ldia 144
+sub
+jmpz 16
+jmp 0
+,
+out
+jmp 16
