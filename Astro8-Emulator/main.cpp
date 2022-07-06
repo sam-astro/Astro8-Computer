@@ -615,7 +615,14 @@ bool Update(float deltatime)
 				apply_pixels(pixels, texture, 64);
 				DisplayTexture(gRenderer, texture);
 
-				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(1.0f / renderedFrameTime) << "  rval: " + to_string(pixelRamIndex);
+				float fps = 1.0f / renderedFrameTime;
+				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(fps) << "  rval: " + to_string(pixelRamIndex);
+
+				if (fps > 65)
+					frameSpeed++;
+				else if (fps < 55)
+					frameSpeed--;
+				frameSpeed = clamp(frameSpeed, 1, 9999);
 
 				renderedFrameTime = 0;
 			}
