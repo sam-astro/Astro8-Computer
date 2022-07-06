@@ -1,41 +1,199 @@
 #AS
 
-#start
+//////////////////////
+// Define variables //
+//////////////////////
 
 // General
 change $pixOffset = 61439 // Beginning of video memory
+change $charOffset = 16382 // Beginning of character memory
 change @EX = 168 // 'Zero' out keypresses
-change $slowTime = 0
 
+change $paddleChar = 11 // The SDCII character that indicates the paddles
+
+// Paddles
+change $LPaddleY = 5 // Vertical position of left paddle
+change $RPaddleY = 5 // Vertical position of right paddle
+
+#start
 // Ball
 change $ballVelX = 1 // 0 = left, 1 = right
 change $ballVelY = 1 // 0 = down, 1 = up
 change $ballPosX = 32 // x-position
 change $ballPosY = 15 // y-position (higher posY = lower screenY)
 change $lastlastposition = 65534
-//change $ballPosition = 2048 // Offset from $pixOffset, position of ball
 
+// UI
+change $leftScoreLocation = 12
+change $leftScore = 0
+change $rightScoreLocation = 17
+change $rightScore = 0
+
+// Render UI before game start
+// Left Score
+add $charOffset,$leftScoreLocation -> $memaddr
+add $leftScore,39 -> $sdciiText
+change *$memaddr = $sdciiText
+// Right Score
+add $charOffset,$rightScoreLocation -> $memaddr
+add $rightScore,39 -> $sdciiText
+change *$memaddr = $sdciiText
 
 #update
+// these two seem to fix weird issues. WHY!?!?
+change 0x4124 = $ballVelX
+change 0x4124 = $ballVelY
 
-change $keypress = @EX
 
-// Slow down time
-if $slowTime==2000:
+if $slowPaddleTime==800: // Only calculate the paddles once every X cycles, otherwise it moves too fast
 
-    // Bounce if on left/right walls
-    if $ballPosX==0: // If on left wall, switch x-direction
-        change $ballVelX = 1
+    ///////////////////////////////////////////
+    // Handle paddle movement and user input //
+    ///////////////////////////////////////////
+
+    change $key = @EX
+    // Left paddle movement
+    // If 'W' key is pressed, move lpaddle up
+    if $key==35:
+        if $LPaddleY>0: // Make sure the player is not on the top edge
+            sub $LPaddleY,1 -> $LPaddleY
+            // Clear the last position
+            change *$lpaddleMemoryPosition = 0
+        endif
     endif
-    if $ballPosX==63: // If on right wall, switch x-direction
+    // If 'S' key is pressed, move lpaddle down
+    if $key==31:
+        if $LPaddleY<10: // Make sure the player is not on the bottom edge
+            add $LPaddleY,1 -> $LPaddleY
+            // Clear the last position
+            change *$lpaddleMemoryPosition = 0
+        endif
+    endif
+
+
+    // Right paddle movement
+    
+    // If 'Up arr' key is pressed, move rpaddle up
+    if $key==71:
+        if $RPaddleY>0: // Make sure the player is not on the top edge
+            sub $RPaddleY,1 -> $RPaddleY
+            // Clear the last position
+            change *$rpaddleMemoryPosition = 0
+        endif
+    endif
+    // If 'Down arr' key is pressed, move lpaddle down
+    if $key==72:
+        if $RPaddleY<10: // Make sure the player is not on the bottom edge
+            add $RPaddleY,1 -> $RPaddleY
+            // Clear the last position
+            change *$rpaddleMemoryPosition = 0
+        endif
+    endif
+		
+    change $slowPaddleTime = 0
+endif
+
+////////////////////
+// Render Paddles //
+////////////////////
+// Calculate correct address and display Left Paddle
+mult 10,$LPaddleY -> $tmpAdd
+add $tmpAdd,$charOffset -> $lpaddleMemoryPosition
+change *$lpaddleMemoryPosition = $paddleChar
+// Calculate correct address and display Right Paddle
+mult 10,$RPaddleY -> $tmpAdd
+add $tmpAdd,9 -> $tmpAdd
+add $tmpAdd,$charOffset -> $rpaddleMemoryPosition
+change *$rpaddleMemoryPosition = $paddleChar
+
+
+
+/////////////////////
+// Handle the ball //
+/////////////////////
+if $slowBallTime==400: // Only calculate the ball once every X cycles, otherwise it moves too fast
+
+    // Convert ball X and Y coordinates into pixel space
+    change $ballPixelPosition = 0
+    mult $ballPosY,64 -> $ballPixelPosition
+    add $ballPosX,$ballPixelPosition -> $ballPixelPosition
+
+    // Calculate correct address and display Ball
+    change *$lastlastposition = 0 // Clear last-last position
+    change $lastlastposition = $ballMemoryPosition
+    change *$ballMemoryPosition = 16912 // fade last position
+    add $ballPixelPosition,$pixOffset -> $ballMemoryPosition
+    change *$ballMemoryPosition = 65534 // Color new position
+    
+
+    // Bounce if in left or right paddles
+
+    if $ballPosX<5: // If in range of left paddle
+        mult $LPaddleY,6 -> $relativePosition // Get relative position in pixel scale
+        add $relativePosition,6 -> $bottomPosition
+        if $ballPosY<$bottomPosition:
+            if $ballPosY>$relativePosition:
+                change $ballVelX = 1
+            endif
+        endif
+    endif
+    if $ballPosX>55: // If in range of right paddle
+        if $ballPosX<59: // There is extra space on the right side, make sure ball is not in this space.
+            mult $RPaddleY,6 -> $relativePosition // Get relative position in pixel scale
+            add $relativePosition,6 -> $bottomPosition
+            if $ballPosY<$bottomPosition:
+                if $ballPosY>$relativePosition:
+                    change $ballVelX = 0
+                endif
+            endif
+        endif
+    endif
+
+    // Increment score and reset position if on left/right walls
+    if $ballPosX==0: // If on left wall
+        // Reset ball
+        change $ballVelX = 1
+        change $ballPosX = 32
+        change $ballPosY = 32
+        // Increment and refresh score
+        add $rightScore,1 -> $rightScore
+
+        if $rightScore==10:
+            change $slowBallTime = 0
+            goto #start
+        endif
+
+        // Right Score
+        add $charOffset,$rightScoreLocation -> $memaddr
+        add $rightScore,39 -> $sdciiText
+        change *$memaddr = $sdciiText
+        
+    endif
+    if $ballPosX==63: // If on right wall
+        // Reset ball
         change $ballVelX = 0
+        change $ballPosX = 32
+        change $ballPosY = 32
+        // Increment and refresh score
+        add $leftScore,1 -> $leftScore
+        
+        if $leftScore==10:
+            change $slowBallTime = 0
+            goto #start
+        endif
+
+        // Left Score
+        add $charOffset,$leftScoreLocation -> $memaddr
+        add $leftScore,39 -> $sdciiText
+        change *$memaddr = $sdciiText
+        
     endif
 
     // Bounce if on top/bottom walls
-    if $ballPosY==0: // If on top wall, switch y-direction
+    if $ballPosY<1: // If on top wall, switch y-direction
         change $ballVelY = 0
     endif
-    if $ballPosY==63: // If on bottom wall, switch y-direction
+    if $ballPosY>62: // If on bottom wall, switch y-direction
         change $ballVelY = 1
     endif
 
@@ -57,22 +215,66 @@ if $slowTime==2000:
         add $ballPosY,1 -> $ballPosY
     endif
 
-    // Convert X and Y coordinates into pixel space
-    change $ballPixelPosition = 0
-    mult $ballPosY,64 -> $ballPixelPosition
-    add $ballPosX,$ballPixelPosition -> $ballPixelPosition
+    ////////////////////////////////////
+    // Draw dotted net through center //
+    ////////////////////////////////////
+    change $linePos = 32
+    #dottedLine
+    add $linePos,$pixOffset -> $lineInMem
+    change *$lineInMem = 19026 // Draw gray dot
+    add $linePos,128 -> $linePos // Skip a line
+    gotoif $linePos<4000, #dottedLine
 
-    // Calculate correct address and display Ball
-    change *$lastlastposition = 0 // Clear last-last position
-    change $lastlastposition = $ballMemoryPosition
-    change *$ballMemoryPosition = 16912 // fade last position
-    add $ballPixelPosition,$pixOffset -> $ballMemoryPosition
-    change *$ballMemoryPosition = 65534 // Color new position
-
-    change $slowTime = 0
+    change $slowBallTime = 0
 endif
 
-add $slowTime,1 -> $slowTime
 
+
+add $slowBallTime,1 -> $slowBallTime
+add $slowPaddleTime,1 -> $slowPaddleTime
 // Keep looping
 goto #update
+
+
+
+// // If the win condition is met, show win screen then reset
+// #win
+
+// // Write winner text
+// change 0x402A = 35 // W
+// change 0x402B = 21 // I
+// change 0x402C = 26 // N
+// change 0x402D = 31 // S
+
+// if $rightScore==10:
+//     change 0x4028 = 30 // R
+// endif
+// if $leftScore==10:
+//     change 0x4028 = 24 // L
+// endif
+
+// // Win background color
+// change $pixPos = 0
+// change $winColor = 3688 // Green
+// #colorScreen
+// add $pixPos,$pixOffset -> $memaddr
+// change *$memaddr = $winColor
+// add $pixPos,1 -> $pixPos
+// gotoif $pixPos<4095, #colorScreen
+
+// add $slowBallTime,1 -> $slowBallTime
+
+// if $slowBallTime==65530:
+//     change $slowBallTime = 0
+
+//     // Clear background color
+//     change $pixPos = 0
+//     #colorScreenTwo
+//     add $pixPos,$pixOffset -> $memaddr
+//     change *$memaddr = 0
+//     add $pixPos,1 -> $pixPos
+//     gotoif $pixPos<4095, #colorScreenTwo
+
+//     goto #start
+// endif
+// goto #win

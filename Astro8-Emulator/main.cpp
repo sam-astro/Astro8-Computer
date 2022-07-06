@@ -296,22 +296,21 @@ int main(int argc, char** argv)
 
 				// Keyboard support
 				expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
-				keyPress = true;
+				//keyPress = true;
 				cout << "  expansionPort: " << expansionPort << endl;
 			}
 			else if (event.type == SDL_KEYUP) {
 
 				// Keyboard support
 				expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-				keyPress = false;
-				cyclesKeyPressed = 0;
-				//cout << "  expansionPort: " << expansionPort << endl;
+				//keyPress = false;
+				//cyclesKeyPressed = 0;
 			}
 		}
-		if (cyclesKeyPressed >= 25)
-			expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-		if (keyPress)
-			cyclesKeyPressed++;
+		//if (cyclesKeyPressed >= 25)
+		//	expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+		//if (keyPress)
+		//	cyclesKeyPressed++;
 
 
 		Update(dt);
@@ -733,6 +732,8 @@ int ConvertAsciiToSdcii(int asciiCode) {
 	conversionTable[45] = 8;	// _ -> _
 	conversionTable[80] = 9;	// l-arr -> <
 	conversionTable[79] = 10;	// r-arr -> >
+	conversionTable[82] = 71;	// u-arr -> u-arr
+	conversionTable[81] = 72;	// d-arr -> d-arr
 	conversionTable[49] = 11;	// | -> vertical line |
 	conversionTable[66] = 12;	// f9 -> horizontal line --
 
@@ -1719,18 +1720,23 @@ string CompileCode(string inputcode) {
 		// 'goto' command  ex. (goto <addr>)
 		else if (command == "goto")
 		{
-			string valAPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
+			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "goto:       ";
-			PrintColored("'" + valAPre + "'\n", brightBlueFGColor, "");
+			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
 
-			int valAProcessed = ParseValue(valAPre);
+			string addrProcessed = to_string(ParseValue(addrPre));
 
-			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + valAPre + "'");
+			// If label has not been defined yet, write after jump to go back to later.
+			if (addrProcessed == "-1") {
+				addrProcessed = addrPre;
+			}
+
+			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
 			compiledLines.push_back("");
 
 
-			compiledLines.at(compiledLines.size() - 1) += "jmp " + to_string(valAProcessed);
+			compiledLines.at(compiledLines.size() - 1) += "jmp " + addrProcessed;
 
 
 			continue;
@@ -1776,7 +1782,7 @@ string CompileCode(string inputcode) {
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
