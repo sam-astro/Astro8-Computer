@@ -6,5 +6,5 @@ change $pixelCount = 0
 add $vMemOffset,$pixelCount -> $actualAddress
 //stop
 change *$actualAddress = $actualAddress
-add $pixelCount,1 -> $pixelCount   // Increment pixel count by 1
+add $pixelCount,1 -> $pixelCount // Increment pixel count by 1
 goto #loop

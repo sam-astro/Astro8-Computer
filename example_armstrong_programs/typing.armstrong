@@ -2,6 +2,12 @@
 change $chMemOffset = 16382
 change $charCount = 0
 change @EX = 168
+change $cursorChar = 8
+
+
+// Cursor/clear character
+add $chMemOffset,$charCount -> $actualAddress
+change *$actualAddress = $cursorChar
 
 #mainLoop
 
@@ -10,18 +16,36 @@ change $key = @EX
 
 // If the user is pressing a key
 if $key!=168:
-	// Get actual address by adding the offset and current position
-	add $chMemOffset,$charCount -> $actualAddress
+	if $key==70: // If backspace key pressed
+		if $charCount>0:
+			// Clear character
+			add $chMemOffset,$charCount -> $actualAddress
+			change *$actualAddress = 0
 
-	// Put character into memory
-	change *$actualAddress = $key
-	
-	// Increment character position
-	add $charCount,1 -> $charCount
+			// Move backward in memory
+			sub $charCount,1 -> $charCount
+			// Cursor character
+			add $chMemOffset,$charCount -> $actualAddress
+			change *$actualAddress = $cursorChar
+		endif
+	endif
 
-	// Reset character count if exceeds char limit
-	if $charCount==110:
-		change $charCount = 0
+	if $key!=70: // If backspace key is NOT pressed
+		// Put character into memory
+		add $chMemOffset,$charCount -> $actualAddress
+		change *$actualAddress = $key
+		
+		// Increment character position
+		add $charCount,1 -> $charCount
+
+		// Cursor/clear character
+		add $chMemOffset,$charCount -> $actualAddress
+		change *$actualAddress = $cursorChar
+
+		// Reset character count if exceeds char limit
+		if $charCount==110:
+			change $charCount = 0
+		endif
 	endif
 endif
 

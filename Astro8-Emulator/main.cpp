@@ -38,10 +38,11 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
-int pixelRamIndex = 0xffff;
+int pixelRamIndex = 0xefff;
 
-int frameSpeed = 1;	// ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
+int frameSpeed = 10;	// ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
 						// v Lower = higher FPS, but slower instruction processing
+#define autoFPS true
 
 float slowdownAmnt = 1;
 int iterations = 0;
@@ -351,7 +352,7 @@ bool Update(float deltatime)
 			//cout << ("CR AW ");
 			// RM
 			// IW
-			InstructionReg = memoryBytes.at(memoryIndex);
+			InstructionReg = memoryBytes.at(clamp(memoryIndex, 0, 65534));
 			// CE
 			programCounter += 1;
 			//cout << "\n     step: 1" << endl;
@@ -362,7 +363,7 @@ bool Update(float deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		vector<bool> mcode = microinstructionData.at(microcodeLocation);
+		vector<bool> mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
 
 		//cout << "\n (";
 		//for (size_t i = 0; i < mcode.size(); i++)
@@ -395,7 +396,7 @@ bool Update(float deltatime)
 		else if (readInstr == 4)
 		{ // RM
 			//cout << ("RM ");
-			bus = memoryBytes.at(memoryIndex);
+			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
 
 			//if (memoryIndex <= 16382 || memoryIndex > 16527)
 			//	bus = memoryBytes[memoryIndex];
@@ -517,7 +518,7 @@ bool Update(float deltatime)
 		else if (writeInstr == 6)
 		{ // WM
 			//cout << ("WM ");
-			memoryBytes.at(memoryIndex) = bus;
+			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
 			//if (memoryIndex <= 16382 || memoryIndex > 16527)
 			//	memoryBytes[memoryIndex] = bus;
 			//else
@@ -545,10 +546,11 @@ bool Update(float deltatime)
 		// Display current pixel
 		if (iterations % frameSpeed == 0)
 		{
-			int characterRamValue = memoryBytes.at(characterRamIndex + 16382);
+			//PrintColored(to_string(pixelRamIndex )+ "\n", redFGColor, "");
+			int characterRamValue = memoryBytes.at(clamp(characterRamIndex + 16382, 0, 65534));
 			bool charPixRomVal = characterRom.at((characterRamValue * 64) + (charPixY * 8) + charPixX);
 
-			int pixelVal = 0;
+			int pixelVal = memoryBytes.at(clamp(pixelRamIndex, 0, 65534));
 			int r, g, b;
 			//r= g=b = 0;
 			//b = 128;
@@ -618,11 +620,13 @@ bool Update(float deltatime)
 				float fps = 1.0f / renderedFrameTime;
 				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(fps) << "  rval: " + to_string(pixelRamIndex);
 
-				if (fps > 65)
-					frameSpeed++;
-				else if (fps < 55)
-					frameSpeed--;
-				frameSpeed = clamp(frameSpeed, 1, 9999);
+				if (autoFPS) {
+					if (fps > 65)
+						frameSpeed++;
+					else if (fps < 55)
+						frameSpeed--;
+					frameSpeed = clamp(frameSpeed, 1, 9999);
+				}
 
 				renderedFrameTime = 0;
 			}
@@ -713,10 +717,12 @@ string charToString(char* a)
 }
 
 int ConvertAsciiToSdcii(int asciiCode) {
-	int conversionTable[100];  // [ascii] = sdcii
+	int conversionTable[600];  // [ascii] = sdcii
+	for (size_t i = 0; i < sizeof(conversionTable)/sizeof(conversionTable[0]); i++)
+		conversionTable[i] = -1;
 
 	// Special characters
-	conversionTable[0] = 0;	// space -> blank
+	conversionTable[44] = 0;	// space -> blank
 	conversionTable[58] = 1;	// f1 -> smaller solid square
 	conversionTable[59] = 2;	// f2 -> full solid square
 	conversionTable[87] = 3;	// num+ -> +
@@ -771,7 +777,14 @@ int ConvertAsciiToSdcii(int asciiCode) {
 	conversionTable[38] = 48;	// 9 -> 9
 
 
-	return conversionTable[asciiCode];
+
+	conversionTable[42] = 70;	// backspace -> backspace
+
+	int actualVal = conversionTable[asciiCode];
+	if (actualVal == -1) // -1 Means unspecified value
+		actualVal = 168;
+
+	return actualVal;
 }
 
 
@@ -1328,19 +1341,23 @@ string CompileCode(string inputcode) {
 	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
 
 	// Remove line if it is blank or is just a comment
-	for (int i = 0; i < codelines.size(); i++)
-	{
-		if (trim(codelines[i]).find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
-			codelines.erase(codelines.begin() + i);
-			i--;
-		}
-		else if (trim(codelines[i])[0] == '/' && trim(codelines[i])[1] == '/')
-			codelines.erase(codelines.begin() + i);
-	}
+	auto isEmptyOrBlank = [](const std::string& s) {
+		return s.find_first_not_of(" \t/") == std::string::npos;
+	};
+	auto isComment = [](const std::string& s) {
+		if (trim(s).size() >= 2)
+			return trim(s)[0] == '/' && trim(s)[1] == '/';
+		return true;
+	};
+	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isEmptyOrBlank), codelines.end());
+	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isComment), codelines.end());
 
+
+	cout << endl;
 	// Remove comments from end of lines and trim whitespace
 	for (int i = 0; i < codelines.size(); i++) {
 		codelines[i] = trim(split(codelines[i], "//")[0]);
+		PrintColored(codelines[i] + "\n", brightBlackFGColor, "");
 	}
 
 	// Replace 'if' statements with 'gotoif' alternatives,
@@ -1546,8 +1563,8 @@ string CompileCode(string inputcode) {
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
 				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre));
-				LoadAddress("@A", to_string(value));
-				StoreAddress("@A", to_string(value));
+				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -1931,13 +1948,13 @@ vector<string> parseCode(string input)
 			cout << " 00000000000";
 #endif
 			outputBytes[memaddr] += "00000000000";
-		}
+			}
 #if DEV_MODE
 		cout << "  " + BinToHexFilled(outputBytes[memaddr], 4) + "\n";
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1956,7 +1973,7 @@ vector<string> parseCode(string input)
 
 		string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
-	}
+		}
 #if DEV_MODE
 	cout << processedOutput << endl << endl;
 #endif
@@ -1967,7 +1984,7 @@ vector<string> parseCode(string input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
 
@@ -2002,7 +2019,7 @@ void ComputeStepInstructions(string stepContents, char* stepComputedInstruction)
 				stepComputedInstruction[10] = binaryval[1];
 				stepComputedInstruction[11] = binaryval[2];
 			}
-			}
+		}
 
 		// Check if microinstruction requires special code
 		for (int minsother = 0; minsother < sizeof(aluInstructionSpecialAddress) / sizeof(aluInstructionSpecialAddress[0]); minsother++)
@@ -2015,8 +2032,8 @@ void ComputeStepInstructions(string stepContents, char* stepComputedInstruction)
 			}
 		}
 
-		}
-			}
+	}
+}
 
 void GenerateMicrocode()
 {
@@ -2033,13 +2050,13 @@ void GenerateMicrocode()
 		{
 			if (instructioncodes[cl][clc] != ' ')
 				newStr += instructioncodes[cl][clc];
-		}
+	}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-		}
+}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -2115,7 +2132,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-				}
+					}
 				if (doesntmatch)
 					continue;
 
@@ -2126,7 +2143,7 @@ void GenerateMicrocode()
 			}
 		}
 
-	}
+				}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2175,9 +2192,9 @@ void GenerateMicrocode()
 									endaddress[checkflag] = '1';
 								stepLocked[checkflag] = 1;
 							}
+						}
 					}
 				}
-			}
 				string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
@@ -2199,9 +2216,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-		}
-	}
-	}
+					}
+				}
+			}
 
 	// Print the output
 	string processedOutput = "";

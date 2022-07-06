@@ -1,0 +1,55 @@
+#AS
+
+#start
+
+// General
+change $charOffset = 16382 // Beginning of character memory
+change @EX = 168 // 'Zero' out keypresses
+
+// Player
+change $playerMin = 0
+change $playerMax = 8
+change $playerPosition = 4 // Offset from $playerMin, horizontal position of player
+change $playerChar = 12 // The SDCII character that indicates the player
+
+// Ball
+change $ballDir = 2 // 0 = up, 1 = right, 2 = down, 3 = left
+change $ballPosition = 4 // Offset from $charOffset, position of ball
+change $ballChar = 69 // The SDCII character that indicates the ball
+
+
+#update
+
+change $keypress = @EX
+
+// Calculate correct address and display Player
+add 91,$playerPosition -> $tmpAdd
+add $tmpAdd,$charOffset -> $memoryPosition
+change *$memoryPosition = $playerChar
+
+// If 'A' key is pressed, decrease player position
+if $keypress==13:
+    if $playerPosition>$playerMin: // Make sure the player is not on the left edge
+        sub $playerPosition,1 -> $playerPosition
+        // Clear the last position
+        change *$memoryPosition = 0
+    endif
+endif
+// If 'D' key is pressed, increase player position
+if $keypress==16:
+    if $playerPosition<$playerMax: // Make sure the player is not on the right edge
+        add $playerPosition,1 -> $playerPosition
+        // Clear the last position
+        change *$memoryPosition = 0
+    endif
+endif
+
+
+
+// Calculate correct address and display Ball
+add $ballPosition,$charOffset -> $ballMemoryPosition
+change *$ballMemoryPosition = $ballChar
+
+
+// Keep looping
+goto #update
