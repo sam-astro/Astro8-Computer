@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 	cout << "\nStarting Emulation...\n";
 
 	// Start graphics
-	InitGraphics("Astro-8 Emulator", 64, 64, 6);
+	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
 
 	int cyclesKeyPressed = 0;

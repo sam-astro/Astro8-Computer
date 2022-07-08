@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "TAjsOJUh9J01DWjshPDxrmz57zbpiym4L4O6Ib6/DAF8rJ0DIId3zsZYi0/RMma+c6FD47+A/OmfArFZbvgKUQ==",
+  "dgSpecHash": "bS+Tw4QxXajR4T1gElY9TYwYHUGQbD1KC8jrgmQACEMXZXpgk1g/qqkE6x7DxTA8T7YNq8LFYOeEoADyzT0VKQ==",
   "success": true,
-  "projectFilePath": "D:\\Code\\Basic-CPU-In-Logisim\\Simple_8bit_assembler\\Simple_8bit_assembler.csproj",
+  "projectFilePath": "D:\\Code\\Astro8-Computer\\Simple_8bit_assembler\\Simple_8bit_assembler.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Sam\\.nuget\\packages\\microsoft.win32.systemevents\\7.0.0-preview.5.22301.12\\microsoft.win32.systemevents.7.0.0-preview.5.22301.12.nupkg.sha512",
     "C:\\Users\\Sam\\.nuget\\packages\\system.drawing.common\\7.0.0-preview.5.22301.12\\system.drawing.common.7.0.0-preview.5.22301.12.nupkg.sha512"

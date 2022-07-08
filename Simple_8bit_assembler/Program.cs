@@ -64,10 +64,11 @@ public class Program
         {
             Console.Write("Path to image >  ");
             string path = Console.ReadLine().Replace("\"", "");
-            Bitmap img = ResizeBitmap(new Bitmap((Bitmap)Image.FromFile(path)), 32, 32);
+            Bitmap img = ResizeBitmap(new Bitmap((Bitmap)Image.FromFile(path)), 64, 64);
 
-            string code = File.ReadAllText("../../../../draw_image.txt") + "\r";
+            string code = "";
             int currentMemIndex = 0;
+            code += "#AS\r";
             for (int pos = 0; pos < img.Width * img.Height; pos++)
             {
                 Color col = img.GetPixel(pos % img.Width, pos / img.Height);
@@ -77,10 +78,10 @@ public class Program
                 string binval = "0" + DecToBinFilled(r, 5) + DecToBinFilled(g, 5) + DecToBinFilled(b, 5);
                 int decval = BinToDec(binval);
 
-                code += "set " + (200 + currentMemIndex) + " " + decval + "\r";
+                code += "define " + (200 + currentMemIndex) + " " + decval + "\r";
                 currentMemIndex++;
             }
-            code += "\n";
+            code += File.ReadAllText("../../../../draw_image.txt") + "\r";
             File.WriteAllText("../../../../code_text_val.txt", code, Encoding.UTF8);
 
         }
