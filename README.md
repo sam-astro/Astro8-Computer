@@ -21,10 +21,12 @@ JMP <val>   01110   : change counter to <val> (changes which instruction is next
 JMPZ <val>  01111   : jump to <val> if the value in reg A is equal to zero
 JMPC <val>  10000   : jump if the carry bit is set
 LDAIN       10001   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
-LDLGE       10010   : use value directly after this instruction as the address, then copy from memory at that address to reg A and advance counter by 2
-SWP         10011   : swap the contents of register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
-HLT         10100   : stop the clock
-OUT         10101   : copy value from reg A to display reg
+STAOUT      10010   : use reg A as memory address, then copy value from B into memory
+LDLGE       10011   : use value directly after this instruction as the address, then copy from memory at that address to reg A and advance counter by 2
+STLGE       10100   : use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+SWP         10101   : swap the contents of register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
+SWPC        10110   : swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
+HLT         10111   : stop the clock
 
 
 
