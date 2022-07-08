@@ -122,9 +122,9 @@ endif                          - Marks the ending of the contents of an if state
 
 High-level:
 ```
-set 0x1ff 32    // Create 32 for multiplying G
-set 0x1fe 1024  // Create 1024 for multiplying R
-set 0x3e8 1     // Constant 1
+define 0x1ff 32    // Create 32 for multiplying G
+define 0x1fe 1024  // Create 1024 for multiplying R
+define 0x3e8 1     // Constant 1
 
 div 0x12a,2 -> 0x120  // Divide x-location by 2
 div 0x12b,2 -> 0x121  // Divide y-location by 2
