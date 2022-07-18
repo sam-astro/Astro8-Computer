@@ -10,7 +10,7 @@
 #include <fstream>
 #include "colorprint.h"
 
-#define DEV_MODE false
+#define DEV_MODE true
 
 
 using namespace std::chrono;
@@ -2092,9 +2092,9 @@ void GenerateMicrocode()
 #if DEV_MODE
 	cout << "\n\ngenerate fetch... \n";
 #endif
-	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
+	for (int ins = 0; ins < 32; ins++) // Iterate through all definitions of instructions
 	{
-		int correctedIndex = instIndexes[ins];
+		int correctedIndex = ins;
 
 		string startaddress = DecToBinFilled(correctedIndex, 5);
 
