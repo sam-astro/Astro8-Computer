@@ -10,7 +10,7 @@
 #include <fstream>
 #include "colorprint.h"
 
-#define DEV_MODE true
+#define DEV_MODE false
 
 
 using namespace std::chrono;
