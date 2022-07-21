@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/AstroEmulator.exe.dir/main.cpp.o  -o AstroEmulator.exe  -lm -lSDL2 

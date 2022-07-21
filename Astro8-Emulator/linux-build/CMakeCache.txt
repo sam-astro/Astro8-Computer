@@ -15,6 +15,12 @@
 ########################
 
 //Value Computed by CMake
+AstroEmulator.exe_BINARY_DIR:STATIC=/home/sam/Astro8-Computer/Astro8-Emulator/linux-build
+
+//Value Computed by CMake
+AstroEmulator.exe_SOURCE_DIR:STATIC=/home/sam/Astro8-Computer/Astro8-Emulator
+
+//Value Computed by CMake
 AstroEmulator_BINARY_DIR:STATIC=/home/sam/Astro8-Computer/Astro8-Emulator/linux-build
 
 //Value Computed by CMake
@@ -151,7 +157,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=AstroEmulator
+CMAKE_PROJECT_NAME:STATIC=AstroEmulator.exe
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib

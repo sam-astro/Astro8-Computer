@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named AstroEmulator
+# Target rules for targets named AstroEmulator.exe
 
 # Build rule for target.
-AstroEmulator: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 AstroEmulator
-.PHONY : AstroEmulator
+AstroEmulator.exe: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 AstroEmulator.exe
+.PHONY : AstroEmulator.exe
 
 # fast build rule for target.
-AstroEmulator/fast:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/build
-.PHONY : AstroEmulator/fast
+AstroEmulator.exe/fast:
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/build
+.PHONY : AstroEmulator.exe/fast
 
 main.o: main.cpp.o
 
@@ -129,7 +129,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/main.cpp.o
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -138,7 +138,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/main.cpp.i
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -147,7 +147,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/main.cpp.s
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 # Help Target
@@ -158,7 +158,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... AstroEmulator"
+	@echo "... AstroEmulator.exe"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

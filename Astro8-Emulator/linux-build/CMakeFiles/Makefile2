@@ -53,7 +53,7 @@ CMAKE_BINARY_DIR = /home/sam/Astro8-Computer/Astro8-Emulator/linux-build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/AstroEmulator.dir/all
+all: CMakeFiles/AstroEmulator.exe.dir/all
 
 .PHONY : all
 
@@ -63,36 +63,36 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/AstroEmulator.dir/clean
+clean: CMakeFiles/AstroEmulator.exe.dir/clean
 
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/AstroEmulator.dir
+# Target rules for target CMakeFiles/AstroEmulator.exe.dir
 
 # All Build rule for target.
-CMakeFiles/AstroEmulator.dir/all:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/depend
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles --progress-num=1,2 "Built target AstroEmulator"
-.PHONY : CMakeFiles/AstroEmulator.dir/all
+CMakeFiles/AstroEmulator.exe.dir/all:
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/depend
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles --progress-num=1,2 "Built target AstroEmulator.exe"
+.PHONY : CMakeFiles/AstroEmulator.exe.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/AstroEmulator.dir/rule: cmake_check_build_system
+CMakeFiles/AstroEmulator.exe.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/AstroEmulator.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/AstroEmulator.exe.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles 0
-.PHONY : CMakeFiles/AstroEmulator.dir/rule
+.PHONY : CMakeFiles/AstroEmulator.exe.dir/rule
 
 # Convenience name for target.
-AstroEmulator: CMakeFiles/AstroEmulator.dir/rule
+AstroEmulator.exe: CMakeFiles/AstroEmulator.exe.dir/rule
 
-.PHONY : AstroEmulator
+.PHONY : AstroEmulator.exe
 
 # clean rule for target.
-CMakeFiles/AstroEmulator.dir/clean:
-	$(MAKE) -f CMakeFiles/AstroEmulator.dir/build.make CMakeFiles/AstroEmulator.dir/clean
-.PHONY : CMakeFiles/AstroEmulator.dir/clean
+CMakeFiles/AstroEmulator.exe.dir/clean:
+	$(MAKE) -f CMakeFiles/AstroEmulator.exe.dir/build.make CMakeFiles/AstroEmulator.exe.dir/clean
+.PHONY : CMakeFiles/AstroEmulator.exe.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
