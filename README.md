@@ -37,9 +37,9 @@ Along with the emulator, you can look at the actual circuit design for the syste
 
 ## Technical details:
 
-```
-Instruction set:
+### Instruction set:
 
+```
 NOP         00000   : no operation
 AIN <addr>  00001   : load data from <addr> to reg A
 BIN <addr>  00010   : load data from <addr> to reg B
@@ -64,11 +64,10 @@ STLGE       10100   : use value directly after counter as address, then copy val
 SWP         10011   : swap the contents of register A and register B (this overwrites register C)
 SWPC        10110   : swap register A and register C (this overwrites register B)
 HLT         10111   : stop the clock
+```
 
-
-
-microinstructions
-
+### Microinstructions:
+```
 (logisim microinstructions are in reversed order. Bottom of this list is left of binary code )
 
 // 000000000000 11  compact
@@ -106,9 +105,7 @@ CE : enable incrementing of counter
 EO : read from ALU to bus
 ```
 
-character rom = 1040 bytes
-
-Memory Layout:
+### Memory Layout:
 ```
 word 0 |                                                       .                                                  | word 65535
        | Program mem. 0 - 16382    I                           I                          Video memory 61439-65535|
@@ -122,7 +119,7 @@ word 0 |                                                       .                
 
 
 
-Armstrong:
+### Armstrong:
 ```
 // Use hex values (0xff) when referring to addresses, and decimal (213) for a new immediate integer
 
