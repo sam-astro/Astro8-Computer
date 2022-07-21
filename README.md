@@ -1,9 +1,44 @@
 # Astro-8 Computer
 
+This is a 16-bit computer design called the Astro-8. It has a fully functional design in the logic simulator called Logisim Evolution. I also made an emulator for running programs at full speed. Continue reading for installation instructions and how to use it.
+
+## Installation:
+### Windows
+1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Windows** version
+2. Unzip the downloaded file
+### Linux
+1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
+2. Unzip the downloaded file
+### From Source
+1. Clone this repository in a command line using `git clone https://github.com/sam-astro/Astro8-Computer.git` OR by downloading the repository as a .ZIP file and unzipping it to your location of choice
+2. Enter the directory `Astro8-Computer/Astro8-Emulator/`
+3. Run CMake using `cmake --build linux-build -- -j5`
+4. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator.exe`
+
+## Use
+### Emulator
+The file called `Astro8-Emulator.exe` serves multiple purposes.
+* Emulates machine code just like the real hardware
+* Compiles Armstrong into assembly
+* Assembles assembly into machine code and stores it into a file called `program_machine_code`
+
+To run your code, simply start the program. You will be prompted to input your code. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. All Armstrong files should have `#AS` as the first line.
+
+There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
+
+### Logisim
+Along with the emulator, you can look at the actual circuit design for the system and run your programs in it. 
+1. Compile/Assemble your program using `Astro8-Emulator.exe`. It will save the machine code to a file called `program_machine_code` automatically
+2. Open the file in the newest version of Logisim Evolution
+3. Locate the RAM area, and find the one called `MEMORY`
+4. Right-click on it, and click `Load Image...`
+5. In the file view that just appeared, locate the file at `Astro8-Computer/program_machine_code`, and click `Open`
+6. Press play, and it should run.
+
+## Technical details:
+
 ```
-
-
-instructions
+Instruction set:
 
 NOP         00000   : no operation
 AIN <addr>  00001   : load data from <addr> to reg A
@@ -86,19 +121,8 @@ word 0 |                                                       .                
 ```
 
 
-Multiply program:
-```
-, Set the first factor
-ldia 4
-, Set the second factor
-ldib 5
-, Multiply
-mult
-out
-hlt
-```
 
-New Assembly (WIP):
+Armstrong:
 ```
 // Use hex values (0xff) when referring to addresses, and decimal (213) for a new immediate integer
 
@@ -122,121 +146,3 @@ if <valA><C><valB>             - Continues if the logic relationship between <va
 endif                          - Marks the ending of the contents of an if statement
 ```
 
-High-level:
-```
-define 0x1ff 32    // Create 32 for multiplying G
-define 0x1fe 1024  // Create 1024 for multiplying R
-define 0x3e8 1     // Constant 1
-
-div 0x12a,2 -> 0x120  // Divide x-location by 2
-div 0x12b,2 -> 0x121  // Divide y-location by 2
-
-//   Red is equal to x * 10-bit offset of 1024
-mult 0x120,0x1fe -> 0x12c
-
-//   Green is equal to y * 5-bit offset of 32
-mult 0x121,0x1ff -> 0x12d
-
-//   Blue is equal to 63 - ( ( x + y ) / 2)
-add 0x120,0x121 -> @A
-div @A,4 -> @B
-sub 63,@B -> 0x12e
-
-// Add RGB values and output value
-add 0x12c,0x12d -> @A
-add @A,0x12e -> @A
-out @A
-
-
-// Handle incrementing x and y, and resetting when above 64 (screen size)
-add 0x12a,1 -> 0x12a
-jmpc 0x12a==64,#incrementY  // If X is equal to 64, jump to #incrementY
-jmp 0x0 // Else return to top
-
-#incrementY
-add 0x12b,1 -> 0x12b  // Increment Y by 1, and reset X to 0
-change 0x12a = 0
-jmpc 0x12b==64,#resetY // If Y is equal to 64, jump to #resetY
-jmp 0x0 // Else return to top
-
-#resetY
-change 0x12b = 0 // Reset Y to 0
-jmp 0x0 // Finally return to top
-```
-
-Parsed:
-```
-set 511 32    // Create 32 for multiplying G
-set 510 1024  // Create 1024 for multiplying R
-set 1000 1     // Constant 1
-
-// Divide x-location by 2
-ain 298
-ldib 2
-div
-sta 288
-// Divide y-location by 2
-ain 299
-ldib 2
-div
-sta 289
-
-//   Red is equal to x * 10-bit offset of 1024
-ain 288
-bin 510
-mult
-sta 300
-
-//   Green is equal to y * 5-bit offset of 32
-ain 289
-bin 511
-mult
-sta 301
-
-//   Blue is equal to 63 - ( ( x + y ) / 2)
-ain 288
-bin 289
-add
-ldib 4
-div
-swp
-ldia 63
-sub
-sta 302
-
-// Add RGB values and output value
-ain 300
-bin 301
-add
-bin 302
-add
-out
-
-
-// Handle incrementing x and y, and resetting when above 64 (screen size)
-ain 298
-ldib 1
-add
-sta 298
-swp
-ldia 64
-sub
-jmpz 40
-jmp 0
-
-ain 299
-ldib 1
-add
-sta 299
-ldia 0
-sta 298
-bin 299
-ldia 64
-sub
-jmpz 51
-jmp 0
-
-ldia 0
-sta 299
-jmp 0
-```
