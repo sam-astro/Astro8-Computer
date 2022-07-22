@@ -6,7 +6,7 @@ This is a 16-bit computer design called the Astro-8. It has a fully functional d
 ### Windows
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Windows** version
 2. Unzip the downloaded file
-### Linux
+### Linux (not working yet)
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
 2. Unzip the downloaded file
 ### From Source
