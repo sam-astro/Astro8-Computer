@@ -1,4 +1,4 @@
-﻿
+
 #include <vector>
 #include <algorithm> 
 #include <string> 
@@ -50,9 +50,15 @@ int charPixY = 0;
 int characterRamIndex = 0;
 int pixelRamIndex = 0xefff;
 
-int frameSpeed = 10;	// ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
-						// v Lower = higher FPS, but slower instruction processing
+
+// Frame limiter which keeps frames steady while also allowing computation time for CPU
+int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
+                     // v Lower = higher FPS, but slower instruction processing
+
+// autoFPS if true will dynamically change the frame speed above ^ to always be around 60 FPS.
+//    Set this to false if you want manual control of frameSpeed
 #define autoFPS true
+
 
 float slowdownAmnt = 1;
 int iterations = 0;
@@ -115,7 +121,6 @@ string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", 
 string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
 string aluInstructionSpecialAddress[] = { "SU", "MU", "DI" };
 string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
-//   "LDAIN", "HLT", "OUT"
 
 string instructioncodes[] = {
 		"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
@@ -205,17 +210,27 @@ int clamp(int x, int min, int max) {
 
 int main(int argc, char** argv)
 {
-	// Gather user inputted code
-	cout << ("v Emu. Code input v\n");
+	const string argvs = string(argv);
+	
 	string code = "";
-	string line;
-	while (true) {
-		getline(cin, line);
-		if (line.empty()) {
-			break;
+	
+	// If no path is provided
+	if (argc == 1)
+	{
+		// Gather user inputted code
+		cout << ("v Emu. Code input v\n");
+		string line;
+		while (true) {
+			getline(cin, line);
+			if (line.empty()) {
+				break;
+			}
+			code += line + "\n";
 		}
-		code += line + "\n";
 	}
+	// Otherwise it is a path
+	else
+		code = split(argvs, " ")[1];
 
 	// If the input is a path to a file
 	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
@@ -236,6 +251,10 @@ int main(int argc, char** argv)
 			cout << "\nError: could not open file \"" << path << "\"\n";
 			exit(1);
 		}
+	}
+	else if (argc != 1) {
+		cout << "\nError: could not open file \"" << code << "\"\n";
+		exit(1);
 	}
 
 	// If the code inputted is marked as written in armstrong with #AS
