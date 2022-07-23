@@ -2293,6 +2293,6 @@ void GenerateMicrocode()
 
 	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
-	myStream.open("./microinstructions_cpu_v1", ios::out);
+	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
 		}
