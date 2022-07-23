@@ -28,12 +28,12 @@ To run your code, simply start the program. You will be prompted to input your c
 There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
 
 ### Logisim
-Along with the emulator, you can look at the actual circuit design for the system and run your programs in it. 
-1. Compile/Assemble your program using `Astro8-Emulator.exe`. It will save the machine code to a file called `program_machine_code` automatically
-2. Open the file in the newest version of Logisim Evolution
+Along with the emulator, you can look at the actual circuit design for the system and even run your programs in it. 
+1. Compile/Assemble your program using `Astro8-Emulator`. It will save the machine code to a file called `program_machine_code` automatically. This file is located directly next to the `Astro8-Emulator` executable.
+2. Open the file called `cpu-circuit.circ` in the newest version of [Logisim Evolution](https://github.com/logisim-evolution/logisim-evolution/releases)
 3. Locate the RAM area, and find the one called `MEMORY`
 4. Right-click on it, and click `Load Image...`
-5. In the file view that just appeared, locate the file at `Astro8-Computer/program_machine_code`, and click `Open`
+5. In the file view that just appeared, locate your compiled program file directly next to the `Astro8-Emulator` executable, and click `Open`
 6. Press play, and it should run.
 
 ## Technical details:
