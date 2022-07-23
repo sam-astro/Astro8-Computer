@@ -53,7 +53,7 @@ int pixelRamIndex = 0xefff;
 
 // Frame limiter which keeps frames steady while also allowing computation time for CPU
 int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
-                     // v Lower = higher FPS, but slower instruction processing
+					 // v Lower = higher FPS, but slower instruction processing
 
 // autoFPS if true will dynamically change the frame speed above ^ to always be around 60 FPS.
 //    Set this to false if you want manual control of frameSpeed
@@ -211,7 +211,7 @@ int clamp(int x, int min, int max) {
 int main(int argc, char** argv)
 {
 	string code = "";
-	
+
 	// If no path is provided
 	if (argc == 1)
 	{
@@ -757,7 +757,7 @@ string charToString(char* a)
 
 int ConvertAsciiToSdcii(int asciiCode) {
 	int conversionTable[600];  // [ascii] = sdcii
-	for (size_t i = 0; i < sizeof(conversionTable)/sizeof(conversionTable[0]); i++)
+	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
 		conversionTable[i] = -1;
 
 	// Special characters
@@ -1994,13 +1994,13 @@ vector<string> parseCode(string input)
 			cout << " 00000000000";
 #endif
 			outputBytes[memaddr] += "00000000000";
-			}
+		}
 #if DEV_MODE
 		cout << "  " + BinToHexFilled(outputBytes[memaddr], 4) + "\n";
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -2019,7 +2019,7 @@ vector<string> parseCode(string input)
 
 		string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
-		}
+	}
 #if DEV_MODE
 	cout << processedOutput << endl << endl;
 #endif
@@ -2030,7 +2030,7 @@ vector<string> parseCode(string input)
 	myStream << processedOutput;
 
 	return outputBytes;
-	}
+}
 
 void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
 
@@ -2096,13 +2096,13 @@ void GenerateMicrocode()
 		{
 			if (instructioncodes[cl][clc] != ' ')
 				newStr += instructioncodes[cl][clc];
-	}
+		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-}
+	}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -2126,7 +2126,7 @@ void GenerateMicrocode()
 			instIndexes[cl] = seenNames.size() - 1;
 		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-		}
+	}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2178,7 +2178,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-					}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -2189,7 +2189,7 @@ void GenerateMicrocode()
 			}
 		}
 
-				}
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2262,9 +2262,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-					}
-				}
 			}
+		}
+	}
 
 	// Print the output
 	string processedOutput = "";
@@ -2295,4 +2295,4 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-		}
+}
