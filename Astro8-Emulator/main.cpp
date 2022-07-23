@@ -210,8 +210,6 @@ int clamp(int x, int min, int max) {
 
 int main(int argc, char** argv)
 {
-	const string argvs = string(argv);
-	
 	string code = "";
 	
 	// If no path is provided
@@ -230,7 +228,7 @@ int main(int argc, char** argv)
 	}
 	// Otherwise it is a path
 	else
-		code = split(argvs, " ")[1];
+		code = argv[1];
 
 	// If the input is a path to a file
 	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
