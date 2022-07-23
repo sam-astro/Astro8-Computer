@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	cout << "Generating Character ROM...";
 	string chline;
-	ifstream charset("..\\..\\..\\char_set_memtape");
+	ifstream charset("./char_set_memtape");
 	//ifstream charset("../../../char_set_memtape");
 	if (charset.is_open())
 	{
