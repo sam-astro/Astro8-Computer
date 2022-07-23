@@ -1,3 +1,0 @@
-/home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles/rebuild_cache.dir
-/home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles/edit_cache.dir
-/home/sam/Astro8-Computer/Astro8-Emulator/linux-build/CMakeFiles/Astro8-Emulator.exe.dir
