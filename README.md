@@ -6,7 +6,7 @@ This is a 16-bit computer design called the Astro-8. It has a fully functional d
 ### Windows
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Windows** version
 2. Unzip the downloaded file
-### Linux (not working yet)
+### Linux
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
 2. Unzip the downloaded file
 ### From Source
@@ -23,7 +23,7 @@ The file called `Astro8-Emulator` serves multiple purposes.
 * Compiles Armstrong into assembly
 * Assembles assembly into machine code and stores it into a file called `program_machine_code`
 
-To run your code, simply start the program. You will be prompted to input your code. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. All Armstrong files should have `#AS` as the first line.
+To run your code, you may either simply start the program where you will be prompted to input your code - OR, you can provide a path as a command line argument. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. ***All Armstrong files should have `#AS` as the first line.***
 
 There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
 
