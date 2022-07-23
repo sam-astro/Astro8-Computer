@@ -233,6 +233,8 @@ int main(int argc, char** argv)
 	// If the input is a path to a file
 	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
 		string path = trim(split(code, "\n")[0]);
+		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
+		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
 		code = "";
 
 		// Open and read file
