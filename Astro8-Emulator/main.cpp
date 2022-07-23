@@ -2024,9 +2024,9 @@ vector<string> parseCode(string input)
 	cout << processedOutput << endl << endl;
 #endif
 
-	// Save the data to ../../../program_machine_code
+	// Save the data to ./program_machine_code
 	fstream myStream;
-	myStream.open("../../../program_machine_code", ios::out);
+	myStream.open("./program_machine_code", ios::out);
 	myStream << processedOutput;
 
 	return outputBytes;
@@ -2291,8 +2291,8 @@ void GenerateMicrocode()
 	}
 	//cout << processedOutput << endl << endl;
 
-	// Save the data to ../../../microinstructions_cpu_v1
+	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
-	myStream.open("../../../microinstructions_cpu_v1", ios::out);
+	myStream.open("./microinstructions_cpu_v1", ios::out);
 	myStream << processedOutput;
 		}
