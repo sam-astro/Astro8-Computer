@@ -14,11 +14,11 @@ This is a 16-bit computer design called the Astro-8. It has a fully functional d
 2. Enter the directory `Astro8-Computer/Astro8-Emulator/linux-build`
 3. Run CMake using `cmake ..` to generate Unix Makefile
 4. Run `make -j5` to generate executable
-5. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator.exe`
+5. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator`
 
 ## Use
 ### Emulator
-The file called `Astro8-Emulator.exe` serves multiple purposes.
+The file called `Astro8-Emulator` serves multiple purposes.
 * Emulates machine code just like the real hardware
 * Compiles Armstrong into assembly
 * Assembles assembly into machine code and stores it into a file called `program_machine_code`
