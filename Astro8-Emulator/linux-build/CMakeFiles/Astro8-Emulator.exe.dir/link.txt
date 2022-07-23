@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/Astro8-Emulator.exe.dir/main.cpp.o  -o Astro8-Emulator.exe  -lm -lSDL2 

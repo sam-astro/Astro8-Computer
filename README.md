@@ -6,33 +6,34 @@ This is a 16-bit computer design called the Astro-8. It has a fully functional d
 ### Windows
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Windows** version
 2. Unzip the downloaded file
-### Linux (not working yet)
+### Linux
 1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
 2. Unzip the downloaded file
 ### From Source
 1. Clone this repository in a command line using `git clone https://github.com/sam-astro/Astro8-Computer.git` OR by downloading the repository as a .ZIP file and unzipping it to your location of choice
-2. Enter the directory `Astro8-Computer/Astro8-Emulator/`
-3. Run CMake using `cmake --build linux-build -- -j5`
-4. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator.exe`
+2. Enter the directory `Astro8-Computer/Astro8-Emulator/linux-build`
+3. Run CMake using `cmake ..` to generate Unix Makefile
+4. Run `make -j5` to generate executable
+5. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator`
 
 ## Use
 ### Emulator
-The file called `Astro8-Emulator.exe` serves multiple purposes.
+The file called `Astro8-Emulator` serves multiple purposes.
 * Emulates machine code just like the real hardware
 * Compiles Armstrong into assembly
 * Assembles assembly into machine code and stores it into a file called `program_machine_code`
 
-To run your code, simply start the program. You will be prompted to input your code. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. All Armstrong files should have `#AS` as the first line.
+To run your code, you may either simply start the program where you will be prompted to input your code - OR, you can provide a path as a command line argument. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. ***All Armstrong files should have `#AS` as the first line.***
 
 There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
 
 ### Logisim
-Along with the emulator, you can look at the actual circuit design for the system and run your programs in it. 
-1. Compile/Assemble your program using `Astro8-Emulator.exe`. It will save the machine code to a file called `program_machine_code` automatically
-2. Open the file in the newest version of Logisim Evolution
+Along with the emulator, you can look at the actual circuit design for the system and even run your programs in it. 
+1. Compile/Assemble your program using `Astro8-Emulator`. It will save the machine code to a file called `program_machine_code` automatically. This file is located directly next to the `Astro8-Emulator` executable.
+2. Open the file called `cpu-circuit.circ` in the newest version of [Logisim Evolution](https://github.com/logisim-evolution/logisim-evolution/releases)
 3. Locate the RAM area, and find the one called `MEMORY`
 4. Right-click on it, and click `Load Image...`
-5. In the file view that just appeared, locate the file at `Astro8-Computer/program_machine_code`, and click `Open`
+5. In the file view that just appeared, locate your compiled program file directly next to the `Astro8-Emulator` executable, and click `Open`
 6. Press play, and it should run.
 
 ## Technical details:

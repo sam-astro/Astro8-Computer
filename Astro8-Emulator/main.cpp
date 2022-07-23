@@ -1,4 +1,4 @@
-﻿
+
 #include <vector>
 #include <algorithm> 
 #include <string> 
@@ -9,6 +9,16 @@
 #include <sstream>
 #include <fstream>
 #include "colorprint.h"
+
+#ifdef _WIN32
+#define SYS_PAUSE system("pause")
+#else
+#define SYS_PAUSE system(                            \
+	"echo \"Press any key to continue . . .\";"      \
+	"(   trap \"stty $(stty -g;stty -icanon)\" EXIT" \
+	"    LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1"   \
+	")   </dev/tty")
+#endif
 
 #define DEV_MODE false
 
@@ -40,9 +50,15 @@ int charPixY = 0;
 int characterRamIndex = 0;
 int pixelRamIndex = 0xefff;
 
-int frameSpeed = 10;	// ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
-						// v Lower = higher FPS, but slower instruction processing
+
+// Frame limiter which keeps frames steady while also allowing computation time for CPU
+int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
+                     // v Lower = higher FPS, but slower instruction processing
+
+// autoFPS if true will dynamically change the frame speed above ^ to always be around 60 FPS.
+//    Set this to false if you want manual control of frameSpeed
 #define autoFPS true
+
 
 float slowdownAmnt = 1;
 int iterations = 0;
@@ -105,7 +121,6 @@ string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", 
 string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
 string aluInstructionSpecialAddress[] = { "SU", "MU", "DI" };
 string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
-//   "LDAIN", "HLT", "OUT"
 
 string instructioncodes[] = {
 		"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
@@ -195,21 +210,31 @@ int clamp(int x, int min, int max) {
 
 int main(int argc, char** argv)
 {
-	// Gather user inputted code
-	cout << ("v Emu. Code input v\n");
 	string code = "";
-	string line;
-	while (true) {
-		getline(cin, line);
-		if (line.empty()) {
-			break;
+	
+	// If no path is provided
+	if (argc == 1)
+	{
+		// Gather user inputted code
+		cout << ("v Emu. Code input v\n");
+		string line;
+		while (true) {
+			getline(cin, line);
+			if (line.empty()) {
+				break;
+			}
+			code += line + "\n";
 		}
-		code += line + "\n";
 	}
+	// Otherwise it is a path
+	else
+		code = argv[1];
 
 	// If the input is a path to a file
 	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
 		string path = trim(split(code, "\n")[0]);
+		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
+		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
 		code = "";
 
 		// Open and read file
@@ -222,6 +247,14 @@ int main(int argc, char** argv)
 			}
 			fileStr.close();
 		}
+		else {
+			cout << "\nError: could not open file \"" << path << "\"\n";
+			exit(1);
+		}
+	}
+	else if (argc != 1) {
+		cout << "\nError: could not open file \"" << code << "\"\n";
+		exit(1);
 	}
 
 	// If the code inputted is marked as written in armstrong with #AS
@@ -246,8 +279,11 @@ int main(int argc, char** argv)
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	cout << "Generating Character ROM...";
 	string chline;
-	ifstream charset("./char_set_memtape");
-	//ifstream charset("../../../char_set_memtape");
+
+	// CWD should be "Astro8-Computer/Astro8-Emulator/linux-build"
+	const string charsetFilename = "./char_set_memtape";
+	ifstream charset(charsetFilename);
+
 	if (charset.is_open())
 	{
 		getline(charset, chline);
@@ -257,6 +293,10 @@ int main(int argc, char** argv)
 			characterRom.push_back(chline[i] == '1');
 		}
 		charset.close();
+	}
+	else {
+		cout << "\nError: could not open file \"" << charsetFilename << "\"\n";
+		exit(1);
 	}
 	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
 
@@ -648,7 +688,7 @@ bool Update(float deltatime)
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-			system("pause");
+			SYS_PAUSE;
 			exit(1);
 		}
 		if (mcode[3] == 1)
@@ -1984,9 +2024,9 @@ vector<string> parseCode(string input)
 	cout << processedOutput << endl << endl;
 #endif
 
-	// Save the data to ../../../program_machine_code
+	// Save the data to ./program_machine_code
 	fstream myStream;
-	myStream.open("../../../program_machine_code", ios::out);
+	myStream.open("./program_machine_code", ios::out);
 	myStream << processedOutput;
 
 	return outputBytes;
@@ -2251,8 +2291,8 @@ void GenerateMicrocode()
 	}
 	//cout << processedOutput << endl << endl;
 
-	// Save the data to ../../../microinstructions_cpu_v1
+	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
-	myStream.open("../../../microinstructions_cpu_v1", ios::out);
+	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
 		}
