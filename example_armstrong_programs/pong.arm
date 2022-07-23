@@ -111,7 +111,7 @@ change *$rpaddleMemoryPosition = $paddleChar
 /////////////////////
 // Handle the ball //
 /////////////////////
-if $slowBallTime==400: // Only calculate the ball once every X cycles, otherwise it moves too fast
+if $slowBallTime==900: // Only calculate the ball once every X cycles, otherwise it moves too fast
 
     // Convert ball X and Y coordinates into pixel space
     change $ballPixelPosition = 0

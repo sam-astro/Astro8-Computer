@@ -261,18 +261,10 @@ int main(int argc, char** argv)
 	cout << "Generating Character ROM...";
 	string chline;
 
-
-	// FIXME: Relative file paths are error prone.
-	// Opening this file fails if the CWD is not the same as the executable.
-#ifdef _WIN32
-	// CWD should be "Astro8-Computer\Astro8-Emulator\x64\Release"
-	const string charsetFilename = "..\\..\\..\\char_set_memtape";
-#else
 	// CWD should be "Astro8-Computer/Astro8-Emulator/linux-build"
-	const string charsetFilename = "../../char_set_memtape";
-#endif
-
+	const string charsetFilename = "./char_set_memtape";
 	ifstream charset(charsetFilename);
+
 	if (charset.is_open())
 	{
 		getline(charset, chline);

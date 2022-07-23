@@ -1,13 +1,10 @@
-
 change $pixOffset = 61439
 change $pixCount = 0
-
 #loop
 add $pixOffset,$pixCount -> $outLoc
 add $pixCount,200 -> $inLoc
 change *$outLoc = *$inLoc
 add $pixCount,1 -> $pixCount
 gotoif $pixCount<8000, #loop
-
 #idle
 goto #idle
