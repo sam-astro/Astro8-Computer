@@ -10,6 +10,16 @@
 #include <fstream>
 #include "colorprint.h"
 
+#ifdef _WIN32
+#define SYS_PAUSE system("pause")
+#else
+#define SYS_PAUSE system(                            \
+	"echo \"Press any key to continue . . .\";"      \
+	"(   trap \"stty $(stty -g;stty -icanon)\" EXIT" \
+	"    LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1"   \
+	")   </dev/tty")
+#endif
+
 #define DEV_MODE false
 
 
@@ -648,7 +658,7 @@ bool Update(float deltatime)
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-			system("pause");
+			SYS_PAUSE;
 			exit(1);
 		}
 		if (mcode[3] == 1)
