@@ -232,6 +232,10 @@ int main(int argc, char** argv)
 			}
 			fileStr.close();
 		}
+		else {
+			cout << "\nError: could not open file \"" << path << "\"\n";
+			exit(1);
+		}
 	}
 
 	// If the code inputted is marked as written in armstrong with #AS
@@ -256,8 +260,19 @@ int main(int argc, char** argv)
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	cout << "Generating Character ROM...";
 	string chline;
-	ifstream charset("..\\..\\..\\char_set_memtape");
-	//ifstream charset("../../../char_set_memtape");
+
+
+	// FIXME: Relative file paths are error prone.
+	// Opening this file fails if the CWD is not the same as the executable.
+#ifdef _WIN32
+	// CWD should be "Astro8-Computer\Astro8-Emulator\x64\Release"
+	const string charsetFilename = "..\\..\\..\\char_set_memtape";
+#else
+	// CWD should be "Astro8-Computer/Astro8-Emulator/linux-build"
+	const string charsetFilename = "../../char_set_memtape";
+#endif
+
+	ifstream charset(charsetFilename);
 	if (charset.is_open())
 	{
 		getline(charset, chline);
@@ -267,6 +282,10 @@ int main(int argc, char** argv)
 			characterRom.push_back(chline[i] == '1');
 		}
 		charset.close();
+	}
+	else {
+		cout << "\nError: could not open file \"" << charsetFilename << "\"\n";
+		exit(1);
 	}
 	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
 
