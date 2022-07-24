@@ -36,6 +36,13 @@ Along with the emulator, you can look at the actual circuit design for the syste
 5. In the file view that just appeared, locate your compiled program file directly next to the `Astro8-Emulator` executable, and click `Open`
 6. Press play, and it should run.
 
+## Programming in Armstrong:
+> The complete list of armstrong commands are at the bottom of this page.
+1. Create a file, name it `main.armstrong`. It can also end with `.arm`.
+2. The first line inside this file ***must*** be `#AS`. This is how the compiler knows what to do.
+3. I recommend using VSCode, because I developed a syntax highlighting [extension here](https://marketplace.visualstudio.com/items?itemName=sam-astro.armstrong).
+4. Try out some of the example code in the `example_armstrong_programs` folder in this repo.
+
 ## Technical details:
 
 ### Instruction set:
