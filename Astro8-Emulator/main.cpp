@@ -230,6 +230,11 @@ int main(int argc, char** argv)
 	else
 		code = argv[1];
 
+	if (code.empty()) {
+		cout << "Error: No filename or '#AS' directive provided on the first line\n";
+		exit(1);
+	}
+
 	// If the input is a path to a file
 	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
 		string path = trim(split(code, "\n")[0]);
