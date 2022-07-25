@@ -138,6 +138,7 @@ string instructioncodes[] = {
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
 		"jmp( 2=ir,j & 3=ei", // Jump <addr>
+		"jmpl( 2=cr,aw & 3=rm,j & 4=ei", // Jump to address which is stored in the word after this instruction (allows for addresses up to 65535)
 		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
