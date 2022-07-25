@@ -316,10 +316,22 @@ int main(int argc, char** argv)
 	}
 	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
 
-	// Generate memory from code and convert from hex to decimal
-	vector<string> mbytes = parseCode(code);
-	for (int memindex = 0; memindex < mbytes.size(); memindex++)
-		memoryBytes.push_back(HexToDec(mbytes[memindex]));
+	// Attempt to parse code, will throw error if not proper assembly
+	try
+	{
+		// Generate memory from code and convert from hex to decimal
+		vector<string> mbytes = parseCode(code);
+		for (int memindex = 0; memindex < mbytes.size(); memindex++)
+			memoryBytes.push_back(HexToDec(mbytes[memindex]));
+	}
+	catch (const std::exception&)
+	{
+		PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
+		exit(1);
+	}
+
 
 	// Generate microcode
 	cout << "Generating microcode from instruction set...";
@@ -368,17 +380,7 @@ int main(int argc, char** argv)
 		//if (keyPress)
 		//	cyclesKeyPressed++;
 
-		try
-		{
 			Update(dt);
-		}
-		catch (const std::exception&)
-		{
-			PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
-			cout << "\n\nPress Enter to Exit...";
-			cin.ignore();
-			exit(1);
-		}
 
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
