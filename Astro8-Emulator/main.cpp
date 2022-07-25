@@ -231,7 +231,9 @@ int main(int argc, char** argv)
 		code = argv[1];
 
 	if (code.empty()) {
-		cout << "Error: No filename or '#AS' directive provided on the first line\n";
+		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
+		cout<<"\n\nPress Enter to Exit...";
+		cin.ignore();
 		exit(1);
 	}
 
@@ -253,12 +255,18 @@ int main(int argc, char** argv)
 			fileStr.close();
 		}
 		else {
-			cout << "\nError: could not open file \"" << path << "\"\n";
+			PrintColored("\nError: could not open file ", redFGColor, "");
+			PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
 			exit(1);
 		}
 	}
 	else if (argc != 1) {
-		cout << "\nError: could not open file \"" << code << "\"\n";
+		PrintColored("\nError: could not open file ", redFGColor, "");
+		PrintColored("\"" + code + "\"\n", brightBlueFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
 		exit(1);
 	}
 
@@ -300,7 +308,10 @@ int main(int argc, char** argv)
 		charset.close();
 	}
 	else {
-		cout << "\nError: could not open file \"" << charsetFilename << "\"\n";
+		PrintColored("\nError: could not open file ", redFGColor, "");
+		PrintColored("\"" + charsetFilename + "\"\n", brightBlueFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
 		exit(1);
 	}
 	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
@@ -357,8 +368,17 @@ int main(int argc, char** argv)
 		//if (keyPress)
 		//	cyclesKeyPressed++;
 
-
-		Update(dt);
+		try
+		{
+			Update(dt);
+		}
+		catch (const std::exception&)
+		{
+			PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
+			exit(1);
+		}
 
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
@@ -693,7 +713,8 @@ bool Update(float deltatime)
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-			SYS_PAUSE;
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
 			exit(1);
 		}
 		if (mcode[3] == 1)

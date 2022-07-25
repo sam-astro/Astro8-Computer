@@ -140,6 +140,7 @@ bool AccomodateSetInProgramRange(string entireLine, int currentLineCount) {
 void PrintColored(std::string text, std::string fgColor, std::string bgColor)
 {
 #if WINDOWS
+	// Normal FG colors
 	if (fgColor == blackFGColor)
 		cout << hue::black;
 	else if (fgColor == redFGColor)
@@ -156,7 +157,25 @@ void PrintColored(std::string text, std::string fgColor, std::string bgColor)
 		cout << hue::aqua;
 	else if (fgColor == whiteFGColor)
 		cout << hue::white;
+	// Check if bright FG colors
+	else if (fgColor == brightBlackFGColor)
+		cout << hue::grey;
+	else if (fgColor == brightRedFGColor)
+		cout << hue::light_red;
+	else if (fgColor == brightGreenFGColor)
+		cout << hue::light_green;
+	else if (fgColor == brightYellowFGColor)
+		cout << hue::light_yellow;
+	else if (fgColor == brightBlueFGColor)
+		cout << hue::light_blue;
+	else if (fgColor == brightMagentaFGColor)
+		cout << hue::light_purple;
+	else if (fgColor == brightCyanFGColor)
+		cout << hue::light_aqua;
+	else if (fgColor == brightWhiteFGColor)
+		cout << hue::bright_white;
 
+	// Normal BG colors
 	if (bgColor == blackBGColor)
 		cout << hue::on_black;
 	else if (bgColor == redBGColor)
@@ -173,6 +192,23 @@ void PrintColored(std::string text, std::string fgColor, std::string bgColor)
 		cout << hue::on_aqua;
 	else if (bgColor == whiteBGColor)
 		cout << hue::on_white;
+	// Check if bright BG colors
+	else if (bgColor == brightBlackBGColor)
+		cout << hue::on_grey;
+	else if (bgColor == brightRedBGColor)
+		cout << hue::on_light_red;
+	else if (bgColor == brightGreenBGColor)
+		cout << hue::on_light_green;
+	else if (bgColor == brightYellowBGColor)
+		cout << hue::on_light_yellow;
+	else if (bgColor == brightBlueBGColor)
+		cout << hue::on_light_blue;
+	else if (bgColor == brightMagentaBGColor)
+		cout << hue::on_light_purple;
+	else if (bgColor == brightCyanBGColor)
+		cout << hue::on_light_aqua;
+	else if (bgColor == brightWhiteBGColor)
+		cout << hue::on_bright_white;
 
 	std::cout << text << hue::reset;
 #else
