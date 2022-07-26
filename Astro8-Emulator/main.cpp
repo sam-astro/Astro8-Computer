@@ -61,13 +61,16 @@ int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing 
 
 
 float slowdownAmnt = 1;
-int iterations = 0;
+unsigned int iterations = 0;
 
 vector<int> memoryBytes;
 vector<int> charRam;
 
 string action = "";
-vector<vector<bool>> microinstructionData;
+#define MICROINSTR_SIZE 14
+vector<uint16_t> microinstructionData;
+static_assert(sizeof(decltype(microinstructionData)::value_type)*8 >= MICROINSTR_SIZE,
+	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
 vector<bool> characterRom;
 
@@ -102,7 +105,7 @@ static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-int BinaryVecRangeToInt(const vector<bool>& vec, int min, int max);
+uint16_t BinaryRangeToInt(uint16_t num, int min, int max);
 string CompileCode(const string& inputcode);
 vector<string> splitByComparator(string str);
 int ParseValue(const string& input);
@@ -429,7 +432,7 @@ bool Update(float deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		vector<bool> mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
+		uint16_t mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
 
 		//cout << "\n (";
 		//for (size_t i = 0; i < mcode.size(); i++)
@@ -442,7 +445,7 @@ bool Update(float deltatime)
 
 
 		// Check for any reads and execute if applicable
-		int readInstr = BinaryVecRangeToInt(mcode, 9, 11);
+		int readInstr = BinaryRangeToInt(mcode, 9, 11);
 		//cout << readInstr << "  " << DecToBinFilled(readInstr, 3) << endl;
 		if (readInstr == 1)
 		{ // RA
@@ -487,12 +490,12 @@ bool Update(float deltatime)
 
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode[0] == 1)
+		if (mcode&(1<<((MICROINSTR_SIZE-1)-0)))
 		{ // EO
 			//cout << ("EO ");
 
 			// Find ALU modifications
-			int aluMod = BinaryVecRangeToInt(mcode, 12, 13);
+			int aluMod = BinaryRangeToInt(mcode, 12, 13);
 
 			if (aluMod == 1) // Subtract
 			{
@@ -559,7 +562,7 @@ bool Update(float deltatime)
 
 
 		// Check for any writes and execute if applicable
-		int writeInstr = BinaryVecRangeToInt(mcode, 5, 8);
+		int writeInstr = BinaryRangeToInt(mcode, 5, 8);
 		//cout << "write:" << to_string(writeInstr) << " ";
 		if (writeInstr == 1)
 		{ // WA
@@ -705,12 +708,12 @@ bool Update(float deltatime)
 		}
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode[1] == 1)
+		if (mcode&(1<<((MICROINSTR_SIZE-1)-1)))
 		{ // CE
 			//cout << ("CE ");
 			programCounter += 1;
 		}
-		if (mcode[2] == 1)
+		if (mcode&(1<<((MICROINSTR_SIZE-1)-2)))
 		{ // ST
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
@@ -719,7 +722,7 @@ bool Update(float deltatime)
 			cin.ignore();
 			exit(1);
 		}
-		if (mcode[3] == 1)
+		if (mcode&(1<<((MICROINSTR_SIZE-1)-3)))
 		{ // EI
 			//cout << ("EI \n\n");
 			break;
@@ -929,19 +932,13 @@ int BinToDec(const string& input)
 {
 	return stoi(input, nullptr, 2);
 }
-int BinaryVecRangeToInt(const vector<bool>& vec, int min, int max)
-{
-	int result = 0;
-	int base = 1;
 
-	for (unsigned int i = max; i >= min; --i)
-	{
-		result += vec[i] * base;
-		base *= 2;
-	}
-
-	return result;
+uint16_t BinaryRangeToInt(uint16_t num, int min, int max) {
+	int bmin = (MICROINSTR_SIZE-1) - max;
+	int bmax = (MICROINSTR_SIZE-1) - min;
+	return (num & ((1<<(bmax+1))-1)) >> bmin;
 }
+
 string DecToBin(int input)
 {
 	string r;
@@ -2113,8 +2110,10 @@ void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
-	vector<bool> ii;
-	for (int osind = 0; osind < 2048; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
+	microinstructionData.resize(2048);
+	for (int osind = 0; osind < 2048; osind++) {
+		output.push_back("00000");
+	}
 
 	// Remove spaces from instruction codes and make uppercase
 	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
@@ -2174,7 +2173,7 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
@@ -2241,7 +2240,7 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
@@ -2311,10 +2310,10 @@ void GenerateMicrocode()
 		string ttmp = output[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 
-		string binversion = HexToBin(ttmp, 14);
+		string binversion = HexToBin(ttmp, MICROINSTR_SIZE);
 		for (int i = 0; i < binversion.size(); i++)
 		{
-			microinstructionData[outindex].push_back(binversion[i] == '1');
+			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE-1)-i);
 		}
 	}
 	//cout << processedOutput << endl << endl;
