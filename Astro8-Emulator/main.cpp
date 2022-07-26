@@ -85,28 +85,28 @@ SDL_Surface* gScreenSurface = NULL;
 // Function List
 bool Update(float deltatime);
 void DrawPixel(int x, int y, int r, int g, int b);
-int InitGraphics(std::string windowTitle, int width, int height, int pixelScale);
+int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
 unsigned BitRange(unsigned value, unsigned offset, unsigned n);
 string DecToHexFilled(int input, int desiredSize);
-string BinToHexFilled(string input, int desiredSize);
-int BinToDec(string input);
+string BinToHexFilled(const string& input, int desiredSize);
+int BinToDec(const string& input);
 string DecToBin(int input);
 string DecToBinFilled(int input, int desiredSize);
-string HexToBin(string s, int desiredSize);
-int HexToDec(string hex);
+string HexToBin(const string& s, int desiredSize);
+int HexToDec(const string& hex);
 vector<string> explode(const string& str, const char& ch);
-vector<string> parseCode(string input);
+vector<string> parseCode(const string& input);
 static inline void ltrim(std::string& s);
 static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-int BinaryVecRangeToInt(vector<bool> vec, int min, int max);
-string CompileCode(string inputcode);
+int BinaryVecRangeToInt(const vector<bool>& vec, int min, int max);
+string CompileCode(const string& inputcode);
 vector<string> splitByComparator(string str);
-int ParseValue(string input);
-string MoveFromRegToReg(string from, string destination);
+int ParseValue(const string& input);
+string MoveFromRegToReg(const string& from, const string& destination);
 int GetLineNumber();
 int ConvertAsciiToSdcii(int asciiCode);
 
@@ -750,7 +750,7 @@ string SimplifiedHertz(float input) {
 	return to_string(round(input * 10.0f) / 10.0f) + " KHz";
 }
 
-int InitGraphics(std::string windowTitle, int width, int height, int pixelScale)
+int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale)
 {
 	int WINDOW_WIDTH = width;
 	int WINDOW_HEIGHT = height;
@@ -913,7 +913,7 @@ string DecToHexFilled(int input, int desiredSize)
 
 	return output;
 }
-string BinToHexFilled(string input, int desiredSize)
+string BinToHexFilled(const string& input, int desiredSize)
 {
 	int dec = BinToDec(input);
 	string output = DecToHexFilled(dec, 0);
@@ -925,11 +925,11 @@ string BinToHexFilled(string input, int desiredSize)
 
 	return output;
 }
-int BinToDec(string input)
+int BinToDec(const string& input)
 {
 	return stoi(input, nullptr, 2);
 }
-int BinaryVecRangeToInt(vector<bool> vec, int min, int max)
+int BinaryVecRangeToInt(const vector<bool>& vec, int min, int max)
 {
 	int result = 0;
 	int base = 1;
@@ -960,7 +960,7 @@ string DecToBinFilled(int input, int desiredSize)
 
 	return output;
 }
-string HexToBin(string s, int desiredSize)
+string HexToBin(const string& s, int desiredSize)
 {
 	string out;
 	for (auto i : s) {
@@ -983,7 +983,7 @@ string HexToBin(string s, int desiredSize)
 	return out;
 }
 
-int HexToDec(string hex)
+int HexToDec(const string& hex)
 {
 	unsigned long result = 0;
 	for (int i = 0; i < hex.length(); i++) {
@@ -1025,54 +1025,54 @@ vector<string> explode(const string& str, const char& ch) {
 		result.push_back(next);
 	return result;
 }
-bool IsHex(string in) {
+bool IsHex(const string& in) {
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'x')
 			return true;
 	return false;
 }
-bool IsBin(string in) {
+bool IsBin(const string& in) {
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'b')
 			return true;
 	return false;
 }
-bool IsReg(string in) {
+bool IsReg(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '@')
 			return true;
 	return false;
 }
-bool IsVar(string in) {
+bool IsVar(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '$')
 			return true;
 	return false;
 }
-bool IsLabel(string in) {
+bool IsLabel(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '#')
 			return true;
 	return false;
 }
-bool IsPointer(string in) {
+bool IsPointer(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '*')
 			return true;
 	return false;
 }
-bool IsDec(string in) {
+bool IsDec(const string& in) {
 	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }
 
-void PutSetOnCurrentLine(string value) {
+void PutSetOnCurrentLine(const string& value) {
 	compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + value);
 }
 
 // Loading of memory value into register, automatically allowing large addressing as needed
-void LoadAddress(string reg, string address) {
+void LoadAddress(const string& reg, const string& address) {
 	int actualVal = ParseValue(address);
 	string addrInWord = "ain ";
 	int actualLineNum = GetLineNumber();
@@ -1102,7 +1102,7 @@ void LoadAddress(string reg, string address) {
 }
 
 // Storing of register into memory, automatically allowing large addressing as needed
-void StoreAddress(string reg, string address) {
+void StoreAddress(const string& reg, const string& address) {
 	int actualLineNum = GetLineNumber();
 	int actualVal = ParseValue(address);
 	string addrOutWord = "ain ";
@@ -1118,7 +1118,7 @@ void StoreAddress(string reg, string address) {
 	}
 }
 
-void RegIdToLDI(string in, string followingValue) {
+void RegIdToLDI(const string& in, const string& followingValue) {
 	int actualValue = ParseValue(followingValue);
 
 	if (actualValue < 2047) {
@@ -1171,7 +1171,7 @@ void RegIdToLDI(string in, string followingValue) {
 //	return "";
 //}
 
-string MoveFromRegToReg(string from, string destination) {
+string MoveFromRegToReg(const string& from, const string& destination) {
 	if (from == destination)
 		return "";
 
@@ -1252,7 +1252,7 @@ int ActualLineNumFromNum(int x) {
 	return outInt;
 }
 
-int GetVariableAddress(string id) {
+int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 	{
@@ -1265,7 +1265,7 @@ int GetVariableAddress(string id) {
 	return 16528 + vars.size() - 1;
 }
 
-int FindLabelLine(string labelName, vector<string> labels, vector<int>labelLineValues) {
+int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
 	for (int i = 0; i < labels.size(); i++)
 	{
 		if (labelName == labels[i]) {
@@ -1276,7 +1276,7 @@ int FindLabelLine(string labelName, vector<string> labels, vector<int>labelLineV
 	return -1;
 }
 
-int ParseValue(string input) {
+int ParseValue(const string& input) {
 	if (input.size() > 2) {
 		if (IsHex(input))      // If preceded by '0x', then it is a hex number
 			return HexToDec(split(input, "0x")[1]);
@@ -1296,18 +1296,18 @@ int ParseValue(string input) {
 }
 
 // Reads from mem at the address stored in pointer, into REG A
-void LoadPointer(string str) {
+void LoadPointer(const string& str) {
 	LoadAddress("@A", split(str, "*")[1]);
 	compiledLines.push_back("ldain");
 }
 
 // Writes from REG B to mem at the address stored in pointer
-void StoreIntoPointer(string str) {
+void StoreIntoPointer(const string& str) {
 	LoadAddress("@A", split(str, "*")[1]);
 	compiledLines.push_back("staout");
 }
 
-string InvertExpression(string expression) {
+string InvertExpression(const string& expression) {
 	string valAPre = trim(splitByComparator(expression)[0]);
 	string valBPre = trim(split(splitByComparator(expression)[1], ",")[0]);
 	string comparer = trim(split(split(expression, valAPre)[1], valBPre)[0]);
@@ -1329,7 +1329,7 @@ string InvertExpression(string expression) {
 	return valAPre + newComparer + valBPre;
 }
 
-void CompareValues(string valA, string comparer, string valB, vector<string> vars) {
+void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
 
@@ -1401,7 +1401,7 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 
 }
 
-string CompileCode(string inputcode) {
+string CompileCode(const string& inputcode) {
 
 	// Pre-process lines of code
 
@@ -1942,7 +1942,7 @@ string CompileCode(string inputcode) {
 
 }
 
-vector<string> parseCode(string input)
+vector<string> parseCode(const string& input)
 {
 	vector<string> outputBytes;
 	for (int i = 0; i < 65535; i++)
@@ -2060,7 +2060,7 @@ vector<string> parseCode(string input)
 	return outputBytes;
 }
 
-void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
+void ComputeStepInstructions(const string& stepContents, char* stepComputedInstruction) {
 
 	for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
 	{
