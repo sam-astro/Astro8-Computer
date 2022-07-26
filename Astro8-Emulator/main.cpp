@@ -114,7 +114,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPL", "JMPZ","JMPZL", "JMPC","JMPCL", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -138,9 +138,11 @@ string instructioncodes[] = {
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
 		"jmp( 2=ir,j & 3=ei", // Jump <addr>
-		"jmpl( 2=cr,aw & 3=rm,j & 4=ei", // Jump to address which is stored in the word after this instruction (allows for addresses up to 65535)
+		"jmpl( 2=cr,aw & 3=rm,j,ce & 4=ei", // Jump to address which is stored in the word after this instruction (allows for addresses up to 65535)
 		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
+		"jmpzl( 2=cr,aw & 3=rm,j | zeroflag & 4=ce & 5=ei", // Jump if zero to address which is stored in the word after this instruction
 		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
+		"jmpcl( 2=cr,aw & 3=rm,j | carryflag & 4=ce & 5=ei", // Jump if carry to address which is stored in the word after this instruction
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
@@ -233,7 +235,7 @@ int main(int argc, char** argv)
 
 	if (code.empty()) {
 		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
-		cout<<"\n\nPress Enter to Exit...";
+		cout << "\n\nPress Enter to Exit...";
 		cin.ignore();
 		exit(1);
 	}
@@ -381,7 +383,7 @@ int main(int argc, char** argv)
 		//if (keyPress)
 		//	cyclesKeyPressed++;
 
-			Update(dt);
+		Update(dt);
 
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
@@ -1511,10 +1513,16 @@ string CompileCode(string inputcode) {
 					continue;
 
 				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
-				if (splitBySpace[0].size() >= 3)
-					if (splitBySpace[0][0] == 'j' && splitBySpace[0][1] == 'm' && splitBySpace[0][2] == 'p')
+				if (splitBySpace[0].size() >= 3) {
+					if (splitBySpace[0] == "jmp" || splitBySpace[0] == "jmpc" || splitBySpace[0] == "jmpz") { // If any of the jmp instructions
 						if (splitBySpace[1] == command) // Check if matching label
 							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal);// Replace
+					}
+					else if (splitBySpace[0] == "set") { // If a set followed by label placeholder
+						if (splitBySpace[2] == command) // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);// Replace
+					}
+				}
 			}
 
 			continue;
@@ -1804,8 +1812,13 @@ string CompileCode(string inputcode) {
 			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
 			compiledLines.push_back("");
 
-
-			compiledLines.at(compiledLines.size() - 1) += "jmp " + addrProcessed;
+			// If the jmp location is larger than can be addressed OR using uncreated label
+			if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1) {
+				compiledLines.at(compiledLines.size() - 1) += "jmpl";
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+			}
+			else
+				compiledLines.at(compiledLines.size() - 1) += "jmp " + addrProcessed;
 
 
 			continue;
@@ -1836,12 +1849,23 @@ string CompileCode(string inputcode) {
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
-				compiledLines.push_back("jmpz " + addrProcessed);
+				int lineNum = GetLineNumber();
+				if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1 || lineNum >= 2047) {
+					compiledLines.at(compiledLines.size() - 1) += "jmpzl";
+					compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				}
+				else
+					compiledLines.push_back("jmpz " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
 				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1 || lineNum >= 2047) {
+					compiledLines.at(compiledLines.size() - 1) += "jmpzl";
+					compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(lineNum + 3) + "\njmp " + addrProcessed);
+				}
+				else
+					compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past jump to endif if false
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
@@ -1991,7 +2015,7 @@ vector<string> parseCode(string input)
 		// Memory address is already used, skip.
 		if (outputBytes[memaddr] != "0000") {
 			memaddr += 1;
-		}
+	}
 
 #if DEV_MODE
 		cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
@@ -2029,7 +2053,7 @@ vector<string> parseCode(string input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -2125,13 +2149,13 @@ void GenerateMicrocode()
 		{
 			if (instructioncodes[cl][clc] != ' ')
 				newStr += instructioncodes[cl][clc];
-		}
+	}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-	}
+}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -2155,7 +2179,7 @@ void GenerateMicrocode()
 			instIndexes[cl] = seenNames.size() - 1;
 		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2215,10 +2239,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
+					}
 		}
 
-	}
+				}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2291,9 +2315,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+					}
+				}
 			}
-		}
-	}
 
 	// Print the output
 	string processedOutput = "";
@@ -2324,4 +2348,4 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-}
+		}
