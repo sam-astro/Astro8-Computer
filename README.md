@@ -33,7 +33,7 @@
 [Logisim Evolution]: https://github.com/logisim-evolution/logisim-evolution
 [Video]: https://www.youtube.com/watch?v=Zt0JfmV7CyI
 
-[Installation]: Documentation/Installation.md
+[Installation]: Documentation/Installation.md 
 [Architecture]: Documentation/Architecture
 [Programming]: Documentation/Programming.md
 [License]: LICENSE
