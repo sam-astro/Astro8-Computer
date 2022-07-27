@@ -1,28 +1,178 @@
-### Instruction set:
 
-```
-NOP         00000   : no operation
-AIN <addr>  00001   : load data from <addr> to reg A
-BIN <addr>  00010   : load data from <addr> to reg B
-CIN <addr>  00011   : load data from <addr> to reg C
-LDIA <val>  00100   : immediately load <val> into reg A
-LDIB <val>  00101   : immediately load <val> into reg B
-RDEXP       00110   : load value stored on the expansion port into reg B
-WREXP       00111   : copy reg A into the expansion port
-STA <addr>  01000   : store value of A into <addr> of memory
-STC <addr>  01001   : store value of C into <addr> of memory
-ADD         01010   : add reg B to reg A, and set reg A = to sum
-SUB         01011   : subtract reg B from reg A, and set reg A = to sum
-MULT        01100   : multiply reg B with reg A, and set reg A = to product
-DIV         01101   : divide reg A by reg B, and set reg A = to quotient
-JMP <val>   01110   : change counter to <val> (changes which instruction is next)
-JMPZ <val>  01111   : jump to <val> if the value in reg A is equal to zero
-JMPC <val>  10000   : jump if the carry bit is set
-LDAIN       10001   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
-STAOUT      10010   : use reg A as memory address, then copy value from B into memory
-LDLGE       10010   : use value directly after instruction as address to copy from memory to reg A and advance counter by 2
-STLGE       10100   : use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
-SWP         10011   : swap the contents of register A and register B (this overwrites register C)
-SWPC        10110   : swap register A and register C (this overwrites register B)
-HLT         10111   : stop the clock
-```
+# Instruction Set
+
+<br>
+
+## No Operation
+
+`00000`
+
+### Syntax
+
+<kbd>  NOP  </kbd>
+
+<br>
+<br>
+
+## Load Data
+
+`00001`   `00010`   `00011`
+
+Load data from the given address to the register A - C.
+
+### Syntax
+
+<kbd>  AIN  </kbd>   <kbd>  \< Address \>  </kbd> <br>
+<kbd>  BIN  </kbd>   <kbd>  \< Address \>  </kbd> <br>
+<kbd>  CIN  </kbd>   <kbd>  \< Address \>  </kbd>
+
+<br>
+<br>
+
+## Load Immediate
+
+`00100`   `00101`
+
+Load immediate value into register A - B.
+
+### Syntax
+
+<kbd>  LDIA  </kbd>   <kbd>  \< Value \>  </kbd> <br>
+<kbd>  LDIB  </kbd>   <kbd>  \< Value \>  </kbd>
+
+<br>
+<br>
+
+## Expansion Port
+
+`00110`   `00111`
+
+Read from / write to the expansion port to / from register B.
+
+### Syntax
+
+<kbd>  RDEXP  </kbd>   **Expansion Port**  **🠖**  **B** <br>
+<kbd>  WREXP  </kbd>   **Expansion Port**  **🠔**  **B**
+
+<br>
+<br>
+
+## Store Value
+
+`01000`   `01001`
+
+Store the register value at the given memory address.
+
+### Syntax
+
+<kbd>  STA  </kbd>   <kbd>  \< Address \>  </kbd>   **A**  **🠖**  **Memory** <br>
+<kbd>  STC  </kbd>   <kbd>  \< Address \>  </kbd>   **C**  **🠖**  **Memory**
+
+<br>
+<br>
+
+## Math
+
+`01010`   `01011`   `01100`   `01101`
+
+Execute the mathematic operation on <br>
+register A & B and save the result in A.
+
+### Syntax
+
+<kbd>       ADD       </kbd>   **A**  **+**  **B**  **🠖**  **A** <br>
+<kbd>       SUB       </kbd>   **A**  **-**  **B**  **🠖**  **A** <br>
+<kbd>  MULT  </kbd>   **A**  **×**  **B**  **🠖**  **A** <br>
+<kbd>       DIV       </kbd>   **A**  **÷**  **B**  **🠖**  **A** 
+
+<br>
+<br>
+
+## Jump
+
+`01110`   `01111`   `10000`
+
+Jumps to the given instruction position, <br>
+which intern sets the program counter.
+
+### Syntax
+
+<kbd>       JMP       </kbd>   <kbd>  \< Value \>  </kbd> <br>
+<kbd>  JMPZ  </kbd>   <kbd>  \< Value \>  </kbd>   Jump if register **A** is zero <br>
+<kbd>  JMPC  </kbd>   <kbd>  \< Value \>  </kbd>   Jump if the carry bit is set
+
+<br>
+<br>
+
+## Exchange Memory
+
+`10001`   `10010`
+
+Use register **A**s value as memory address <br>
+to either load or store a memory value.
+
+### Syntax
+
+<kbd>       LDAIN      </kbd>   **Memory**  **🠖**  **A** <br>
+<kbd>  STAOUT  </kbd>   **B**  **🠖**  **Memory** <br>
+
+<br>
+<br>
+
+## LDLGE
+
+`10010`
+
+Use value directly after instruction <br>
+as address to copy from memory <br>
+to reg A and advance counter by 2.
+
+### Syntax
+
+<kbd>       LDLGE      </kbd>
+
+<br>
+<br>
+
+## STLGE
+
+`10100`
+
+Use value directly after counter as <br>
+address, then copy value from reg A <br>
+to memory and advance counter by 2.
+
+### Syntax
+
+<kbd>     STLGE      </kbd>
+
+<br>
+<br>
+
+## Swap
+
+`10011`   `10110`
+
+Swap 2 registers with each other. Overrides the third.
+
+### Syntax
+
+<kbd>       SWP       </kbd>   **A**  **⟷**  **B**   Overrides **C** <br>
+<kbd>  SWPC  </kbd>   **A**  **⟷**  **C**   Overrides **B** 
+
+
+<br>
+<br>
+
+## Halt
+
+`10111`
+
+Stop the clock and thus execution.
+
+### Syntax
+
+<kbd>  HLT  </kbd>
+
+<br>
+
