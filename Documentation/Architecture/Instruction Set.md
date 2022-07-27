@@ -20,6 +20,7 @@
 
 Load data from the given address into register  **A  -  C** .
 
+
 ### Syntax
 
 <kbd>  AIN  </kbd>   <kbd>  \< Address \>  </kbd> <br>
@@ -34,6 +35,7 @@ Load data from the given address into register  **A  -  C** .
 `00100`   `00101`
 
 Load immediate value into register  **A  -  B** .
+
 
 ### Syntax
 
@@ -176,5 +178,4 @@ Stop the clock and thus execution.
 <kbd>  HLT  </kbd>
 
 <br>
-
 
