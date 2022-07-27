@@ -1,0 +1,10 @@
+#AS
+change $a = 2
+
+gotoif $a==0, #label
+
+stop
+
+
+#label
+goto #label

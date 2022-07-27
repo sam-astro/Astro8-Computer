@@ -62,10 +62,10 @@ ADD         01010   : add reg B to reg A, and set reg A = to sum
 SUB         01011   : subtract reg B from reg A, and set reg A = to sum
 MULT        01100   : multiply reg B with reg A, and set reg A = to product
 DIV         01101   : divide reg A by reg B, and set reg A = to quotient
-JMP <val>   01110   : change counter to <val> (changes which instruction is next)
-JMPL        01111   : change counter to value stored in the following word after this instruction (allows for addresses up to 65535)
-JMPZ <val>  10000   : jump to <val> if the value in reg A is equal to zero
-JMPC <val>  10001   : jump if the carry bit is set
+JMP         01110   : change counter to address stored after instruction (changes which instruction is next)
+JMPZ        01111   : jump to address stored after instruction if the last arithmetic operation was equal to zero
+JMPC        10000   : jump to address stored after instruction if the last arithmetic operation had a carry
+JREG        10001   : jump to address stored in Reg A
 LDAIN       10010   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
 STAOUT      10011   : use reg A as memory address, then copy value from B into memory
 LDLGE       10100   : use value directly after instruction as address to copy from memory to reg A and advance counter by 2

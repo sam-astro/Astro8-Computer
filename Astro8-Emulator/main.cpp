@@ -40,8 +40,8 @@ int InstructionReg = 0;
 int flags[3] = { 0, 0, 0 };
 int bus = 0;
 int outputReg = 0;
-int memoryIndex = 0;
-int programCounter = 0;
+uint16_t memoryIndex = 0;
+uint16_t programCounter = 0;
 
 int imgX = 0;
 int imgY = 0;
@@ -69,7 +69,7 @@ vector<int> charRam;
 string action = "";
 #define MICROINSTR_SIZE 14
 vector<uint16_t> microinstructionData;
-static_assert(sizeof(decltype(microinstructionData)::value_type)*8 >= MICROINSTR_SIZE,
+static_assert(sizeof(decltype(microinstructionData)::value_type) * 8 >= MICROINSTR_SIZE,
 	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
 vector<bool> characterRom;
@@ -86,7 +86,7 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update(float deltatime);
+bool Update(double deltatime);
 void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
@@ -117,7 +117,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPL", "JMPZ","JMPZL", "JMPC","JMPCL", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -140,12 +140,10 @@ string instructioncodes[] = {
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
-		"jmp( 2=ir,j & 3=ei", // Jump <addr>
-		"jmpl( 2=cr,aw & 3=rm,j,ce & 4=ei", // Jump to address which is stored in the word after this instruction (allows for addresses up to 65535)
-		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
-		"jmpzl( 2=cr,aw & 3=rm,j | zeroflag & 4=ce & 5=ei", // Jump if zero to address which is stored in the word after this instruction
-		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
-		"jmpcl( 2=cr,aw & 3=rm,j | carryflag & 4=ce & 5=ei", // Jump if carry to address which is stored in the word after this instruction
+		"jmp( 2=cr,aw & 3=rm,j & 4=ei", // Jump to address following instruction
+		"jmpz( 2=cr,aw & 3=ce,rm & 4=j | zeroflag & 5=ei", // Jump if zero to address following instruction
+		"jmpc( 2=cr,aw & 3=ce,rm & 4=j | carryflag & 5=ei", // Jump if carry to address following instruction
+		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
@@ -294,6 +292,8 @@ int main(int argc, char** argv)
 
 		//exit(0);
 	}
+	else
+		ColorAndPrintAssembly(code);
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	cout << "Generating Character ROM...";
@@ -350,52 +350,49 @@ int main(int argc, char** argv)
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
 
-	int cyclesKeyPressed = 0;
 	bool keyPress = false;
 
-	float dt = 0;
+	uint8_t pollCounter = 0;
+
+	double dt = 0;
 	bool running = true;
+	SDL_Event event;
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			if (event.type == SDL_QUIT)
+		if(pollCounter%6000==0)
+			while (SDL_PollEvent(&event))
 			{
-				running = false;
-			}
-			else if (event.type == SDL_KEYDOWN) {
+				if (event.type == SDL_QUIT)
+				{
+					running = false;
+				}
+				else if (event.type == SDL_KEYDOWN) {
 
-				// Keyboard support
-				expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
-				//keyPress = true;
-				cout << "  expansionPort: " << expansionPort << endl;
-			}
-			else if (event.type == SDL_KEYUP) {
+					// Keyboard support
+					expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-				// Keyboard support
-				expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-				//keyPress = false;
-				//cyclesKeyPressed = 0;
+					cout << "  expansionPort: " << expansionPort << endl;
+				}
+				else if (event.type == SDL_KEYUP) {
+
+					// Keyboard support
+					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+				}
+
+				pollCounter = 0;
 			}
-		}
-		//if (cyclesKeyPressed >= 25)
-		//	expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-		//if (keyPress)
-		//	cyclesKeyPressed++;
+		pollCounter++;
 
 		Update(dt);
 
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
-		dt = std::chrono::duration<float, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0f;
+		dt = std::chrono::duration<double, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0;
+		if (dt == 0)
+			dt = 0.0000001;
 	}
-
-
-	//SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
-	//SDL_RenderClear(gRenderer);
 
 	destroy(gRenderer, gWindow);
 	SDL_Quit();
@@ -405,30 +402,24 @@ int main(int argc, char** argv)
 
 steady_clock::time_point start;
 float renderedFrameTime = 0;
-bool Update(float deltatime)
+bool Update(double deltatime)
 {
 	renderedFrameTime += deltatime;
 
-	//cout << programCounter << ")  ";
 	for (int step = 0; step < 16; step++)
 	{
 
-		//cout << "\n     step: " + to_string(step) << endl;
-
-		// Quickly execute fetch
+		// Execute fetch in single step
 		if (step == 0)
 		{
 			// CR
 			// AW
 			memoryIndex = programCounter;
-			//cout << ("CR AW ");
 			// RM
 			// IW
 			InstructionReg = memoryBytes.at(clamp(memoryIndex, 0, 65534));
 			// CE
-			programCounter += 1;
-			//cout << "\n     step: 1" << endl;
-			//cout << ("RM IW CE ");
+			programCounter = clamp(programCounter + 1, 0, 65534);
 			step = 1;
 			continue;
 		}
@@ -436,15 +427,6 @@ bool Update(float deltatime)
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
 		uint16_t mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
-
-		//cout << "\n (";
-		//for (size_t i = 0; i < mcode.size(); i++)
-		//{
-		//	cout << mcode[i];
-		//}
-		//cout<<")" << endl;
-		//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
-		//cout << ("mcDat- " + mcode) << endl;
 
 
 		// Check for any reads and execute if applicable
@@ -493,11 +475,9 @@ bool Update(float deltatime)
 
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode&(1<<((MICROINSTR_SIZE-1)-0)))
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
 		{ // EO
-			//cout << ("EO ");
-
-			// Find ALU modifications
+			// Find ALU modifiers
 			int aluMod = BinaryRangeToInt(mcode, 12, 13);
 
 			if (aluMod == 1) // Subtract
@@ -509,7 +489,7 @@ bool Update(float deltatime)
 				bus = AReg - BReg;
 				if (bus < 0)
 				{
-					bus = 65535 + bus;
+					bus = 65534 + bus;
 					flags[1] = 0;
 				}
 			}
@@ -520,9 +500,9 @@ bool Update(float deltatime)
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -542,9 +522,9 @@ bool Update(float deltatime)
 					bus = 0;
 				}
 
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -555,9 +535,9 @@ bool Update(float deltatime)
 				if (AReg + BReg == 0)
 					flags[0] = 1;
 				bus = AReg + BReg;
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -591,17 +571,10 @@ bool Update(float deltatime)
 		{ // WM
 			//cout << ("WM ");
 			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
-			//if (memoryIndex <= 16382 || memoryIndex > 16527)
-			//	memoryBytes[memoryIndex] = bus;
-			//else
-			//	charRam.at(clamp(memoryIndex - 16383, 0, 143)) = bus;
 		}
 		else if (writeInstr == 7)
 		{ // J
-			//cout << ("J ");
-			//cout<<Line(DecToBinFilled(InstructionReg, 16));
-			//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-			programCounter = BitRange(InstructionReg, 0, 11);
+			programCounter = clamp(bus, 0, 65534);
 		}
 		else if (writeInstr == 8)
 		{ // AW
@@ -690,7 +663,7 @@ bool Update(float deltatime)
 				DisplayTexture(gRenderer, texture);
 
 				float fps = 1.0f / renderedFrameTime;
-				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(fps) << "  rval: " + to_string(pixelRamIndex);
+				cout << "\r                                                       " << "\r" << SimplifiedHertz(1.0 / deltatime) + "\tFPS: " + to_string(fps) << "  programCounter: " + to_string(programCounter);
 
 				if (autoFPS) {
 					if (fps > 65)
@@ -711,21 +684,21 @@ bool Update(float deltatime)
 		}
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode&(1<<((MICROINSTR_SIZE-1)-1)))
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 1)))
 		{ // CE
 			//cout << ("CE ");
-			programCounter += 1;
+			programCounter = clamp(programCounter + 1, 0, 65534);
 		}
-		if (mcode&(1<<((MICROINSTR_SIZE-1)-2)))
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 2)))
 		{ // ST
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
-			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
 			exit(1);
 		}
-		if (mcode&(1<<((MICROINSTR_SIZE-1)-3)))
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 3)))
 		{ // EI
 			//cout << ("EI \n\n");
 			break;
@@ -746,12 +719,15 @@ void DrawPixel(int x, int y, int r, int g, int b)
 }
 
 string SimplifiedHertz(float input) {
-	if (input >= 1000000000) // GHz
-		return to_string(round(input / 1000000000.0f * 10.0f) / 10.0f) + " GHz";
-	if (input >= 1000000) // MHz
-		return to_string(round(input / 1000000.0f * 10.0f) / 10.0f) + " MHz";
-	if (input >= 1000) // KHz
-		return to_string(round(input / 1000.0f * 10.0f) / 10.0f) + " KHz";
+	if (input == INFINITY)
+		input = FLT_MAX;
+
+	if (input >= 1000000000.0) // GHz
+		return to_string(floor(input / 100000000.0f) / 10.0f) + " GHz";
+	if (input >= 1000000.0) // MHz
+		return to_string(floor(input / 100000.0f) / 10.0f) + " MHz";
+	if (input >= 1000.0) // KHz
+		return to_string(floor(input / 100.0f) / 10.0f) + " KHz";
 
 	return to_string(round(input * 10.0f) / 10.0f) + " KHz";
 }
@@ -937,9 +913,9 @@ int BinToDec(const string& input)
 }
 
 uint16_t BinaryRangeToInt(uint16_t num, int min, int max) {
-	int bmin = (MICROINSTR_SIZE-1) - max;
-	int bmax = (MICROINSTR_SIZE-1) - min;
-	return (num & ((1<<(bmax+1))-1)) >> bmin;
+	int bmin = (MICROINSTR_SIZE - 1) - max;
+	int bmax = (MICROINSTR_SIZE - 1) - min;
+	return (num & ((1 << (bmax + 1)) - 1)) >> bmin;
 }
 
 string DecToBin(int input)
@@ -1384,19 +1360,19 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	// Check if two values are equal
 	if (comparer == "==" || comparer == "!=") {
 		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 	// Check if A is greater than B
 	if (comparer == ">" || comparer == ">=") {
 		// Finally compare with a subtract, which will NOT activate the ZERO flag OR the CARRY flag if A is greater than B
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 	// Check if B is greater than A (A less than B <)
 	if (comparer == "<" || comparer == "<=") {
 		// Finally compare with a subtract, which WILL activate the CARRY flag if A is less than B
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 }
@@ -1511,11 +1487,7 @@ string CompileCode(const string& inputcode) {
 
 				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
 				if (splitBySpace[0].size() >= 3) {
-					if (splitBySpace[0] == "jmp" || splitBySpace[0] == "jmpc" || splitBySpace[0] == "jmpz") { // If any of the jmp instructions
-						if (splitBySpace[1] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal);// Replace
-					}
-					else if (splitBySpace[0] == "set") { // If a set followed by label placeholder
+					if (splitBySpace[0] == "set") { // If a set followed by label placeholder
 						if (splitBySpace[2] == command) // Check if matching label
 							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);// Replace
 					}
@@ -1598,18 +1570,15 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing memory value at an address and setting to another memory location
 			else if (IsHex(addrPre) && IsHex(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting to another memory location
 			else if (IsReg(addrPre) && IsHex(valuePre)) {
 				LoadAddress(addrPre, to_string(value));
-				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
@@ -1626,18 +1595,15 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing memory value at an address and setting equal to a variable
 			else if (IsHex(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre)) + "\n" + "sta " + to_string(addr);
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting equal to a variable
 			else if (IsReg(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
 				LoadAddress(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre));
 				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
 				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
@@ -1654,8 +1620,6 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing memory value at an address and setting equal to a register
 			else if (IsHex(addrPre) && IsReg(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(addr);
 				StoreAddress(valuePre, to_string(addr));
 			}
 			// If changing a register value and setting equal to a register
@@ -1664,8 +1628,6 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(addrPre));
 				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
 			}
 
@@ -1726,7 +1688,6 @@ string CompileCode(const string& inputcode) {
 
 			// If second argument is an address
 			if (IsHex(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
 				LoadAddress("@B", to_string(valBProcessed));
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1736,7 +1697,6 @@ string CompileCode(const string& inputcode) {
 			}
 			// If second argument is a variable
 			else if (IsVar(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre)) + "\n";
 				LoadAddress("@B", valBPre);
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1748,7 +1708,6 @@ string CompileCode(const string& inputcode) {
 
 			// If first argument is an address
 			if (IsHex(valAPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
 				LoadAddress("@A", to_string(valAProcessed));
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1758,7 +1717,6 @@ string CompileCode(const string& inputcode) {
 			}
 			// If first argument is a variable
 			else if (IsVar(valAPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valAPre)) + "\n";
 				LoadAddress("@A", valAPre);
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1774,7 +1732,6 @@ string CompileCode(const string& inputcode) {
 
 			// If output argument is an address
 			if (IsHex(outLoc)) {
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(outLocProcessed) + "\n";
 				StoreAddress("@A", to_string(outLocProcessed));
 			}
 			// If output argument is a register
@@ -1783,7 +1740,6 @@ string CompileCode(const string& inputcode) {
 			}
 			// If output argument is a variable
 			else if (IsVar(outLoc)) {
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(outLoc)) + "\n";
 				StoreAddress("@A", outLoc);
 			}
 
@@ -1807,15 +1763,10 @@ string CompileCode(const string& inputcode) {
 			}
 
 			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
-			compiledLines.push_back("");
 
-			// If the jmp location is larger than can be addressed OR using uncreated label
-			if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1) {
-				compiledLines.at(compiledLines.size() - 1) += "jmpl";
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
-			}
-			else
-				compiledLines.at(compiledLines.size() - 1) += "jmp " + addrProcessed;
+
+			compiledLines.push_back("jmp"); // Jump to v
+			compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 
 
 			continue;
@@ -1846,43 +1797,47 @@ string CompileCode(const string& inputcode) {
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
-				int lineNum = GetLineNumber();
-				if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1 || lineNum >= 2047) {
-					compiledLines.at(compiledLines.size() - 1) += "jmpzl";
-					compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
-				}
-				else
-					compiledLines.push_back("jmpz " + addrProcessed);
+				compiledLines.push_back("jmpz");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
-				int lineNum = GetLineNumber();
-				if (ParseValue(addrPre) > 2047 || ParseValue(addrPre) == -1 || lineNum >= 2047) {
-					compiledLines.at(compiledLines.size() - 1) += "jmpzl";
-					compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(lineNum + 3) + "\njmp " + addrProcessed);
-				}
-				else
-					compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 3) + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 5));
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 
 
@@ -2012,7 +1967,7 @@ vector<string> parseCode(const string& input)
 		// Memory address is already used, skip.
 		if (outputBytes[memaddr] != "0000") {
 			memaddr += 1;
-	}
+		}
 
 #if DEV_MODE
 		cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
@@ -2050,7 +2005,7 @@ vector<string> parseCode(const string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -2148,13 +2103,13 @@ void GenerateMicrocode()
 		{
 			if (instructioncodes[cl][clc] != ' ')
 				newStr += instructioncodes[cl][clc];
-	}
+		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-}
+	}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -2178,7 +2133,7 @@ void GenerateMicrocode()
 			instIndexes[cl] = seenNames.size() - 1;
 		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-		}
+	}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2238,10 +2193,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-					}
+			}
 		}
 
-				}
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2314,9 +2269,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-					}
-				}
 			}
+		}
+	}
 
 	// Print the output
 	string processedOutput = "";
@@ -2338,7 +2293,7 @@ void GenerateMicrocode()
 		string binversion = HexToBin(ttmp, MICROINSTR_SIZE);
 		for (int i = 0; i < binversion.size(); i++)
 		{
-			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE-1)-i);
+			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE - 1) - i);
 		}
 	}
 	//cout << processedOutput << endl << endl;
@@ -2347,4 +2302,4 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-		}
+}
