@@ -32,7 +32,7 @@
 [Logisim Evolution]: https://github.com/logisim-evolution/logisim-evolution
 
 [Installation]: Documentation/Installation.md
-[Architecture]: Documentation/Architecture.md
+[Architecture]: Documentation/Architecture
 [Programming]: Documentation/Programming.md
 [Usage]: Documentation/Usage.md
 [License]: LICENSE
