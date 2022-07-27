@@ -52,4 +52,4 @@
 [Button Architecture]: https://img.shields.io/badge/Architecture-006272?style=for-the-badge&logoColor=white&logo=GoogleSearchConsole
 [Button Programming]: https://img.shields.io/badge/Program-C9284D?style=for-the-badge&logoColor=white&logo=Xcode
 [Button Video]: https://img.shields.io/badge/Explanation-c91111?style=for-the-badge&logoColor=white&logo=YouTube
-
+[Button Usage]: https://img.shields.io/badge/Use-008FC7?style=for-the-badge&logoColor=white&logo=GitBook
