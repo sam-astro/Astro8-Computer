@@ -42,7 +42,7 @@
 [Extension VSCode]: https://marketplace.visualstudio.com/items?itemName=sam-astro.armstrong
 
 [Examples]: ../example_armstrong_programs
-[Syntax]: Architecture/Armstrong.md
+[Syntax]: Armstrong
 
 
 <!---------------------------------[ Buttons ]--------------------------------->
