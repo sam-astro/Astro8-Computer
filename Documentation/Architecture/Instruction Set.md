@@ -18,7 +18,7 @@
 
 `00001`   `00010`   `00011`
 
-Load data from the given address to the register A - C.
+Load data from the given address into register  **A  -  C** .
 
 ### Syntax
 
@@ -33,7 +33,7 @@ Load data from the given address to the register A - C.
 
 `00100`   `00101`
 
-Load immediate value into register A - B.
+Load immediate value into register  **A  -  B** .
 
 ### Syntax
 
@@ -81,7 +81,7 @@ register A & B and save the result in A.
 ### Syntax
 
 <kbd>       ADD       </kbd>   **A**  **+**  **B**  **🠖**  **A** <br>
-<kbd>       SUB       </kbd>   **A**  **-**  **B**  **🠖**  **A** <br>
+<kbd>       SUB       </kbd>   **A**   **-**    **B**  **🠖**  **A** <br>
 <kbd>  MULT  </kbd>   **A**  **×**  **B**  **🠖**  **A** <br>
 <kbd>       DIV       </kbd>   **A**  **÷**  **B**  **🠖**  **A** 
 
@@ -153,7 +153,8 @@ to memory and advance counter by 2.
 
 `10011`   `10110`
 
-Swap 2 registers with each other. Overrides the third.
+Swaps two registers with each other <br>
+& as a side-effect overrides the third.
 
 ### Syntax
 
