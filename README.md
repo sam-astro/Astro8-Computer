@@ -11,6 +11,7 @@
 [![Button Usage]][Usage]   
 [![Button Programming]][Programming]
 
+[![Button Video]][Video]   
 [![Button Architecture]][Architecture] 
 
 </div>
@@ -30,12 +31,13 @@
 <!----------------------------------------------------------------------------->
 
 [Logisim Evolution]: https://github.com/logisim-evolution/logisim-evolution
+[Video]: https://www.youtube.com/watch?v=Zt0JfmV7CyI
 
 [Installation]: Documentation/Installation.md
 [Architecture]: Documentation/Architecture
 [Programming]: Documentation/Programming.md
-[Usage]: Documentation/Usage.md
 [License]: LICENSE
+[Usage]: Documentation/Usage.md
 
 
 <!----------------------------------[ Badges ]--------------------------------->
@@ -48,5 +50,6 @@
 [Button Installation]: https://img.shields.io/badge/Install-339933?style=for-the-badge&logoColor=white&logo=DocuSign
 [Button Architecture]: https://img.shields.io/badge/Architecture-006272?style=for-the-badge&logoColor=white&logo=GoogleSearchConsole
 [Button Programming]: https://img.shields.io/badge/Program-C9284D?style=for-the-badge&logoColor=white&logo=Xcode
+[Button Video]: https://img.shields.io/badge/Explanation-c91111?style=for-the-badge&logoColor=white&logo=YouTube
 [Button Usage]: https://img.shields.io/badge/Use-008FC7?style=for-the-badge&logoColor=white&logo=GitBook
 
