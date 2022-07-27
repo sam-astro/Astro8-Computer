@@ -1,20 +1,32 @@
 
 # Installation
 
-### Windows
+*How to install the emulator.*
 
-1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Windows** version
-2. Unzip the downloaded file
+<br>
 
-### Linux
+## Prebuild
 
-1. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
-2. Unzip the downloaded file
+*You can download executables for **Windows** & **Linux**.*
 
-### From Source
+<br>
 
-1. Clone this repository in a command line using `git clone https://github.com/sam-astro/Astro8-Computer.git` OR by downloading the repository as a .ZIP file and unzipping it to your location of choice
-2. Enter the directory `Astro8-Computer/Astro8-Emulator/linux-build`
-3. Run CMake using `cmake ..` to generate Unix Makefile
-4. Run `make -j5` to generate executable
-5. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator`
+1.  Download a **[Release]**.
+
+2.  Unzip the downloaded archive.
+
+<br>
+<br>
+
+## Building
+
+*[» Alternatively check out how to build it yourself.][Building]*
+
+<br>
+
+
+<!----------------------------------------------------------------------------->
+
+[Release]: https://github.com/sam-astro/Astro8-Computer/releases
+
+[Building]: Building.md
