@@ -67,9 +67,9 @@ JMPZ <val>  01111   : jump to <val> if the value in reg A is equal to zero
 JMPC <val>  10000   : jump if the carry bit is set
 LDAIN       10001   : load from reg A as memory address, then copy value from memory into A (allows for 16-bit addressing)
 STAOUT      10010   : use reg A as memory address, then copy value from B into memory
-LDLGE       10010   : use value directly after instruction as address to copy from memory to reg A and advance counter by 2
+LDLGE       10011   : use value directly after instruction as address to copy from memory to reg A and advance counter by 2
 STLGE       10100   : use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
-SWP         10011   : swap the contents of register A and register B (this overwrites register C)
+SWP         10101   : swap the contents of register A and register B (this overwrites register C)
 SWPC        10110   : swap register A and register C (this overwrites register B)
 HLT         10111   : stop the clock
 ```
