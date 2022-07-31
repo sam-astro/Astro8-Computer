@@ -121,7 +121,7 @@ to either load or store a memory value.
 
 ## LDLGE
 
-`10010`
+`10011`
 
 Use value directly after instruction <br>
 as address to copy from memory <br>
@@ -151,7 +151,7 @@ to memory and advance counter by 2.
 
 ## Swap
 
-`10011`   `10110`
+`10101`   `10110`
 
 Swaps two registers with each other <br>
 & as a side-effect overrides the third.
