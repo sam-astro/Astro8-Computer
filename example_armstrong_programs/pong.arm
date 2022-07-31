@@ -20,7 +20,7 @@ change $RPaddleY = 5 // Vertical position of right paddle
 change $ballVelX = 1 // 0 = left, 1 = right
 change $ballVelY = 1 // 0 = down, 1 = up
 change $ballPosX = 32 // x-position
-change $ballPosY = 15 // y-position (higher posY = lower screenY)
+change $ballPosY = 32 // y-position (higher posY = lower screenY)
 change $lastlastposition = 65534
 
 // UI
@@ -41,57 +41,10 @@ change *$memaddr = $sdciiText
 
 #update
 // these two seem to fix weird issues. WHY!?!?
-change 0x4124 = $ballVelX
+change 0x4123 = $ballVelX
 change 0x4124 = $ballVelY
 
 
-if $slowPaddleTime==800: // Only calculate the paddles once every X cycles, otherwise it moves too fast
-
-    ///////////////////////////////////////////
-    // Handle paddle movement and user input //
-    ///////////////////////////////////////////
-
-    change $key = @EX
-    // Left paddle movement
-    // If 'W' key is pressed, move lpaddle up
-    if $key==35:
-        if $LPaddleY>0: // Make sure the player is not on the top edge
-            sub $LPaddleY,1 -> $LPaddleY
-            // Clear the last position
-            change *$lpaddleMemoryPosition = 0
-        endif
-    endif
-    // If 'S' key is pressed, move lpaddle down
-    if $key==31:
-        if $LPaddleY<10: // Make sure the player is not on the bottom edge
-            add $LPaddleY,1 -> $LPaddleY
-            // Clear the last position
-            change *$lpaddleMemoryPosition = 0
-        endif
-    endif
-
-
-    // Right paddle movement
-    
-    // If 'Up arr' key is pressed, move rpaddle up
-    if $key==71:
-        if $RPaddleY>0: // Make sure the player is not on the top edge
-            sub $RPaddleY,1 -> $RPaddleY
-            // Clear the last position
-            change *$rpaddleMemoryPosition = 0
-        endif
-    endif
-    // If 'Down arr' key is pressed, move lpaddle down
-    if $key==72:
-        if $RPaddleY<10: // Make sure the player is not on the bottom edge
-            add $RPaddleY,1 -> $RPaddleY
-            // Clear the last position
-            change *$rpaddleMemoryPosition = 0
-        endif
-    endif
-		
-    change $slowPaddleTime = 0
-endif
 
 ////////////////////
 // Render Paddles //
@@ -108,23 +61,62 @@ change *$rpaddleMemoryPosition = $paddleChar
 
 
 
+
+///////////////////////////////////////////
+// Handle paddle movement and user input //
+///////////////////////////////////////////
+
+if $slowPaddleTime==4000: // Only calculate the paddles once every X cycles, otherwise it moves too fast
+
+    change $key = @EX
+
+    // Left paddle movement
+    // If 'W' key is pressed, move lpaddle up
+    if $key==35:
+        if $LPaddleY>0: // Make sure the player is not on the top edge
+            // Clear the last position
+            change *$lpaddleMemoryPosition = 0
+            sub $LPaddleY,1 -> $LPaddleY
+        endif
+    endif
+    // If 'S' key is pressed, move lpaddle down
+    if $key==31:
+        if $LPaddleY<10: // Make sure the player is not on the bottom edge
+            // Clear the last position
+            change *$lpaddleMemoryPosition = 0
+            add $LPaddleY,1 -> $LPaddleY
+        endif
+    endif
+
+
+    // Right paddle movement
+    // If 'Up arr' key is pressed, move rpaddle up
+    if $key==71:
+        if $RPaddleY>0: // Make sure the player is not on the top edge
+            // Clear the last position
+            change *$rpaddleMemoryPosition = 0
+            sub $RPaddleY,1 -> $RPaddleY
+        endif
+    endif
+    // If 'Down arr' key is pressed, move lpaddle down
+    if $key==72:
+        if $RPaddleY<10: // Make sure the player is not on the bottom edge
+            // Clear the last position
+            change *$rpaddleMemoryPosition = 0
+            add $RPaddleY,1 -> $RPaddleY
+        endif
+    endif
+		
+    change $slowPaddleTime = 0
+endif
+
+
+
+
 /////////////////////
 // Handle the ball //
 /////////////////////
-if $slowBallTime==900: // Only calculate the ball once every X cycles, otherwise it moves too fast
-
-    // Convert ball X and Y coordinates into pixel space
-    change $ballPixelPosition = 0
-    mult $ballPosY,64 -> $ballPixelPosition
-    add $ballPosX,$ballPixelPosition -> $ballPixelPosition
-
-    // Calculate correct address and display Ball
-    change *$lastlastposition = 0 // Clear last-last position
-    change $lastlastposition = $ballMemoryPosition
-    change *$ballMemoryPosition = 16912 // fade last position
-    add $ballPixelPosition,$pixOffset -> $ballMemoryPosition
-    change *$ballMemoryPosition = 65534 // Color new position
-    
+if $slowBallTime==1500: // Only calculate the ball once every X cycles, otherwise it moves too fast
 
     // Bounce if in left or right paddles
 
@@ -153,6 +145,7 @@ if $slowBallTime==900: // Only calculate the ball once every X cycles, otherwise
     if $ballPosX==0: // If on left wall
         // Reset ball
         change $ballVelX = 1
+        change $ballVelY = 1
         change $ballPosX = 32
         change $ballPosY = 32
         // Increment and refresh score
@@ -172,6 +165,7 @@ if $slowBallTime==900: // Only calculate the ball once every X cycles, otherwise
     if $ballPosX==63: // If on right wall
         // Reset ball
         change $ballVelX = 0
+        change $ballVelY = 1
         change $ballPosX = 32
         change $ballPosY = 32
         // Increment and refresh score
@@ -223,58 +217,24 @@ if $slowBallTime==900: // Only calculate the ball once every X cycles, otherwise
     add $linePos,$pixOffset -> $lineInMem
     change *$lineInMem = 19026 // Draw gray dot
     add $linePos,128 -> $linePos // Skip a line
-    gotoif $linePos<4000, #dottedLine
+    gotoif $linePos<3969, #dottedLine
 
     change $slowBallTime = 0
 endif
 
 
+    // Convert ball X and Y coordinates into pixel space
+    //change $ballPixelPosition = 0
+    mult $ballPosY,64 -> $ballPixelPosition
+    add $ballPosX,$ballPixelPosition -> $ballPixelPosition
+
+    // Calculate correct address and display Ball
+    change *$ballMemoryPosition = 0 // delete last position
+    add $ballPixelPosition,$pixOffset -> $ballMemoryPosition
+    change *$ballMemoryPosition = 65534 // Color new position
+    
 
 add $slowBallTime,1 -> $slowBallTime
 add $slowPaddleTime,1 -> $slowPaddleTime
 // Keep looping
 goto #update
-
-
-
-// // If the win condition is met, show win screen then reset
-// #win
-
-// // Write winner text
-// change 0x402A = 35 // W
-// change 0x402B = 21 // I
-// change 0x402C = 26 // N
-// change 0x402D = 31 // S
-
-// if $rightScore==10:
-//     change 0x4028 = 30 // R
-// endif
-// if $leftScore==10:
-//     change 0x4028 = 24 // L
-// endif
-
-// // Win background color
-// change $pixPos = 0
-// change $winColor = 3688 // Green
-// #colorScreen
-// add $pixPos,$pixOffset -> $memaddr
-// change *$memaddr = $winColor
-// add $pixPos,1 -> $pixPos
-// gotoif $pixPos<4095, #colorScreen
-
-// add $slowBallTime,1 -> $slowBallTime
-
-// if $slowBallTime==65530:
-//     change $slowBallTime = 0
-
-//     // Clear background color
-//     change $pixPos = 0
-//     #colorScreenTwo
-//     add $pixPos,$pixOffset -> $memaddr
-//     change *$memaddr = 0
-//     add $pixPos,1 -> $pixPos
-//     gotoif $pixPos<4095, #colorScreenTwo
-
-//     goto #start
-// endif
-// goto #win

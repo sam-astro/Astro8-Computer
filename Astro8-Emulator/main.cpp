@@ -40,8 +40,8 @@ int InstructionReg = 0;
 int flags[3] = { 0, 0, 0 };
 int bus = 0;
 int outputReg = 0;
-int memoryIndex = 0;
-int programCounter = 0;
+uint16_t memoryIndex = 0;
+uint16_t programCounter = 0;
 
 int imgX = 0;
 int imgY = 0;
@@ -61,13 +61,16 @@ int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing 
 
 
 float slowdownAmnt = 1;
-int iterations = 0;
+unsigned int iterations = 0;
 
 vector<int> memoryBytes;
 vector<int> charRam;
 
 string action = "";
-vector<vector<bool>> microinstructionData;
+#define MICROINSTR_SIZE 14
+vector<uint16_t> microinstructionData;
+static_assert(sizeof(decltype(microinstructionData)::value_type) * 8 >= MICROINSTR_SIZE,
+	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
 vector<bool> characterRom;
 
@@ -83,30 +86,30 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update(float deltatime);
+bool Update(double deltatime);
 void DrawPixel(int x, int y, int r, int g, int b);
-int InitGraphics(std::string windowTitle, int width, int height, int pixelScale);
+int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
 unsigned BitRange(unsigned value, unsigned offset, unsigned n);
 string DecToHexFilled(int input, int desiredSize);
-string BinToHexFilled(string input, int desiredSize);
-int BinToDec(string input);
+string BinToHexFilled(const string& input, int desiredSize);
+int BinToDec(const string& input);
 string DecToBin(int input);
 string DecToBinFilled(int input, int desiredSize);
-string HexToBin(string s, int desiredSize);
-int HexToDec(string hex);
+string HexToBin(const string& s, int desiredSize);
+int HexToDec(const string& hex);
 vector<string> explode(const string& str, const char& ch);
-vector<string> parseCode(string input);
+vector<string> parseCode(const string& input);
 static inline void ltrim(std::string& s);
 static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-int BinaryVecRangeToInt(vector<bool> vec, int min, int max);
-string CompileCode(string inputcode);
+uint16_t BinaryRangeToInt(uint16_t num, int min, int max);
+string CompileCode(const string& inputcode);
 vector<string> splitByComparator(string str);
-int ParseValue(string input);
-string MoveFromRegToReg(string from, string destination);
+int ParseValue(const string& input);
+string MoveFromRegToReg(const string& from, const string& destination);
 int GetLineNumber();
 int ConvertAsciiToSdcii(int asciiCode);
 
@@ -114,7 +117,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -137,9 +140,10 @@ string instructioncodes[] = {
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
-		"jmp( 2=ir,j & 3=ei", // Jump <addr>
-		"jmpz( 2=ir,j | zeroflag & 3=ei", // Jump if zero <addr>
-		"jmpc( 2=ir,j | carryflag & 3=ei", // Jump if carry <addr>
+		"jmp( 2=cr,aw & 3=rm,j & 4=ei", // Jump to address following instruction
+		"jmpz( 2=cr,aw & 3=ce,rm & 4=j | zeroflag & 5=ei", // Jump if zero to address following instruction
+		"jmpc( 2=cr,aw & 3=ce,rm & 4=j | carryflag & 5=ei", // Jump if carry to address following instruction
+		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
 		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
@@ -232,7 +236,7 @@ int main(int argc, char** argv)
 
 	if (code.empty()) {
 		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
-		cout<<"\n\nPress Enter to Exit...";
+		cout << "\n\nPress Enter to Exit...";
 		cin.ignore();
 		exit(1);
 	}
@@ -288,6 +292,8 @@ int main(int argc, char** argv)
 
 		//exit(0);
 	}
+	else
+		ColorAndPrintAssembly(code);
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	cout << "Generating Character ROM...";
@@ -344,52 +350,49 @@ int main(int argc, char** argv)
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
 
-	int cyclesKeyPressed = 0;
 	bool keyPress = false;
 
-	float dt = 0;
+	uint8_t pollCounter = 0;
+
+	double dt = 0;
 	bool running = true;
+	SDL_Event event;
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			if (event.type == SDL_QUIT)
+		if(pollCounter%6000==0)
+			while (SDL_PollEvent(&event))
 			{
-				running = false;
-			}
-			else if (event.type == SDL_KEYDOWN) {
+				if (event.type == SDL_QUIT)
+				{
+					running = false;
+				}
+				else if (event.type == SDL_KEYDOWN) {
 
-				// Keyboard support
-				expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
-				//keyPress = true;
-				cout << "  expansionPort: " << expansionPort << endl;
-			}
-			else if (event.type == SDL_KEYUP) {
+					// Keyboard support
+					expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-				// Keyboard support
-				expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-				//keyPress = false;
-				//cyclesKeyPressed = 0;
-			}
-		}
-		//if (cyclesKeyPressed >= 25)
-		//	expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-		//if (keyPress)
-		//	cyclesKeyPressed++;
+					cout << "  expansionPort: " << expansionPort << endl;
+				}
+				else if (event.type == SDL_KEYUP) {
 
-			Update(dt);
+					// Keyboard support
+					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+				}
+
+				pollCounter = 0;
+			}
+		pollCounter++;
+
+		Update(dt);
 
 		// Calculate frame time
 		auto stopTime = std::chrono::high_resolution_clock::now();
-		dt = std::chrono::duration<float, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0f;
+		dt = std::chrono::duration<double, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0;
+		if (dt == 0)
+			dt = 0.0000001;
 	}
-
-
-	//SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
-	//SDL_RenderClear(gRenderer);
 
 	destroy(gRenderer, gWindow);
 	SDL_Quit();
@@ -399,50 +402,35 @@ int main(int argc, char** argv)
 
 steady_clock::time_point start;
 float renderedFrameTime = 0;
-bool Update(float deltatime)
+bool Update(double deltatime)
 {
 	renderedFrameTime += deltatime;
 
-	//cout << programCounter << ")  ";
 	for (int step = 0; step < 16; step++)
 	{
 
-		//cout << "\n     step: " + to_string(step) << endl;
-
-		// Quickly execute fetch
+		// Execute fetch in single step
 		if (step == 0)
 		{
 			// CR
 			// AW
 			memoryIndex = programCounter;
-			//cout << ("CR AW ");
 			// RM
 			// IW
 			InstructionReg = memoryBytes.at(clamp(memoryIndex, 0, 65534));
 			// CE
-			programCounter += 1;
-			//cout << "\n     step: 1" << endl;
-			//cout << ("RM IW CE ");
+			programCounter = clamp(programCounter + 1, 0, 65534);
 			step = 1;
 			continue;
 		}
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		vector<bool> mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
-
-		//cout << "\n (";
-		//for (size_t i = 0; i < mcode.size(); i++)
-		//{
-		//	cout << mcode[i];
-		//}
-		//cout<<")" << endl;
-		//cout << ("\nmcLoc- " + DecToBinFilled(InstructionReg, 16).substr(0, 4) + DecToBinFilled(step, 4) + to_string(flags[0]) + to_string(flags[1])) << "  ==  " << microcodeLocation << endl;
-		//cout << ("mcDat- " + mcode) << endl;
+		uint16_t mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
 
 
 		// Check for any reads and execute if applicable
-		int readInstr = BinaryVecRangeToInt(mcode, 9, 11);
+		int readInstr = BinaryRangeToInt(mcode, 9, 11);
 		//cout << readInstr << "  " << DecToBinFilled(readInstr, 3) << endl;
 		if (readInstr == 1)
 		{ // RA
@@ -487,12 +475,10 @@ bool Update(float deltatime)
 
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode[0] == 1)
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
 		{ // EO
-			//cout << ("EO ");
-
-			// Find ALU modifications
-			int aluMod = BinaryVecRangeToInt(mcode, 12, 13);
+			// Find ALU modifiers
+			int aluMod = BinaryRangeToInt(mcode, 12, 13);
 
 			if (aluMod == 1) // Subtract
 			{
@@ -503,7 +489,7 @@ bool Update(float deltatime)
 				bus = AReg - BReg;
 				if (bus < 0)
 				{
-					bus = 65535 + bus;
+					bus = 65534 + bus;
 					flags[1] = 0;
 				}
 			}
@@ -514,9 +500,9 @@ bool Update(float deltatime)
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -536,9 +522,9 @@ bool Update(float deltatime)
 					bus = 0;
 				}
 
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -549,9 +535,9 @@ bool Update(float deltatime)
 				if (AReg + BReg == 0)
 					flags[0] = 1;
 				bus = AReg + BReg;
-				if (bus >= 65535)
+				if (bus >= 65534)
 				{
-					bus = bus - 65535;
+					bus = bus - 65534;
 					flags[1] = 1;
 				}
 			}
@@ -559,7 +545,7 @@ bool Update(float deltatime)
 
 
 		// Check for any writes and execute if applicable
-		int writeInstr = BinaryVecRangeToInt(mcode, 5, 8);
+		int writeInstr = BinaryRangeToInt(mcode, 5, 8);
 		//cout << "write:" << to_string(writeInstr) << " ";
 		if (writeInstr == 1)
 		{ // WA
@@ -585,17 +571,10 @@ bool Update(float deltatime)
 		{ // WM
 			//cout << ("WM ");
 			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
-			//if (memoryIndex <= 16382 || memoryIndex > 16527)
-			//	memoryBytes[memoryIndex] = bus;
-			//else
-			//	charRam.at(clamp(memoryIndex - 16383, 0, 143)) = bus;
 		}
 		else if (writeInstr == 7)
 		{ // J
-			//cout << ("J ");
-			//cout<<Line(DecToBinFilled(InstructionReg, 16));
-			//cout<<Line(DecToBinFilled(InstructionReg, 16).Substring(4, 12));
-			programCounter = BitRange(InstructionReg, 0, 11);
+			programCounter = clamp(bus, 0, 65534);
 		}
 		else if (writeInstr == 8)
 		{ // AW
@@ -684,7 +663,7 @@ bool Update(float deltatime)
 				DisplayTexture(gRenderer, texture);
 
 				float fps = 1.0f / renderedFrameTime;
-				cout << "\r                                                 " << "\r" << SimplifiedHertz(1.0f / deltatime) + "\tFPS: " + to_string(fps) << "  rval: " + to_string(pixelRamIndex);
+				cout << "\r                                                       " << "\r" << SimplifiedHertz(1.0 / deltatime) + "\tFPS: " + to_string(fps) << "  programCounter: " + to_string(programCounter);
 
 				if (autoFPS) {
 					if (fps > 65)
@@ -705,21 +684,21 @@ bool Update(float deltatime)
 		}
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode[1] == 1)
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 1)))
 		{ // CE
 			//cout << ("CE ");
-			programCounter += 1;
+			programCounter = clamp(programCounter + 1, 0, 65534);
 		}
-		if (mcode[2] == 1)
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 2)))
 		{ // ST
 			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
-			cout << ("FINAL VALUES |=  o: " + to_string(outputReg) + " A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
+			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
 			exit(1);
 		}
-		if (mcode[3] == 1)
+		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 3)))
 		{ // EI
 			//cout << ("EI \n\n");
 			break;
@@ -740,17 +719,20 @@ void DrawPixel(int x, int y, int r, int g, int b)
 }
 
 string SimplifiedHertz(float input) {
-	if (input >= 1000000000) // GHz
-		return to_string(round(input / 1000000000.0f * 10.0f) / 10.0f) + " GHz";
-	if (input >= 1000000) // MHz
-		return to_string(round(input / 1000000.0f * 10.0f) / 10.0f) + " MHz";
-	if (input >= 1000) // KHz
-		return to_string(round(input / 1000.0f * 10.0f) / 10.0f) + " KHz";
+	if (input == INFINITY)
+		input = FLT_MAX;
+
+	if (input >= 1000000000.0) // GHz
+		return to_string(floor(input / 100000000.0f) / 10.0f) + " GHz";
+	if (input >= 1000000.0) // MHz
+		return to_string(floor(input / 100000.0f) / 10.0f) + " MHz";
+	if (input >= 1000.0) // KHz
+		return to_string(floor(input / 100.0f) / 10.0f) + " KHz";
 
 	return to_string(round(input * 10.0f) / 10.0f) + " KHz";
 }
 
-int InitGraphics(std::string windowTitle, int width, int height, int pixelScale)
+int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale)
 {
 	int WINDOW_WIDTH = width;
 	int WINDOW_HEIGHT = height;
@@ -913,7 +895,7 @@ string DecToHexFilled(int input, int desiredSize)
 
 	return output;
 }
-string BinToHexFilled(string input, int desiredSize)
+string BinToHexFilled(const string& input, int desiredSize)
 {
 	int dec = BinToDec(input);
 	string output = DecToHexFilled(dec, 0);
@@ -925,23 +907,17 @@ string BinToHexFilled(string input, int desiredSize)
 
 	return output;
 }
-int BinToDec(string input)
+int BinToDec(const string& input)
 {
 	return stoi(input, nullptr, 2);
 }
-int BinaryVecRangeToInt(vector<bool> vec, int min, int max)
-{
-	int result = 0;
-	int base = 1;
 
-	for (unsigned int i = max; i >= min; --i)
-	{
-		result += vec[i] * base;
-		base *= 2;
-	}
-
-	return result;
+uint16_t BinaryRangeToInt(uint16_t num, int min, int max) {
+	int bmin = (MICROINSTR_SIZE - 1) - max;
+	int bmax = (MICROINSTR_SIZE - 1) - min;
+	return (num & ((1 << (bmax + 1)) - 1)) >> bmin;
 }
+
 string DecToBin(int input)
 {
 	string r;
@@ -960,7 +936,7 @@ string DecToBinFilled(int input, int desiredSize)
 
 	return output;
 }
-string HexToBin(string s, int desiredSize)
+string HexToBin(const string& s, int desiredSize)
 {
 	string out;
 	for (auto i : s) {
@@ -983,7 +959,7 @@ string HexToBin(string s, int desiredSize)
 	return out;
 }
 
-int HexToDec(string hex)
+int HexToDec(const string& hex)
 {
 	unsigned long result = 0;
 	for (int i = 0; i < hex.length(); i++) {
@@ -1025,54 +1001,54 @@ vector<string> explode(const string& str, const char& ch) {
 		result.push_back(next);
 	return result;
 }
-bool IsHex(string in) {
+bool IsHex(const string& in) {
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'x')
 			return true;
 	return false;
 }
-bool IsBin(string in) {
+bool IsBin(const string& in) {
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'b')
 			return true;
 	return false;
 }
-bool IsReg(string in) {
+bool IsReg(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '@')
 			return true;
 	return false;
 }
-bool IsVar(string in) {
+bool IsVar(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '$')
 			return true;
 	return false;
 }
-bool IsLabel(string in) {
+bool IsLabel(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '#')
 			return true;
 	return false;
 }
-bool IsPointer(string in) {
+bool IsPointer(const string& in) {
 	if (in.size() > 1)
 		if (in[0] == '*')
 			return true;
 	return false;
 }
-bool IsDec(string in) {
+bool IsDec(const string& in) {
 	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }
 
-void PutSetOnCurrentLine(string value) {
+void PutSetOnCurrentLine(const string& value) {
 	compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + value);
 }
 
 // Loading of memory value into register, automatically allowing large addressing as needed
-void LoadAddress(string reg, string address) {
+void LoadAddress(const string& reg, const string& address) {
 	int actualVal = ParseValue(address);
 	string addrInWord = "ain ";
 	int actualLineNum = GetLineNumber();
@@ -1102,7 +1078,7 @@ void LoadAddress(string reg, string address) {
 }
 
 // Storing of register into memory, automatically allowing large addressing as needed
-void StoreAddress(string reg, string address) {
+void StoreAddress(const string& reg, const string& address) {
 	int actualLineNum = GetLineNumber();
 	int actualVal = ParseValue(address);
 	string addrOutWord = "ain ";
@@ -1118,7 +1094,7 @@ void StoreAddress(string reg, string address) {
 	}
 }
 
-void RegIdToLDI(string in, string followingValue) {
+void RegIdToLDI(const string& in, const string& followingValue) {
 	int actualValue = ParseValue(followingValue);
 
 	if (actualValue < 2047) {
@@ -1171,7 +1147,7 @@ void RegIdToLDI(string in, string followingValue) {
 //	return "";
 //}
 
-string MoveFromRegToReg(string from, string destination) {
+string MoveFromRegToReg(const string& from, const string& destination) {
 	if (from == destination)
 		return "";
 
@@ -1252,7 +1228,7 @@ int ActualLineNumFromNum(int x) {
 	return outInt;
 }
 
-int GetVariableAddress(string id) {
+int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 	{
@@ -1265,7 +1241,7 @@ int GetVariableAddress(string id) {
 	return 16528 + vars.size() - 1;
 }
 
-int FindLabelLine(string labelName, vector<string> labels, vector<int>labelLineValues) {
+int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
 	for (int i = 0; i < labels.size(); i++)
 	{
 		if (labelName == labels[i]) {
@@ -1276,7 +1252,7 @@ int FindLabelLine(string labelName, vector<string> labels, vector<int>labelLineV
 	return -1;
 }
 
-int ParseValue(string input) {
+int ParseValue(const string& input) {
 	if (input.size() > 2) {
 		if (IsHex(input))      // If preceded by '0x', then it is a hex number
 			return HexToDec(split(input, "0x")[1]);
@@ -1296,18 +1272,18 @@ int ParseValue(string input) {
 }
 
 // Reads from mem at the address stored in pointer, into REG A
-void LoadPointer(string str) {
+void LoadPointer(const string& str) {
 	LoadAddress("@A", split(str, "*")[1]);
 	compiledLines.push_back("ldain");
 }
 
 // Writes from REG B to mem at the address stored in pointer
-void StoreIntoPointer(string str) {
+void StoreIntoPointer(const string& str) {
 	LoadAddress("@A", split(str, "*")[1]);
 	compiledLines.push_back("staout");
 }
 
-string InvertExpression(string expression) {
+string InvertExpression(const string& expression) {
 	string valAPre = trim(splitByComparator(expression)[0]);
 	string valBPre = trim(split(splitByComparator(expression)[1], ",")[0]);
 	string comparer = trim(split(split(expression, valAPre)[1], valBPre)[0]);
@@ -1329,7 +1305,7 @@ string InvertExpression(string expression) {
 	return valAPre + newComparer + valBPre;
 }
 
-void CompareValues(string valA, string comparer, string valB, vector<string> vars) {
+void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
 
@@ -1384,24 +1360,24 @@ void CompareValues(string valA, string comparer, string valB, vector<string> var
 	// Check if two values are equal
 	if (comparer == "==" || comparer == "!=") {
 		// Finally compare with a subtract, which will activate the ZERO flag if A and B are equal
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 	// Check if A is greater than B
 	if (comparer == ">" || comparer == ">=") {
 		// Finally compare with a subtract, which will NOT activate the ZERO flag OR the CARRY flag if A is greater than B
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 	// Check if B is greater than A (A less than B <)
 	if (comparer == "<" || comparer == "<=") {
 		// Finally compare with a subtract, which WILL activate the CARRY flag if A is less than B
-		compiledLines.at(compiledLines.size() - 1) += "sub\n";
+		compiledLines.push_back("sub\n");
 	}
 
 }
 
-string CompileCode(string inputcode) {
+string CompileCode(const string& inputcode) {
 
 	// Pre-process lines of code
 
@@ -1510,10 +1486,12 @@ string CompileCode(string inputcode) {
 					continue;
 
 				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
-				if (splitBySpace[0].size() >= 3)
-					if (splitBySpace[0][0] == 'j' && splitBySpace[0][1] == 'm' && splitBySpace[0][2] == 'p')
-						if (splitBySpace[1] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal);// Replace
+				if (splitBySpace[0].size() >= 3) {
+					if (splitBySpace[0] == "set") { // If a set followed by label placeholder
+						if (splitBySpace[2] == command) // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);// Replace
+					}
+				}
 			}
 
 			continue;
@@ -1592,18 +1570,15 @@ string CompileCode(string inputcode) {
 			}
 			// If changing memory value at an address and setting to another memory location
 			else if (IsHex(addrPre) && IsHex(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(addr);
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting to another memory location
 			else if (IsReg(addrPre) && IsHex(valuePre)) {
 				LoadAddress(addrPre, to_string(value));
-				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(value) + "\n" + "sta " + to_string(GetVariableAddress(addrPre, vars));
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
@@ -1620,18 +1595,15 @@ string CompileCode(string inputcode) {
 			}
 			// If changing memory value at an address and setting equal to a variable
 			else if (IsHex(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre)) + "\n" + "sta " + to_string(addr);
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting equal to a variable
 			else if (IsReg(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += RegIdToMRead(addrPre, to_string(GetVariableAddress(valuePre, vars)));
 				LoadAddress(addrPre, to_string(value));
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valuePre, vars)) + "\n" + "sta " + to_string(GetVariableAddress(addrPre));
 				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
 				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
@@ -1648,8 +1620,6 @@ string CompileCode(string inputcode) {
 			}
 			// If changing memory value at an address and setting equal to a register
 			else if (IsHex(addrPre) && IsReg(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(addr);
 				StoreAddress(valuePre, to_string(addr));
 			}
 			// If changing a register value and setting equal to a register
@@ -1658,8 +1628,6 @@ string CompileCode(string inputcode) {
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				//compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valuePre, "@A");
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(addrPre));
 				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
 			}
 
@@ -1720,7 +1688,6 @@ string CompileCode(string inputcode) {
 
 			// If second argument is an address
 			if (IsHex(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(valBProcessed) + "\n";
 				LoadAddress("@B", to_string(valBProcessed));
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1730,7 +1697,6 @@ string CompileCode(string inputcode) {
 			}
 			// If second argument is a variable
 			else if (IsVar(valBPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "bin " + to_string(GetVariableAddress(valBPre)) + "\n";
 				LoadAddress("@B", valBPre);
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1742,7 +1708,6 @@ string CompileCode(string inputcode) {
 
 			// If first argument is an address
 			if (IsHex(valAPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(valAProcessed) + "\n";
 				LoadAddress("@A", to_string(valAProcessed));
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1752,7 +1717,6 @@ string CompileCode(string inputcode) {
 			}
 			// If first argument is a variable
 			else if (IsVar(valAPre)) {
-				//compiledLines.at(compiledLines.size() - 1) += "ain " + to_string(GetVariableAddress(valAPre)) + "\n";
 				LoadAddress("@A", valAPre);
 				compiledLines.at(compiledLines.size() - 1) += "\n";
 			}
@@ -1768,7 +1732,6 @@ string CompileCode(string inputcode) {
 
 			// If output argument is an address
 			if (IsHex(outLoc)) {
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(outLocProcessed) + "\n";
 				StoreAddress("@A", to_string(outLocProcessed));
 			}
 			// If output argument is a register
@@ -1777,7 +1740,6 @@ string CompileCode(string inputcode) {
 			}
 			// If output argument is a variable
 			else if (IsVar(outLoc)) {
-				//compiledLines.at(compiledLines.size() - 1) += "sta " + to_string(GetVariableAddress(outLoc)) + "\n";
 				StoreAddress("@A", outLoc);
 			}
 
@@ -1801,10 +1763,10 @@ string CompileCode(string inputcode) {
 			}
 
 			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
-			compiledLines.push_back("");
 
 
-			compiledLines.at(compiledLines.size() - 1) += "jmp " + addrProcessed;
+			compiledLines.push_back("jmp"); // Jump to v
+			compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 
 
 			continue;
@@ -1835,32 +1797,47 @@ string CompileCode(string inputcode) {
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
-				compiledLines.push_back("jmpz " + addrProcessed);
+				compiledLines.push_back("jmpz");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 2) + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + to_string(lineNum + 3) + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 5));
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
-				int lineNum = GetLineNumber();
-				compiledLines.push_back("jmpz " + addrProcessed + "\njmpc " + to_string(lineNum + 3) + "\njmp " + addrProcessed); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("jmpc");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("jmp");
+				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 
 
@@ -1942,7 +1919,7 @@ string CompileCode(string inputcode) {
 
 }
 
-vector<string> parseCode(string input)
+vector<string> parseCode(const string& input)
 {
 	vector<string> outputBytes;
 	for (int i = 0; i < 65535; i++)
@@ -2060,7 +2037,7 @@ vector<string> parseCode(string input)
 	return outputBytes;
 }
 
-void ComputeStepInstructions(string stepContents, char* stepComputedInstruction) {
+void ComputeStepInstructions(const string& stepContents, char* stepComputedInstruction) {
 
 	for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
 	{
@@ -2113,8 +2090,10 @@ void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
-	vector<bool> ii;
-	for (int osind = 0; osind < 2048; osind++) { output.push_back("00000"); microinstructionData.push_back(ii); }
+	microinstructionData.resize(2048);
+	for (int osind = 0; osind < 2048; osind++) {
+		output.push_back("00000");
+	}
 
 	// Remove spaces from instruction codes and make uppercase
 	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
@@ -2174,7 +2153,7 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
@@ -2241,7 +2220,7 @@ void GenerateMicrocode()
 
 			string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[14] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
@@ -2311,10 +2290,10 @@ void GenerateMicrocode()
 		string ttmp = output[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 
-		string binversion = HexToBin(ttmp, 14);
+		string binversion = HexToBin(ttmp, MICROINSTR_SIZE);
 		for (int i = 0; i < binversion.size(); i++)
 		{
-			microinstructionData[outindex].push_back(binversion[i] == '1');
+			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE - 1) - i);
 		}
 	}
 	//cout << processedOutput << endl << endl;
