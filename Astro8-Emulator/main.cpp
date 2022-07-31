@@ -426,50 +426,38 @@ bool Update(double deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		uint16_t mcode = microinstructionData.at(clamp(microcodeLocation, 0, 2047));
+		uint16_t mcode = microinstructionData.at(microcodeLocation);
 
 
 		// Check for any reads and execute if applicable
 		int readInstr = BinaryRangeToInt(mcode, 9, 11);
-		//cout << readInstr << "  " << DecToBinFilled(readInstr, 3) << endl;
+		
 		if (readInstr == 1)
 		{ // RA
-			//cout << ("RA ");
 			bus = AReg;
 		}
 		else if (readInstr == 2)
 		{ // RB
-			//cout << ("RB ");
 			bus = BReg;
 		}
 		else if (readInstr == 3)
 		{ // RC
-			//cout << ("RC ");
 			bus = CReg;
 		}
 		else if (readInstr == 4)
 		{ // RM
-			//cout << ("RM ");
 			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
-
-			//if (memoryIndex <= 16382 || memoryIndex > 16527)
-			//	bus = memoryBytes[memoryIndex];
-			//else
-			//	bus = charRam.at(clamp(memoryIndex - 16383, 0, 143));
 		}
 		else if (readInstr == 5)
 		{ // IR
-			//cout << ("IR ");
 			bus = BitRange(InstructionReg, 0, 11);
 		}
 		else if (readInstr == 6)
 		{ // CR
-			//cout << ("CR ");
 			bus = programCounter;
 		}
 		else if (readInstr == 7)
 		{ // RE
-			//cout << ("RE ");
 			bus = expansionPort;
 		}
 
