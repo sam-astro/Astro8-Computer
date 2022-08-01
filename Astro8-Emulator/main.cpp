@@ -72,6 +72,10 @@ vector<uint16_t> microinstructionData;
 static_assert(sizeof(decltype(microinstructionData)::value_type) * 8 >= MICROINSTR_SIZE,
 	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
+vector<uint16_t> microALU;
+vector<uint16_t> microREAD;
+vector<uint16_t> microWRITE;
+
 vector<bool> characterRom;
 
 SDL_Rect r;
@@ -361,7 +365,7 @@ int main(int argc, char** argv)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
 
-		if(pollCounter%6000==0)
+		if (pollCounter % 6000 == 0)
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_QUIT)
@@ -430,46 +434,50 @@ bool Update(double deltatime)
 
 
 		// Check for any reads and execute if applicable
-		int readInstr = BinaryRangeToInt(mcode, 9, 11);
-		
-		if (readInstr == 1)
-		{ // RA
+		uint16_t readInstr = microREAD.at(microcodeLocation);
+
+		switch (readInstr)
+		{
+		case 1:
+			// RA
 			bus = AReg;
-		}
-		else if (readInstr == 2)
-		{ // RB
+			break;
+		case 2:
+			// RB
 			bus = BReg;
-		}
-		else if (readInstr == 3)
-		{ // RC
+			break;
+		case 3:
+			// RC
 			bus = CReg;
-		}
-		else if (readInstr == 4)
-		{ // RM
+			break;
+		case 4:
+			// RM
 			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
-		}
-		else if (readInstr == 5)
-		{ // IR
+			break;
+		case 5:
+			// IR
 			bus = BitRange(InstructionReg, 0, 11);
-		}
-		else if (readInstr == 6)
-		{ // CR
+			break;
+		case 6:
+			// CR
 			bus = programCounter;
-		}
-		else if (readInstr == 7)
-		{ // RE
+			break;
+		case 7:
+			// RE
 			bus = expansionPort;
+			break;
 		}
 
+
+		// Find ALU modifiers
+		uint16_t aluInstr = microALU.at(microcodeLocation);
 
 		// Standalone microinstruction (ungrouped)
 		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
 		{ // EO
-			// Find ALU modifiers
-			int aluMod = BinaryRangeToInt(mcode, 12, 13);
-
-			if (aluMod == 1) // Subtract
+			switch (aluInstr)
 			{
+			case 1: // Subtract
 				flags[0] = 0;
 				flags[1] = 1;
 				if (AReg - BReg == 0)
@@ -480,9 +488,9 @@ bool Update(double deltatime)
 					bus = 65534 + bus;
 					flags[1] = 0;
 				}
-			}
-			else if (aluMod == 2) // Multiply
-			{
+				break;
+
+			case 2: // Multiply
 				flags[0] = 0;
 				flags[1] = 0;
 				if (AReg * BReg == 0)
@@ -493,9 +501,9 @@ bool Update(double deltatime)
 					bus = bus - 65534;
 					flags[1] = 1;
 				}
-			}
-			else if (aluMod == 3) // Divide
-			{
+				break;
+
+			case 3: // Divide
 				flags[0] = 0;
 				flags[1] = 0;
 
@@ -515,9 +523,9 @@ bool Update(double deltatime)
 					bus = bus - 65534;
 					flags[1] = 1;
 				}
-			}
-			else // Add
-			{
+				break;
+
+			default: // Add
 				flags[0] = 0;
 				flags[1] = 0;
 				if (AReg + BReg == 0)
@@ -528,65 +536,58 @@ bool Update(double deltatime)
 					bus = bus - 65534;
 					flags[1] = 1;
 				}
+				break;
 			}
 		}
 
 
 		// Check for any writes and execute if applicable
-		int writeInstr = BinaryRangeToInt(mcode, 5, 8);
-		//cout << "write:" << to_string(writeInstr) << " ";
-		if (writeInstr == 1)
-		{ // WA
-			//cout << ("WA ");
+		uint16_t writeInstr = microWRITE.at(microcodeLocation);
+		switch (writeInstr)
+		{
+		case 1:
+			// WA
 			AReg = bus;
-		}
-		else if (writeInstr == 2)
-		{ // WB
-			//cout << ("WB ");
+			break;
+		case 2:
+			// WB
 			BReg = bus;
-		}
-		else if (writeInstr == 3)
-		{ // WC
-			//cout << ("WC ");
+			break;
+		case 3:
+			// WC
 			CReg = bus;
-		}
-		else if (writeInstr == 4)
-		{ // IW
-			//cout << ("IW ");
+			break;
+		case 4:
+			// IW
 			InstructionReg = bus;
-		}
-		else if (writeInstr == 6)
-		{ // WM
-			//cout << ("WM ");
+			break;
+		case 6:
+			// WM
 			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
-		}
-		else if (writeInstr == 7)
-		{ // J
+			break;
+		case 7:
+			// J
 			programCounter = clamp(bus, 0, 65534);
-		}
-		else if (writeInstr == 8)
-		{ // AW
-			//cout << ("AW ");
+			break;
+		case 8:
+			// AW
 			memoryIndex = bus;
-		}
-		else if (writeInstr == 9)
-		{ // WE
-			//cout << ("WE ");
+			break;
+		case 9:
+			// WE
 			expansionPort = bus;
+			break;
 		}
 
 
 		// Display current pixel
 		if (iterations % frameSpeed == 0)
 		{
-			//PrintColored(to_string(pixelRamIndex )+ "\n", redFGColor, "");
 			int characterRamValue = memoryBytes.at(clamp(characterRamIndex + 16382, 0, 65534));
 			bool charPixRomVal = characterRom.at((characterRamValue * 64) + (charPixY * 8) + charPixX);
 
 			int pixelVal = memoryBytes.at(clamp(pixelRamIndex, 0, 65534));
 			int r, g, b;
-			//r= g=b = 0;
-			//b = 128;
 
 			if (charPixRomVal == true && imgX < 60) {
 				r = 255;
@@ -598,23 +599,18 @@ bool Update(double deltatime)
 				g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
 				b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
 			}
-			//cout << "rgb: (" << r << ", " << g << ", " << b << ")" << endl;
 
 			set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
-			//DrawPixel(imgX, imgY, r, g, b);
 
 
 			imgX++;
 			charPixX++;
 			if (charPixX >= 6) {
 				charPixX = 0;
-				//if (imgX < 61)
 				characterRamIndex++;
 			}
-			/*if (characterRamIndex >= 100)
-				characterRamIndex = 0;*/
 
-				// If x-coord is max, reset and increment y-coord
+			// If x-coord is max, reset and increment y-coord
 			if (imgX >= 64)
 			{
 				imgY++;
@@ -624,10 +620,6 @@ bool Update(double deltatime)
 
 				if (charPixY < 6)
 					characterRamIndex -= 10;
-
-
-				/*apply_pixels(pixels, texture, 64);
-				DisplayTexture(gRenderer, texture);*/
 			}
 
 			if (charPixY >= 6) {
@@ -642,10 +634,6 @@ bool Update(double deltatime)
 				characterRamIndex = 0;
 				charPixY = 0;
 				charPixX = 0;
-
-				// Apply pixels and render
-				//SDL_SetRenderDrawColor(gRenderer, 60, 60, 60, SDL_ALPHA_OPAQUE);
-				//SDL_RenderClear(gRenderer);
 
 				apply_pixels(pixels, texture, 64);
 				DisplayTexture(gRenderer, texture);
@@ -674,12 +662,10 @@ bool Update(double deltatime)
 		// Standalone microinstructions (ungrouped)
 		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 1)))
 		{ // CE
-			//cout << ("CE ");
 			programCounter = clamp(programCounter + 1, 0, 65534);
 		}
 		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 2)))
 		{ // ST
-			//cout << ("ST ");
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			cout << "\n\nPress Enter to Exit...";
@@ -688,7 +674,6 @@ bool Update(double deltatime)
 		}
 		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 3)))
 		{ // EI
-			//cout << ("EI \n\n");
 			break;
 		}
 	}
@@ -2079,6 +2064,9 @@ void GenerateMicrocode()
 	// Generate zeros in data
 	vector<string> output;
 	microinstructionData.resize(2048);
+	microALU.resize(2048);
+	microREAD.resize(2048);
+	microWRITE.resize(2048);
 	for (int osind = 0; osind < 2048; osind++) {
 		output.push_back("00000");
 	}
@@ -2284,7 +2272,15 @@ void GenerateMicrocode()
 			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE - 1) - i);
 		}
 	}
-	//cout << processedOutput << endl << endl;
+
+	for (int i = 0; i < microinstructionData.size(); i++)
+	{
+		uint16_t mcode = microinstructionData.at(i);
+
+		microALU[i] = BinaryRangeToInt(mcode, 12, 13);
+		microREAD[i] = BinaryRangeToInt(mcode, 9, 11);
+		microWRITE[i] = BinaryRangeToInt(mcode, 5, 8);
+	}
 
 	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
