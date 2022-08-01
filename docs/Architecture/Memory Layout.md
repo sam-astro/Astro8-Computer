@@ -40,11 +40,11 @@ be displayed at the corresponding location.
 <br>
 <br>
 
-## Variable Memory
+## Variable and General Purpose Memory
 
-Percent: `25-25%` <br>
-Range: `16528 - 16656` <br>
-Words: `128`
+Percent: `25-93%` <br>
+Range: `16528 - 61439` <br>
+Words: `44911`
 
 <br>
 <br>
