@@ -39,7 +39,7 @@ search:
 # Aux links for the upper right navigation
 aux_links:
     
-    "ＧｉｔＨｕｂ":
+    "Astro-8 on GitHub":
       - "//github.com/sam-astro/Astro8-Computer"
 
 # Makes Aux links open in a new tab. Default is false
