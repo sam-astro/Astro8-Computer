@@ -1,3 +1,9 @@
+---
+has_children : true
+nav_order : 7
+layout : default
+title : Architecture
+---
 
 # Architecture
 
@@ -6,13 +12,9 @@
 <br>
 <br>
 
-<div align = center>
-
 [![Button Instruction Set]][Instruction Set]   
 [![Button Micro Instructions]][Micro Instructions]   
 [![Button Memory Layout]][Memory Layout] 
-
-</div>
 
 <br>
 <br>
@@ -20,9 +22,9 @@
 
 <!----------------------------------------------------------------------------->
 
-[Micro Instructions]: Micro%20Instructions.md
-[Instruction Set]: Instruction%20Set.md
-[Memory Layout]: Memory%20Layout.md
+[Micro Instructions]: Micro%20Instructions
+[Instruction Set]: Instruction%20Set
+[Memory Layout]: Memory%20Layout
 
 
 <!---------------------------------[ Buttons ]--------------------------------->

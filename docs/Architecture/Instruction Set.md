@@ -1,3 +1,9 @@
+---
+layout : default
+parent : Architecture
+title : Instruction Set
+nav_order : 3
+---
 
 # Instruction Set
 
@@ -7,9 +13,13 @@
 
 `00000`
 
+<br>
+
 ### Syntax
 
-<kbd>  NOP  </kbd>
+```asm
+NOP
+```
 
 <br>
 <br>
@@ -20,11 +30,21 @@
 
 Load data from the given address into register  **A  -  C** .
 
+<br>
+
 ### Syntax
 
-<kbd>  AIN  </kbd>   <kbd>  \< Address \>  </kbd> <br>
-<kbd>  BIN  </kbd>   <kbd>  \< Address \>  </kbd> <br>
-<kbd>  CIN  </kbd>   <kbd>  \< Address \>  </kbd>
+```
+AIN 〈 Ａｄｄｒｅｓｓ 〉
+```
+
+```
+BIN 〈 Ａｄｄｒｅｓｓ 〉
+```
+
+```
+CIN 〈 Ａｄｄｒｅｓｓ 〉
+```
 
 <br>
 <br>
@@ -35,10 +55,17 @@ Load data from the given address into register  **A  -  C** .
 
 Load immediate value into register  **A  -  B** .
 
+<br>
+
 ### Syntax
 
-<kbd>  LDIA  </kbd>   <kbd>  \< Value \>  </kbd> <br>
-<kbd>  LDIB  </kbd>   <kbd>  \< Value \>  </kbd>
+```
+LDIA 〈 Ｖａｌｕｅ 〉
+```
+
+```
+LDIB 〈 Ｖａｌｕｅ 〉
+```
 
 <br>
 <br>
@@ -49,10 +76,21 @@ Load immediate value into register  **A  -  B** .
 
 Read from / write to the expansion port to / from register B.
 
+<br>
+
 ### Syntax
 
-<kbd>  RDEXP  </kbd>   **Expansion Port**  **🠖**  **B** <br>
-<kbd>  WREXP  </kbd>   **Expansion Port**  **🠔**  **B**
+**Expansion Port 🠖 B**
+
+```
+RDEXP
+```
+
+**Expansion Port 🠔 B**
+
+```
+WREXP
+```
 
 <br>
 <br>
@@ -63,10 +101,21 @@ Read from / write to the expansion port to / from register B.
 
 Store the register value at the given memory address.
 
+<br>
+
 ### Syntax
 
-<kbd>  STA  </kbd>   <kbd>  \< Address \>  </kbd>   **A**  **🠖**  **Memory** <br>
-<kbd>  STC  </kbd>   <kbd>  \< Address \>  </kbd>   **C**  **🠖**  **Memory**
+**A 🠖 Memory**
+
+```
+STA 〈 Ａｄｄｒｅｓｓ 〉
+```
+
+**C 🠖 Memory**
+
+```
+STC 〈 Ａｄｄｒｅｓｓ 〉
+```
 
 <br>
 <br>
@@ -78,12 +127,33 @@ Store the register value at the given memory address.
 Execute the mathematic operation on <br>
 register A & B and save the result in A.
 
+<br>
+
 ### Syntax
 
-<kbd>       ADD       </kbd>   **A**  **+**  **B**  **🠖**  **A** <br>
-<kbd>       SUB       </kbd>   **A**   **-**    **B**  **🠖**  **A** <br>
-<kbd>  MULT  </kbd>   **A**  **×**  **B**  **🠖**  **A** <br>
-<kbd>       DIV       </kbd>   **A**  **÷**  **B**  **🠖**  **A** 
+**A  +  B  🠖  A**
+
+```
+ADD
+```
+
+**A    -    B  🠖  A**
+
+```
+SUB
+```
+
+**A  ×  B  🠖  A**
+
+```
+MULT
+```
+
+**A**  **÷**  **B**  **🠖**  **A**
+
+```
+DIV
+```
 
 <br>
 <br>
@@ -95,11 +165,25 @@ register A & B and save the result in A.
 Jumps to the given instruction position, <br>
 which intern sets the program counter.
 
+<br>
+
 ### Syntax
 
-<kbd>       JMP       </kbd>   <kbd>  \< Value \>  </kbd> <br>
-<kbd>  JMPZ  </kbd>   <kbd>  \< Value \>  </kbd>   Jump if register **A** is zero <br>
-<kbd>  JMPC  </kbd>   <kbd>  \< Value \>  </kbd>   Jump if the carry bit is set
+```
+JMP 〈 Ｖａｌｕｅ 〉
+```
+
+Jump if register **A** is zero
+
+```
+JMPZ 〈 Ｖａｌｕｅ 〉
+```
+
+Jump if the carry bit is set
+
+```
+JMPC 〈 Ｖａｌｕｅ 〉
+```
 
 <br>
 <br>
@@ -111,10 +195,21 @@ which intern sets the program counter.
 Use register **A**s value as memory address <br>
 to either load or store a memory value.
 
+<br>
+
 ### Syntax
 
-<kbd>       LDAIN      </kbd>   **Memory**  **🠖**  **A** <br>
-<kbd>  STAOUT  </kbd>   **B**  **🠖**  **Memory** <br>
+**Memory  🠖  A**
+
+```
+LDAIN
+```
+
+**B  🠖  Memory**
+
+```
+STAOUT
+```
 
 <br>
 <br>
@@ -127,9 +222,13 @@ Use value directly after instruction <br>
 as address to copy from memory <br>
 to reg A and advance counter by 2.
 
+<br>
+
 ### Syntax
 
-<kbd>       LDLGE      </kbd>
+```
+LDLGE
+```
 
 <br>
 <br>
@@ -142,9 +241,13 @@ Use value directly after counter as <br>
 address, then copy value from reg A <br>
 to memory and advance counter by 2.
 
+<br>
+
 ### Syntax
 
-<kbd>     STLGE      </kbd>
+```
+STLGE
+```
 
 <br>
 <br>
@@ -156,11 +259,21 @@ to memory and advance counter by 2.
 Swaps two registers with each other <br>
 & as a side-effect overrides the third.
 
+<br>
+
 ### Syntax
 
-<kbd>       SWP       </kbd>   **A**  **⟷**  **B**   Overrides **C** <br>
-<kbd>  SWPC  </kbd>   **A**  **⟷**  **C**   Overrides **B** 
+**A  ⟷  B   Overrides C**
 
+```
+SWP
+```
+
+**A  ⟷  C   Overrides B** 
+
+```
+SWPC
+```
 
 <br>
 <br>
@@ -171,9 +284,13 @@ Swaps two registers with each other <br>
 
 Stop the clock and thus execution.
 
+<br>
+
 ### Syntax
 
-<kbd>  HLT  </kbd>
+```
+HLT
+```
 
 <br>
 

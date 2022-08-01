@@ -10,7 +10,7 @@ search:
 
     # Split pages into sections that 
     # can be searched individually
-    heading_level : 2
+    heading_level : 1
     
     # Maximum amount of previews per search result
     previews : 3
@@ -39,7 +39,7 @@ search:
 # Aux links for the upper right navigation
 aux_links:
     
-    "Astro8 on GitHub":
+    "ＧｉｔＨｕｂ":
       - "//github.com/sam-astro/Astro8-Computer"
 
 # Makes Aux links open in a new tab. Default is false
@@ -58,10 +58,3 @@ back_to_top_text: "Scroll Up"
 
 color_scheme: 'light'
 
-
-just_the_docs:
-    collections:
-        Documentation:
-        name: Documentation
-        nav_exclude: false
-        search_exclude: false

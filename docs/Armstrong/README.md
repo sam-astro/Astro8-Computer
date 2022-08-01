@@ -1,3 +1,10 @@
+---
+has_children : true
+nav_order : 6
+layout : default
+title : Armstrong
+---
+
 # Armstrong
 
 *The **Armstrong** syntax guide.*
@@ -14,7 +21,7 @@
 
 Use hexadecimal values for **Addresses**.
 
-```Armstrong
+```
 0xff
 ```
 
@@ -25,7 +32,7 @@ Use hexadecimal values for **Addresses**.
 
 Use decimal values for **Immediate Integers**.
 
-```Armstrong
+```
 213
 ```
 
@@ -34,13 +41,21 @@ Use decimal values for **Immediate Integers**.
 
 ## Comments
 
+*How to add comment to your code.*
+
+<br>
+
 ### Syntax
 
-<kbd>  //  </kbd> <kbd>  \< You Comment Text \>  </kbd>
+```
+// 〈 Ｙｏｕｒ　Ｃｏｍｍｅｎｔ 〉
+```
+
+<br>
 
 ### Example
 
-```armstrong
+```
 // This is a comment
 ```
 
@@ -49,9 +64,17 @@ Use decimal values for **Immediate Integers**.
 
 ## Registers
 
+*How to address a register.*
+
+<br>
+
 ### Syntax
 
-<kbd>  @  </kbd> <kbd>  \< Register Name \>  </kbd>
+```
+@ 〈 Ｒｅｇｉｓｔｅｒ　Ｎａｍｅ 〉
+```
+
+<br>
 
 ### Available
 
@@ -68,13 +91,19 @@ Use decimal values for **Immediate Integers**.
 A label is a place in the program you can jump to. <br>
 *You can also see it as an address in the program.*
 
+<br>
+
 ### Syntax
 
-<kbd>  #  </kbd> <kbd>  \< Label Name \>  </kbd>
+```
+# 〈 Ｌａｂｅｌ　Ｎａｍｅ 〉
+```
+
+<br>
 
 ### Example
 
-```Armstrong
+```
 #start
 ```
 
@@ -86,13 +115,19 @@ A label is a place in the program you can jump to. <br>
 Variable can contain an an integers only. <br>
 *You can think of them as addresses in memory.*
 
+<br>
+
 ### Syntax
 
-<kbd>  $  </kbd> <kbd>  \< Variable Name \>  </kbd>
+```
+$ 〈 Ｖａｒｉａｂｌｅ　Ｎａｍｅ 〉
+```
+
+<br>
 
 ### Example
 
-```Armstrong
+```
 $ballVelocity
 ```
 
@@ -103,6 +138,8 @@ $ballVelocity
 
 Some functions compare two values and <br>
 determine if their relationship is valid.
+
+<br>
 
 ### Types
 
@@ -118,7 +155,7 @@ determine if their relationship is valid.
 
 <!----------------------------------------------------------------------------->
 
-[Functions]: Functions.md
+[Functions]: Functions
 
 
 <!---------------------------------[ Buttons ]--------------------------------->

@@ -1,11 +1,17 @@
+---
+layout : default
+parent : Architecture
+title : Memory Layout
+nav_order : 1
+---
 
 # Memory Layout
 
 <br>
 
 ```
-word 0  |                                                 .                                            | word 65535
-        | Program mem. 0 - 16382    I                     I                    Video memory 61439-65535|
+word 0  |                                         .                                     | word 65535
+        | Program mem. 0 - 16382    I             I             Video memory 61439-65535|
 ```
 
 <br>

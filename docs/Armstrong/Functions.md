@@ -1,3 +1,8 @@
+---
+layout : default
+parent : Armstrong
+title : Functions
+---
 
 # Functions
 
@@ -12,11 +17,13 @@ given values before the program is executed.
 
 ### Syntax
 
-<kbd>  define  </kbd>   <kbd>  \< Address \>  </kbd>   <kbd>  \< Value \>  </kbd>
+```
+define 〈 Ａｄｄｒｅｓｓ 〉 〈 Ｖａｌｕｅ 〉
+```
 
 ### Example
 
-```Armstrong
+```
 define 0xff2 33
 ```
 
@@ -29,11 +36,13 @@ Assigns the given address the supplied value.
 
 ### Syntax
 
-<kbd>  change  </kbd>   <kbd>  \< Address \>  </kbd>   <kbd>  =  </kbd>   <kbd>  \< Value \>  </kbd>
+```
+change 〈 Ａｄｄｒｅｓｓ 〉 = 〈 Ｖａｌｕｅ 〉
+```
 
 ### Example
 
-```Armstrong
+```
 change $cursorChar = 8
 ```
 
@@ -47,11 +56,13 @@ operator and saves the result at the given address.
 
 ### Syntax
 
-<kbd>  \< Operator \>  </kbd>   <kbd>  \< Value A \>  </kbd>   <kbd>  ,  </kbd>   <kbd>  \< Value B \>  </kbd>   <kbd>  ->  </kbd>   <kbd>  \< Address \>  </kbd>
+```
+〈 Ｏｐｅｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ａ 〉 , 〈 Ｖａｌｕｅ　Ｂ 〉 -> 〈 Ａｄｄｒｅｓｓ 〉
+```
 
 ### Example
 
-```Armstrong
+```
 add $A , $B -> $C  //  A + B
 mul $A , $B -> $C  //  A * B
 sub $A , $B -> $C  //  A - B
@@ -67,11 +78,13 @@ Jumps to the given address or label.
 
 ### Syntax
 
-<kbd>  goto  </kbd>   <kbd>  \< Address \>  </kbd>
+```
+goto 〈 Ａｄｄｒｅｓｓ 〉
+```
 
 ### Example
 
-```Armstrong
+```
 goto #mainLoop
 ```
 
@@ -85,12 +98,14 @@ comparison of the two values return true.
 
 ### Syntax
 
-<kbd>  gotoif  </kbd>   <kbd>  \< Value A \>  </kbd>   <kbd>  \< Comparator \> </kbd>   <kbd>  \< Value B \>  </kbd>   <kbd>  ,  </kbd>   <kbd>  \< Address \>  </kbd>
+```
+gotoif 〈 Ｖａｌｕｅ　Ａ 〉 〈 Ｃｏｍｐａｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ｂ 〉 , 〈 Ａｄｄｒｅｓｓ 〉
+```
 
 ### Example
 
-```Armstrong
-gotoif $pixPos < 4095 , #colorScreen
+```
+gotoif $pixPos  < 4095 , #colorScreen
 gotoif $pixPos == 4095 , #colorScreen
 ```
 
@@ -104,15 +119,17 @@ of the two given values returns true.
 
 ### Syntax
 
-<kbd>  if  </kbd>   <kbd>  \< Value A \>  </kbd>   <kbd>  \< Comparator \> </kbd>   <kbd>  \< Value B \>  </kbd>   <kbd>  :  </kbd>
+```
+if 〈 Ｖａｌｕｅ　Ａ 〉 〈 Ｃｏｍｐａｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ｂ 〉 :
 
-      <kbd>  \< Logic Block \>  </kbd>
-
-<kbd>  endif  </kbd>
+    〈 Ｌｏｇｉｃ　Ｂｌｏｃｋ 〉
+    
+endif
+```
 
 ### Example
 
-```Armstrong
+```
 if $ballPosY > 62 :
     change $ballVelY = 1
 endif

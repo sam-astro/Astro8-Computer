@@ -1,3 +1,8 @@
+---
+nav_order : 4
+layout : default
+title : Programming
+---
 
 # Programming
 
@@ -6,12 +11,8 @@
 <br>
 <br>
 
-<div align = center>
-
 [![Button Syntax]][Syntax]   
 [![Button Examples]][Examples] 
-
-</div>
 
 <br>
 <br>
@@ -41,9 +42,9 @@
 <!----------------------------------------------------------------------------->
 
 [Extension VSCode]: https://marketplace.visualstudio.com/items?itemName=sam-astro.armstrong
+[Examples]: https://github.com/sam-astro/Astro8-Computer/tree/main/example_armstrong_programs
 
-[Examples]: ../example_armstrong_programs
-[Syntax]: Armstrong
+[Syntax]: Armstrong/README
 
 
 <!---------------------------------[ Buttons ]--------------------------------->
