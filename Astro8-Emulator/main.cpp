@@ -20,7 +20,7 @@
 	")   </dev/tty")
 #endif
 
-#define DEV_MODE false
+#define DEV_MODE true
 
 
 using namespace std::chrono;
@@ -116,12 +116,13 @@ int ParseValue(const string& input);
 string MoveFromRegToReg(const string& from, const string& destination);
 int GetLineNumber();
 int ConvertAsciiToSdcii(int asciiCode);
+int GetVariableAddress(const string& id);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "HLT", "OUT" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -130,7 +131,7 @@ string aluInstructionSpecialAddress[] = { "SU", "MU", "DI" };
 string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
 
 string instructioncodes[] = {
-		"fetch( 0=aw,cr & 1=rm,iw,ce & 2=ei", // Fetch
+		"fetch( 0=cr,aw & 1=rm,iw,ce & 2=ei", // Fetch
 		"ain( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
 		"bin( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
 		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
@@ -150,8 +151,9 @@ string instructioncodes[] = {
 		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
-		"ldlge( 2=cr,aw & 3=rm,aw & 4=rm,wa,ce & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
-		"stlge( 2=cr,aw & 3=rm,aw & 4=ra,wm,ce & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+		"ldlge( 2=cr,aw & 3=ce,rm,aw & 4=rm,wa & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+		"stlge( 2=cr,aw & 3=ce,rm,aw & 4=ra,wm & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+		"ldw( 2=cr,aw & 3=ce,rm,wa & 4=ei", // Load value directly after counter, and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
 		"hlt( 2=st & 3=ei", // Stop the computer clock
@@ -475,10 +477,11 @@ bool Update(double deltatime)
 		// Standalone microinstruction (ungrouped)
 		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
 		{ // EO
+			flags[0] = 0;
+			flags[1] = 0;
 			switch (aluInstr)
 			{
 			case 1: // Subtract
-				flags[0] = 0;
 				flags[1] = 1;
 				if (AReg - BReg == 0)
 					flags[0] = 1;
@@ -491,8 +494,6 @@ bool Update(double deltatime)
 				break;
 
 			case 2: // Multiply
-				flags[0] = 0;
-				flags[1] = 0;
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
@@ -504,9 +505,6 @@ bool Update(double deltatime)
 				break;
 
 			case 3: // Divide
-				flags[0] = 0;
-				flags[1] = 0;
-
 				// Dont divide by zero
 				if (BReg != 0) {
 					if (AReg / BReg == 0)
@@ -526,8 +524,6 @@ bool Update(double deltatime)
 				break;
 
 			default: // Add
-				flags[0] = 0;
-				flags[1] = 0;
 				if (AReg + BReg == 0)
 					flags[0] = 1;
 				bus = AReg + BReg;
@@ -1088,19 +1084,21 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 	}
 	else {
 		if (in == "@A") {
-			compiledLines.push_back("ain " + to_string(GetLineNumber() + 1));
+			compiledLines.push_back("ldw");
 			PutSetOnCurrentLine(followingValue);
 		}
 		else if (in == "@B") {
-			compiledLines.push_back("bin " + to_string(GetLineNumber() + 1));
+			compiledLines.push_back("ldw");
 			PutSetOnCurrentLine(followingValue);
+			compiledLines.push_back("swp");
 		}
 		else if (in == "@C") {
-			compiledLines.push_back("cin " + to_string(GetLineNumber() + 1));
+			compiledLines.push_back("ldw");
 			PutSetOnCurrentLine(followingValue);
+			compiledLines.push_back("swpc");
 		}
 		else if (in == "@EX") {
-			compiledLines.push_back("ain " + to_string(GetLineNumber() + 1));
+			compiledLines.push_back("ldw");
 			PutSetOnCurrentLine(followingValue);
 			compiledLines.push_back("wrexp");
 		}
@@ -1284,7 +1282,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 
 	// Get into B reg
 
-		// If B is pointer to a memory address
+	// If B is pointer to a memory address
 	if (IsPointer(valB)) {
 		LoadPointer(valB);
 		compiledLines.push_back("swp\n");
@@ -1390,7 +1388,6 @@ string CompileCode(const string& inputcode) {
 		if (codelines[i] == "")
 			continue;
 
-		//cout << currentNumber << endl;
 		if (trim(split(codelines[i], " ")[0]) == "if") {
 			openIfs++;
 			foundIfs++;
@@ -1517,7 +1514,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting to a new integer value
-			if (IsHex(addrPre) && IsDec(valuePre)) {
+			else if (IsHex(addrPre) && IsDec(valuePre)) {
 				RegIdToLDI("@A", to_string(value));
 				StoreAddress("@A", addrPre);
 			}
@@ -1811,6 +1808,10 @@ string CompileCode(const string& inputcode) {
 				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
 				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				//compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				//compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				//compiledLines.push_back("jmpc");
+				//compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
 			}
 
 
