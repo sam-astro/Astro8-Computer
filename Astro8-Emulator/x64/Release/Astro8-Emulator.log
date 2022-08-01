@@ -16,8 +16,8 @@ D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(943,28): warning C4244: '+=': c
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1212,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2110,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  191 of 1122 functions (17.0%) were compiled, the rest were copied from previous compilation.
+  3 of 1122 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    149 functions had inline decision re-evaluated but remain unchanged
+    18 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
