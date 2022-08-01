@@ -1,4 +1,0 @@
-rdexp
-swp
-out
-jmp 0
