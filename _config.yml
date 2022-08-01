@@ -1,0 +1,60 @@
+
+remote_theme : just-the-docs/just-the-docs
+
+
+# Search Settings
+
+search_enabled : true
+
+search:
+
+    # Split pages into sections that 
+    # can be searched individually
+    heading_level : 1
+    
+    # Maximum amount of previews per search result
+    previews : 3
+    
+    # Maximum amount of words to display 
+    # before a matched word in the preview
+    preview_words_before : 5
+    
+    # Maximum amount of words to display 
+    # after a matched word in the preview
+    preview_words_after : 10
+    
+    # Set the search token separator
+    tokenizer_separator : /[\s/]+/
+    
+    # Display the relative url in search results
+    rel_url : true
+    
+    # Enable or disable the search button that appears
+    # in the bottom right corner of every page
+    button : false
+
+
+# AUX Links
+    
+# Aux links for the upper right navigation
+aux_links:
+    
+    "ＧｉｔＨｕｂ":
+      - "//github.com/sam-astro/Astro8-Computer"
+
+# Makes Aux links open in a new tab. Default is false
+aux_links_new_tab : false
+
+
+# Footer
+
+# uses ruby's time format: https://ruby-doc.org/stdlib-2.7.0/libdoc/time/rdoc/Time.html
+last_edit_time_format : "%b %e %Y at %I:%M %p"
+last_edit_timestamp : true
+
+
+back_to_top: true
+back_to_top_text: "Scroll Up"
+
+color_scheme: 'light'
+
