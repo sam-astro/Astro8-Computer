@@ -4,15 +4,12 @@
 
 <br>
 <br>
+<br>
 
 <div align = center>
 
-[![Button Installation]][Installation]   
-[![Button Usage]][Usage]   
-[![Button Programming]][Programming]
-
 [![Button Video]][Video]   
-[![Button Architecture]][Architecture] 
+[![Button Documentation]][Documentation] 
 
 </div>
 
@@ -32,13 +29,10 @@
 <!----------------------------------------------------------------------------->
 
 [Logisim Evolution]: https://github.com/logisim-evolution/logisim-evolution
+[Documentation]: https://sam-astro.github.io/Astro8-Computer/
 [Video]: https://www.youtube.com/watch?v=Zt0JfmV7CyI
 
-[Installation]: Documentation/Installation.md 
-[Architecture]: Documentation/Architecture
-[Programming]: Documentation/Programming.md
 [License]: LICENSE
-[Usage]: Documentation/Usage.md
 
 
 <!----------------------------------[ Badges ]--------------------------------->
@@ -48,8 +42,5 @@
 
 <!---------------------------------[ Buttons ]--------------------------------->
 
-[Button Installation]: https://img.shields.io/badge/Install-339933?style=for-the-badge&logoColor=white&logo=DocuSign
-[Button Architecture]: https://img.shields.io/badge/Architecture-006272?style=for-the-badge&logoColor=white&logo=GoogleSearchConsole
-[Button Programming]: https://img.shields.io/badge/Program-C9284D?style=for-the-badge&logoColor=white&logo=Xcode
+[Button Documentation]: https://img.shields.io/badge/Documentation-008FC7?style=for-the-badge&logoColor=white&logo=GitBook
 [Button Video]: https://img.shields.io/badge/Explanation-c91111?style=for-the-badge&logoColor=white&logo=YouTube
-[Button Usage]: https://img.shields.io/badge/Use-008FC7?style=for-the-badge&logoColor=white&logo=GitBook
