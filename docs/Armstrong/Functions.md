@@ -4,7 +4,7 @@ parent : Armstrong
 title : Functions
 ---
 
-# Functions
+# Commands
 
 *Available **Armstrong** functions.*
 
@@ -105,7 +105,7 @@ gotoif 〈 Ｖａｌｕｅ　Ａ 〉 〈 Ｃｏｍｐａｒａｔｏｒ 〉 〈 
 ### Example
 
 ```
-gotoif $pixPos  < 4095 , #colorScreen
+gotoif $pixPos < 4095 , #colorScreen
 gotoif $pixPos == 4095 , #colorScreen
 ```
 
@@ -130,7 +130,7 @@ endif
 ### Example
 
 ```
-if $ballPosY > 62 :
+if $ballPosY > 62:
     change $ballVelY = 1
 endif
 ```
