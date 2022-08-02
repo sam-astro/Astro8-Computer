@@ -1,4 +1,4 @@
-# Astro-8 Computer   [![Badge License]][License]
+# Astro-8 Computer   [![Badge License]][License]   [![Button Discord]][Discord Server]
 
 <br>
 
@@ -38,14 +38,15 @@ The two most supported ways to program for the computer is using the [assembly l
 [Video]: https://www.youtube.com/watch?v=Zt0JfmV7CyI
 
 [License]: LICENSE
+[Discord Server]: https://discord.gg/9p82dTEdkN
 
 
 <!----------------------------------[ Badges ]--------------------------------->
 
-[Badge License]: https://img.shields.io/badge/License-MIT-ac8b11.svg?style=flat-square&labelColor=yellow
-
+[Badge License]: https://img.shields.io/github/license/sam-astro/Astro8-Computer
 
 <!---------------------------------[ Buttons ]--------------------------------->
 
 [Button Documentation]: https://img.shields.io/badge/Documentation-008FC7?style=flat-square&logoColor=white&logo=GitBook
 [Button Video]: https://img.shields.io/badge/Video-c91111?style=flat-square&logoColor=white&logo=YouTube
+[Button Discord]: https://img.shields.io/badge/Discord_Server-573f75.svg?style=social&logo=Discord
