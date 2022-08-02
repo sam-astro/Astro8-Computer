@@ -7,7 +7,7 @@ title : Armstrong
 
 # Armstrong
 
-*The **Armstrong** syntax guide.*
+Armstrong is a higher level language created to make programming for the Astro-8 a better experience. Here are the syntax and rules of the langauge.
 
 <br>
 <br>
