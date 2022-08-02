@@ -12,7 +12,7 @@ title : Armstrong
 <br>
 <br>
 
-[![Button Functions]][Functions]
+[![Button Commands]][Commands]
 
 <br>
 <br>
@@ -155,9 +155,9 @@ determine if their relationship is valid.
 
 <!----------------------------------------------------------------------------->
 
-[Functions]: Functions
+[Commands]: Commands
 
 
 <!---------------------------------[ Buttons ]--------------------------------->
 
-[Button Functions]: https://img.shields.io/badge/Functions-0288D1?style=for-the-badge&logoColor=white&logo=Betfair
+[Button Commands]: https://img.shields.io/badge/Functions-0288D1?style=flat-square&logoColor=white&logo=Betfair
