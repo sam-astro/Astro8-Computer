@@ -10,7 +10,7 @@ change $lastKey = 168
 add $chMemOffset,$charCount -> $actualAddress
 change *$actualAddress = $cursorChar
 
-#mainLoop
+#mainLoop // Main loop
 
 // Get any key press
 change $key = @EX
