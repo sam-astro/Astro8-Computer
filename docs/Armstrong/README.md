@@ -160,4 +160,4 @@ determine if their relationship is valid.
 
 <!---------------------------------[ Buttons ]--------------------------------->
 
-[Button Commands]: https://img.shields.io/badge/Functions-0288D1?style=flat-square&logoColor=white&logo=Betfair
+[Button Commands]: https://img.shields.io/badge/Commands-0288D1?style=flat-square&logoColor=white&logo=Betfair
