@@ -1,7 +1,7 @@
 ---
 layout : default
 parent : Armstrong
-title : Functions
+title : Commands
 ---
 
 # Commands
