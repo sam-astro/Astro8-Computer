@@ -1,4 +1,6 @@
-# Astro-8 Computer   [![Badge License]][License]   [![Button Discord]][Discord Server]
+<img src="https://github.com/sam-astro/Astro8-Computer/blob/main/images/Astro8-Logo-Small.png?raw=true"/>
+
+[![Badge License]][License]   [![Button Discord]][Discord Server]
 
 <br>
 
