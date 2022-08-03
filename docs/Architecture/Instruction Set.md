@@ -8,9 +8,7 @@ nav_order : 3
 # Instruction Set
 
 ## Instructions:
-<ol>
-</ol>
-* TOC
+1. List of instructions
 {:toc}
 
 0. NOP
