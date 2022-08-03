@@ -1,6 +1,9 @@
-# Astro-8 Computer   [![Badge License]][License]   [![Button Discord]][Discord Server]
+<img src="https://github.com/sam-astro/Astro8-Computer/blob/main/images/Astro8-Logo-Small.png?raw=true"/>
+
+[![Badge License]][License]   [![Button Discord]][Discord Server]
 
 <br>
+
 The Astro-8 is a 16-bit computer design. It has a working **[Logisim Evolution]** circuit, along with an emulator on Windows, Mac, and Linux, for running code at full speed. There is an assembly language, along with a higher level language called Armstrong, plus more which are actively being built by the community.
 
 I created a video about the creation of this and how it works, which you can view here:
