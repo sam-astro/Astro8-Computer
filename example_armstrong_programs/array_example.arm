@@ -1,6 +1,6 @@
 #AS
 
-// array $arr[15] // Initialize array with a size of 15
+// array $arr, 15 // Initialize array with a size of 15
 
 // change $arr[1] = 5
 
@@ -10,7 +10,7 @@
 
 // Assembly version of above ^
 asm"
-    , array $arr[15]
+    , array $arr, 15
     , Allocate memory 16528 - 16543, store beginning (16528) and size (15) in ArmArr
 
 
@@ -46,7 +46,7 @@ asm"
 
 
 
-// array $arr[15] // Initialize array with a size of 15
+// array $arr, 15 // Initialize array with a size of 15
 
 // change $arr[1] = 5
 
@@ -56,7 +56,7 @@ asm"
 
 // Assembly version of above ^
 asm"
-    , array $arr[15]
+    , array $arr, 15
     , Allocate memory 16528 - 16543, store beginning (16528) and size (15) in ArmArr
 
 
