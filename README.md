@@ -5,18 +5,14 @@ layout : default
 title : Home
 ---
 
-<div align = center>
-
 
 <img src="https://github.com/sam-astro/Astro8-Computer/blob/Documentation/images/Astro8-Docs-Logo-Small.png?raw=true"/>
 
-
 [![Badge License]][License]   [![Button Discord]][Discord Server]
 
-
+<div align = center>
 <i>Welcome, you can find the topics in the</i> <br>
 <i>left sidebar or search for them above.</i>
-
 </div>
 
 
