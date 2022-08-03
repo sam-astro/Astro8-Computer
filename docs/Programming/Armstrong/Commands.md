@@ -1,7 +1,6 @@
 ---
 layout : default
-grand_parent: Programming
-parent: Armstrong
+parent: Programming
 title : Commands
 ---
 

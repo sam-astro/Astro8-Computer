@@ -2,8 +2,7 @@
 nav_order : 1
 layout : default
 title : Armstrong
-grand_parent: Programming
-parent: Armstrong
+parent: Programming
 ---
 
 # Armstrong
