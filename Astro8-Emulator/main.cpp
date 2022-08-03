@@ -23,7 +23,6 @@
 #define DEV_MODE false
 
 
-using namespace std::chrono;
 using namespace std;
 
 
@@ -51,16 +50,10 @@ int characterRamIndex = 0;
 int pixelRamIndex = 0xefff;
 
 
-// Frame limiter which keeps frames steady while also allowing computation time for CPU
-int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
-					 // v Lower = higher FPS, but slower instruction processing
+// 1000000 = 1.0MHz
+#define TARGET_CPU_FREQ 10000000
+#define TARGET_RENDER_FPS 60.0
 
-// autoFPS if true will dynamically change the frame speed above ^ to always be around 60 FPS.
-//    Set this to false if you want manual control of frameSpeed
-#define autoFPS true
-
-
-float slowdownAmnt = 1;
 unsigned int iterations = 0;
 
 vector<int> memoryBytes;
@@ -132,7 +125,8 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update(double deltatime);
+bool Update();
+void Draw();
 void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
@@ -398,17 +392,51 @@ int main(int argc, char** argv)
 
 
 	bool keyPress = false;
-
-	uint8_t pollCounter = 0;
-
-	double dt = 0;
 	bool running = true;
 	SDL_Event event;
+	
+	int updateCount = 0;
+	int frameCount = 0;
+	auto lastSecond = std::chrono::high_resolution_clock::now();
+	auto lastFrame = lastSecond;
+	auto lastTick = lastSecond;
+
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
+		double secondDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastSecond).count();
+		double frameDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastFrame).count();
+		double tickDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastTick).count();
 
-		if (pollCounter % 6000 == 0)
+		// Every second
+		if (secondDiff > 1000.0) {
+			lastSecond = startTime;
+			cout << "\r                                                       \r"
+				<< SimplifiedHertz(updateCount)
+				<< "\tFPS: " << to_string(frameCount)
+				<< "  programCounter: " << to_string(programCounter)
+				<< std::flush;
+			updateCount = 0;
+			frameCount = 0;
+		}
+
+		// CPU tick
+		// Update 1000 times, otherwise chrono becomes a bottleneck
+		// Chrono is slow in any case, so it may be replaced later
+		// SDL_GetTick is probably not precise enough
+		const int numUpdates = 1000;
+		if (tickDiff > (numUpdates * 1000.0 / TARGET_CPU_FREQ)) {
+			lastTick = startTime;
+			for (int i = 0; i < numUpdates; ++i)
+				Update();
+			updateCount += numUpdates;
+		}
+
+		// Frame
+		if (frameDiff > (1000.0 / TARGET_RENDER_FPS)) {
+			lastFrame = startTime;
+			Draw();
+			++frameCount;
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_QUIT)
@@ -427,18 +455,8 @@ int main(int argc, char** argv)
 					// Keyboard support
 					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
 				}
-
-				pollCounter = 0;
 			}
-		pollCounter++;
-
-		Update(dt);
-
-		// Calculate frame time
-		auto stopTime = std::chrono::high_resolution_clock::now();
-		dt = std::chrono::duration<double, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0;
-		if (dt == 0)
-			dt = 0.0000001;
+		}
 	}
 
 	destroy(gRenderer, gWindow);
@@ -447,11 +465,9 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-steady_clock::time_point start;
-float renderedFrameTime = 0;
-bool Update(double deltatime)
+
+bool Update()
 {
-	renderedFrameTime += deltatime;
 
 	for (int step = 0; step < 16; step++)
 	{
@@ -602,85 +618,6 @@ bool Update(double deltatime)
 		}
 
 
-		// Display current pixel
-		if (iterations % frameSpeed == 0)
-		{
-			int characterRamValue = memoryBytes[characterRamIndex + 16382];
-			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
-
-			int pixelVal = memoryBytes[pixelRamIndex];
-			int r, g, b;
-
-			if (charPixRomVal == true && imgX < 60) {
-				r = 255;
-				g = 255;
-				b = 255;
-			}
-			else {
-				r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
-				g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
-				b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
-			}
-
-			set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
-
-
-			imgX++;
-			charPixX++;
-			if (charPixX >= 6) {
-				charPixX = 0;
-				characterRamIndex++;
-			}
-
-			// If x-coord is max, reset and increment y-coord
-			if (imgX >= 64)
-			{
-				imgY++;
-				charPixY++;
-				charPixX = 0;
-				imgX = 0;
-
-				if (charPixY < 6)
-					characterRamIndex -= 10;
-			}
-
-			if (charPixY >= 6) {
-				charPixY = 0;
-			}
-
-
-			if (imgY >= 64) // The final layer is done, reset counter and render image
-			{
-				imgY = 0;
-
-				characterRamIndex = 0;
-				charPixY = 0;
-				charPixX = 0;
-
-				apply_pixels(pixels, texture, 64);
-				DisplayTexture(gRenderer, texture);
-
-				float fps = 1.0f / renderedFrameTime;
-				cout << "\r                                                       " << "\r" << SimplifiedHertz(1.0 / deltatime) + "\tFPS: " + to_string(fps) << "  programCounter: " + to_string(programCounter);
-
-				if (autoFPS) {
-					if (fps > 65)
-						frameSpeed++;
-					else if (fps < 55)
-						frameSpeed--;
-					frameSpeed = clamp(frameSpeed, 1, 9999);
-				}
-
-				renderedFrameTime = 0;
-			}
-
-			pixelRamIndex++;
-
-			if (pixelRamIndex >= 65535)
-				pixelRamIndex = 61439;
-
-		}
-
 		// Standalone microinstructions (ungrouped)
 		if (mcode & STANDALONE_CE)
 		{
@@ -705,6 +642,76 @@ bool Update(double deltatime)
 		iterations = 1;
 
 	return true;
+}
+
+static void DrawNextPixel() {
+	int characterRamValue = memoryBytes[characterRamIndex + 16382];
+	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
+
+	int pixelVal = memoryBytes[pixelRamIndex];
+	int r, g, b;
+
+	if (charPixRomVal == true && imgX < 60) {
+		r = 255;
+		g = 255;
+		b = 255;
+	}
+	else {
+		r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
+		g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
+		b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
+	}
+
+	set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
+
+
+	imgX++;
+	charPixX++;
+	if (charPixX >= 6) {
+		charPixX = 0;
+		characterRamIndex++;
+	}
+
+	// If x-coord is max, reset and increment y-coord
+	if (imgX >= 64)
+	{
+		imgY++;
+		charPixY++;
+		charPixX = 0;
+		imgX = 0;
+
+		if (charPixY < 6)
+			characterRamIndex -= 10;
+	}
+
+	if (charPixY >= 6) {
+		charPixY = 0;
+	}
+
+
+	if (imgY >= 64) // The final layer is done, reset counter and render image
+	{
+		imgY = 0;
+
+		characterRamIndex = 0;
+		charPixY = 0;
+		charPixX = 0;
+
+		apply_pixels(pixels, texture, 64);
+		DisplayTexture(gRenderer, texture);
+	}
+
+	pixelRamIndex++;
+}
+
+void Draw() {
+	while (true) {
+		DrawNextPixel();
+		if (pixelRamIndex >= 65535) {
+			pixelRamIndex = 61439;
+			break;
+		}
+	}
 }
 
 void DrawPixel(int x, int y, int r, int g, int b)
