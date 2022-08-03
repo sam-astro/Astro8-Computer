@@ -7,6 +7,38 @@ nav_order : 3
 
 # Instruction Set
 
+## Instructions:
+<ol>
+</ol>
+* TOC
+{:toc}
+
+0. NOP
+1. AIN
+2. BIN
+3. CIN
+4. LDIA
+5. LDIB
+6. RDEXP
+7. WREXP
+8. STA
+9. STC
+10. ADD
+11. SUB
+12. MULT
+13. DIV
+14. JMP
+15. JMPZ
+16. JMPC
+17. JREG
+18. LDAIN
+19. STAOUT
+20. LDLGE
+21. STLGE
+22. LDW
+23. SWP
+24. SWPC
+
 <br>
 
 ## No Operation
