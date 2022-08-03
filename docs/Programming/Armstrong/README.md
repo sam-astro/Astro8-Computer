@@ -1,8 +1,8 @@
 ---
-has_children : true
 nav_order : 4
 layout : default
 title : Armstrong
+parent: Programming
 ---
 
 # Armstrong
