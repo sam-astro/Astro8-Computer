@@ -464,7 +464,7 @@ bool Update(double deltatime)
 			memoryIndex = programCounter;
 			// RM
 			// IW
-			InstructionReg = memoryBytes.at(clamp(memoryIndex, 0, 65534));
+			InstructionReg = memoryBytes[clamp(memoryIndex, 0, 65534)];
 			// CE
 			programCounter = clamp(programCounter + 1, 0, 65534);
 			step = 1;
@@ -473,7 +473,7 @@ bool Update(double deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		MicroInstruction mcode = microinstructionData.at(microcodeLocation);
+		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
 		// Check for any reads and execute if applicable
@@ -490,7 +490,7 @@ bool Update(double deltatime)
 			bus = CReg;
 			break;
 		case READ_RM:
-			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
+			bus = memoryBytes[clamp(memoryIndex, 0, 65534)];
 			break;
 		case READ_IR:
 			bus = BitRange(InstructionReg, 0, 11);
@@ -588,7 +588,7 @@ bool Update(double deltatime)
 			InstructionReg = bus;
 			break;
 		case WRITE_WM:
-			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
+			memoryBytes[clamp(memoryIndex, 0, 65534)] = bus;
 			break;
 		case WRITE_J:
 			programCounter = clamp(bus, 0, 65534); 
@@ -605,10 +605,10 @@ bool Update(double deltatime)
 		// Display current pixel
 		if (iterations % frameSpeed == 0)
 		{
-			int characterRamValue = memoryBytes.at(clamp(characterRamIndex + 16382, 0, 65534));
-			bool charPixRomVal = characterRom.at((characterRamValue * 64) + (charPixY * 8) + charPixX);
+			int characterRamValue = memoryBytes[clamp(characterRamIndex + 16382, 0, 65534)];
+			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-			int pixelVal = memoryBytes.at(clamp(pixelRamIndex, 0, 65534));
+			int pixelVal = memoryBytes[clamp(pixelRamIndex, 0, 65534)];
 			int r, g, b;
 
 			if (charPixRomVal == true && imgX < 60) {
