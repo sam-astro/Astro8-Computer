@@ -7,60 +7,53 @@ nav_order : 3
 
 # Instruction Set
 
-## Instructions:
-1. List of instructions
-{:toc}
-
-0. NOP
-1. AIN
-2. BIN
-3. CIN
-4. LDIA
-5. LDIB
-6. RDEXP
-7. WREXP
-8. STA
-9. STC
-10. ADD
-11. SUB
-12. MULT
-13. DIV
-14. JMP
-15. JMPZ
-16. JMPC
-17. JREG
-18. LDAIN
-19. STAOUT
-20. LDLGE
-21. STLGE
-22. LDW
-23. SWP
-24. SWPC
+## List:
+0. [NOP](#nop)
+1. [AIN](#ain)
+2. [BIN](#bin)
+3. [CIN](#cin)
+4. [LDIA](#ldia)
+5. [LDIB](#ldib)
+6. [RDEXP](#rdexp)
+7. [WREXP](#wrexp)
+8. [STA](#sta)
+9. [STC](#stc)
+10. [ADD](#add)
+11. [SUB](#sub)
+12. [MULT](#mult)
+13. [DIV](#div)
+14. [JMP](#jmp)
+15. [JMPZ](#jmpz)
+16. [JMPC](#jmpc)
+17. [JREG](#jreg)
+18. [LDAIN](#ldain)
+19. [STAOUT](#staout)
+20. [LDLGE](#ldlge)
+21. [STLGE](#stlge)
+22. [LDW](#ldw)
+23. [SWP](#swp)
+24. [SWPC](#swpc)
 
 <br>
 
-## No Operation
+## NOP
+*No operation: acts as a fetch without an instruction.*
 
-`00000`
+ID: `0`, `0b00000`
 
-<br>
+### Syntax:
 
-### Syntax
-
-```asm
+```
 NOP
 ```
 
 <br>
-<br>
 
-## Load Data
+## AIN
 
-`00001`   `00010`   `00011`
+ID: `1`, `0b00001`
 
-Load data from the given address into register  **A  -  C** .
-
-<br>
+*Load data from the given address into register* ***A***
 
 ### Syntax
 
@@ -68,24 +61,41 @@ Load data from the given address into register  **A  -  C** .
 AIN 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
+<br>
+
+## BIN
+
+ID: `2`, `0b00010`
+
+*Load data from the given address into register* ***B***
+
+### Syntax
+
 ```
 BIN 〈 Ａｄｄｒｅｓｓ 〉
 ```
+
+<br>
+
+## CIN
+
+ID: `3`, `0b00011`
+
+*Load data from the given address into register* ***C***
+
+### Syntax
 
 ```
 CIN 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
 <br>
-<br>
 
-## Load Immediate
+## LDIA
 
-`00100`   `00101`
+ID: `4`, `00100`
 
-Load immediate value into register  **A  -  B** .
-
-<br>
+*Load immediate value into register* ***A***
 
 ### Syntax
 
@@ -93,11 +103,20 @@ Load immediate value into register  **A  -  B** .
 LDIA 〈 Ｖａｌｕｅ 〉
 ```
 
+<br>
+
+## LDIB
+
+ID: `5`, `00101`
+
+*Load immediate value into register* ***B***
+
+### Syntax
+
 ```
 LDIB 〈 Ｖａｌｕｅ 〉
 ```
 
-<br>
 <br>
 
 ## Expansion Port
