@@ -23,7 +23,6 @@
 #define DEV_MODE false
 
 
-using namespace std::chrono;
 using namespace std;
 
 
@@ -51,30 +50,66 @@ int characterRamIndex = 0;
 int pixelRamIndex = 0xefff;
 
 
-// Frame limiter which keeps frames steady while also allowing computation time for CPU
-int frameSpeed = 10; // ^ Higher = lower FPS, but faster instruction processing     (~60fps at 10)
-					 // v Lower = higher FPS, but slower instruction processing
+// 1000000 = 1.0MHz
+#define TARGET_CPU_FREQ 10000000
+#define TARGET_RENDER_FPS 60.0
 
-// autoFPS if true will dynamically change the frame speed above ^ to always be around 60 FPS.
-//    Set this to false if you want manual control of frameSpeed
-#define autoFPS true
-
-
-float slowdownAmnt = 1;
 unsigned int iterations = 0;
 
 vector<int> memoryBytes;
 vector<int> charRam;
 
 string action = "";
-#define MICROINSTR_SIZE 14
-vector<uint16_t> microinstructionData;
-static_assert(sizeof(decltype(microinstructionData)::value_type) * 8 >= MICROINSTR_SIZE,
-	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
-vector<uint16_t> microALU;
-vector<uint16_t> microREAD;
-vector<uint16_t> microWRITE;
+
+// Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
+
+#define MICROINSTR_SIZE 14
+using MicroInstruction = uint16_t;
+static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
+	"Size of MicroInstruction is too small, increase its width...");
+
+vector<MicroInstruction> microinstructionData;
+
+enum ALUInstruction : MicroInstruction {
+	ALU_SU   = 0b00000000000001,
+	ALU_MU   = 0b00000000000010,
+	ALU_DI   = 0b00000000000011,
+	ALU_MASK = 0b00000000000011,
+};
+
+enum ReadInstruction : MicroInstruction {
+	READ_RA   = 0b00000000000100,
+	READ_RB   = 0b00000000001000,
+	READ_RC   = 0b00000000001100,
+	READ_RM   = 0b00000000010000,
+	READ_IR   = 0b00000000010100,
+	READ_CR   = 0b00000000011000,
+	READ_RE   = 0b00000000011100,
+	READ_MASK = 0b00000000011100,
+};
+
+enum WriteInstruction : MicroInstruction {
+	WRITE_WA   = 0b00000000100000,
+	WRITE_WB   = 0b00000001000000,
+	WRITE_WC   = 0b00000001100000,
+	WRITE_IW   = 0b00000010000000,
+	WRITE_DW   = 0b00000010100000,
+	WRITE_WM   = 0b00000011000000,
+	WRITE_J    = 0b00000011100000,
+	WRITE_AW   = 0b00000100000000,
+	WRITE_WE   = 0b00000100100000,
+	WRITE_MASK = 0b00000111100000,
+};
+
+enum StandaloneInstruction : MicroInstruction {
+	STANDALONE_FL   = 0b00001000000000,
+	STANDALONE_EI   = 0b00010000000000,
+	STANDALONE_ST   = 0b00100000000000,
+	STANDALONE_CE   = 0b01000000000000,
+	STANDALONE_EO   = 0b10000000000000,
+};
+
 
 vector<bool> characterRom;
 
@@ -90,7 +125,8 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update(double deltatime);
+bool Update();
+void Draw();
 void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
@@ -109,7 +145,6 @@ static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-uint16_t BinaryRangeToInt(uint16_t num, int min, int max);
 string CompileCode(const string& inputcode);
 vector<string> splitByComparator(string str);
 int ParseValue(const string& input);
@@ -357,17 +392,51 @@ int main(int argc, char** argv)
 
 
 	bool keyPress = false;
-
-	uint8_t pollCounter = 0;
-
-	double dt = 0;
 	bool running = true;
 	SDL_Event event;
+	
+	int updateCount = 0;
+	int frameCount = 0;
+	auto lastSecond = std::chrono::high_resolution_clock::now();
+	auto lastFrame = lastSecond;
+	auto lastTick = lastSecond;
+
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
+		double secondDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastSecond).count();
+		double frameDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastFrame).count();
+		double tickDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastTick).count();
 
-		if (pollCounter % 6000 == 0)
+		// Every second
+		if (secondDiff > 1000.0) {
+			lastSecond = startTime;
+			cout << "\r                                                       \r"
+				<< SimplifiedHertz(updateCount)
+				<< "\tFPS: " << to_string(frameCount)
+				<< "  programCounter: " << to_string(programCounter)
+				<< std::flush;
+			updateCount = 0;
+			frameCount = 0;
+		}
+
+		// CPU tick
+		// Update 1000 times, otherwise chrono becomes a bottleneck
+		// Chrono is slow in any case, so it may be replaced later
+		// SDL_GetTick is probably not precise enough
+		const int numUpdates = 1000;
+		if (tickDiff > (numUpdates * 1000.0 / TARGET_CPU_FREQ)) {
+			lastTick = startTime;
+			for (int i = 0; i < numUpdates; ++i)
+				Update();
+			updateCount += numUpdates;
+		}
+
+		// Frame
+		if (frameDiff > (1000.0 / TARGET_RENDER_FPS)) {
+			lastFrame = startTime;
+			Draw();
+			++frameCount;
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_QUIT)
@@ -386,18 +455,8 @@ int main(int argc, char** argv)
 					// Keyboard support
 					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
 				}
-
-				pollCounter = 0;
 			}
-		pollCounter++;
-
-		Update(dt);
-
-		// Calculate frame time
-		auto stopTime = std::chrono::high_resolution_clock::now();
-		dt = std::chrono::duration<double, std::chrono::milliseconds::period>(stopTime - startTime).count() / 1000.0;
-		if (dt == 0)
-			dt = 0.0000001;
+		}
 	}
 
 	destroy(gRenderer, gWindow);
@@ -406,11 +465,9 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-steady_clock::time_point start;
-float renderedFrameTime = 0;
-bool Update(double deltatime)
+
+bool Update()
 {
-	renderedFrameTime += deltatime;
 
 	for (int step = 0; step < 16; step++)
 	{
@@ -423,65 +480,58 @@ bool Update(double deltatime)
 			memoryIndex = programCounter;
 			// RM
 			// IW
-			InstructionReg = memoryBytes.at(clamp(memoryIndex, 0, 65534));
+			InstructionReg = memoryBytes[memoryIndex];
 			// CE
-			programCounter = clamp(programCounter + 1, 0, 65534);
+			programCounter = programCounter + 1;
 			step = 1;
 			continue;
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		uint16_t mcode = microinstructionData.at(microcodeLocation);
+		int microcodeLocation = ((InstructionReg >> 11) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
+		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
 		// Check for any reads and execute if applicable
-		uint16_t readInstr = microREAD.at(microcodeLocation);
-
+		MicroInstruction readInstr = mcode & READ_MASK;
 		switch (readInstr)
 		{
-		case 1:
-			// RA
+		case READ_RA:
 			bus = AReg;
 			break;
-		case 2:
-			// RB
+		case READ_RB:
 			bus = BReg;
 			break;
-		case 3:
-			// RC
+		case READ_RC:
 			bus = CReg;
 			break;
-		case 4:
-			// RM
-			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
+		case READ_RM:
+			bus = memoryBytes[memoryIndex];
 			break;
-		case 5:
-			// IR
-			bus = BitRange(InstructionReg, 0, 11);
+		case READ_IR:
+			bus = InstructionReg & ((1<<11)-1);
 			break;
-		case 6:
-			// CR
+		case READ_CR:
 			bus = programCounter;
 			break;
-		case 7:
-			// RE
+		case READ_RE:
 			bus = expansionPort;
 			break;
+		default: break;
 		}
 
 
 		// Find ALU modifiers
-		uint16_t aluInstr = microALU.at(microcodeLocation);
+		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
-		{ // EO
+		if (mcode & STANDALONE_EO)
+		{
 			flags[0] = 0;
 			flags[1] = 0;
 			switch (aluInstr)
 			{
-			case 1: // Subtract
+			case ALU_SU: // Subtract
 				flags[1] = 1;
 				if (AReg - BReg == 0)
 					flags[0] = 1;
@@ -493,7 +543,7 @@ bool Update(double deltatime)
 				}
 				break;
 
-			case 2: // Multiply
+			case ALU_MU: // Multiply
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
@@ -504,7 +554,7 @@ bool Update(double deltatime)
 				}
 				break;
 
-			case 3: // Divide
+			case ALU_DI: // Divide
 				// Dont divide by zero
 				if (BReg != 0) {
 					if (AReg / BReg == 0)
@@ -538,138 +588,51 @@ bool Update(double deltatime)
 
 
 		// Check for any writes and execute if applicable
-		uint16_t writeInstr = microWRITE.at(microcodeLocation);
+		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
-		case 1:
-			// WA
+		case WRITE_WA:
 			AReg = bus;
 			break;
-		case 2:
-			// WB
+		case WRITE_WB:
 			BReg = bus;
 			break;
-		case 3:
-			// WC
+		case WRITE_WC:
 			CReg = bus;
 			break;
-		case 4:
-			// IW
+		case WRITE_IW:
 			InstructionReg = bus;
 			break;
-		case 6:
-			// WM
-			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
+		case WRITE_WM:
+			memoryBytes[memoryIndex] = bus;
 			break;
-		case 7:
-			// J
-			programCounter = clamp(bus, 0, 65534);
+		case WRITE_J:
+			programCounter = bus; 
 			break;
-		case 8:
-			// AW
+		case WRITE_AW:
 			memoryIndex = bus;
 			break;
-		case 9:
-			// WE
+		case WRITE_WE:
 			expansionPort = bus;
 			break;
 		}
 
 
-		// Display current pixel
-		if (iterations % frameSpeed == 0)
-		{
-			int characterRamValue = memoryBytes.at(clamp(characterRamIndex + 16382, 0, 65534));
-			bool charPixRomVal = characterRom.at((characterRamValue * 64) + (charPixY * 8) + charPixX);
-
-			int pixelVal = memoryBytes.at(clamp(pixelRamIndex, 0, 65534));
-			int r, g, b;
-
-			if (charPixRomVal == true && imgX < 60) {
-				r = 255;
-				g = 255;
-				b = 255;
-			}
-			else {
-				r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
-				g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
-				b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
-			}
-
-			set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
-
-
-			imgX++;
-			charPixX++;
-			if (charPixX >= 6) {
-				charPixX = 0;
-				characterRamIndex++;
-			}
-
-			// If x-coord is max, reset and increment y-coord
-			if (imgX >= 64)
-			{
-				imgY++;
-				charPixY++;
-				charPixX = 0;
-				imgX = 0;
-
-				if (charPixY < 6)
-					characterRamIndex -= 10;
-			}
-
-			if (charPixY >= 6) {
-				charPixY = 0;
-			}
-
-
-			if (imgY >= 64) // The final layer is done, reset counter and render image
-			{
-				imgY = 0;
-
-				characterRamIndex = 0;
-				charPixY = 0;
-				charPixX = 0;
-
-				apply_pixels(pixels, texture, 64);
-				DisplayTexture(gRenderer, texture);
-
-				float fps = 1.0f / renderedFrameTime;
-				cout << "\r                                                       " << "\r" << SimplifiedHertz(1.0 / deltatime) + "\tFPS: " + to_string(fps) << "  programCounter: " + to_string(programCounter);
-
-				if (autoFPS) {
-					if (fps > 65)
-						frameSpeed++;
-					else if (fps < 55)
-						frameSpeed--;
-					frameSpeed = clamp(frameSpeed, 1, 9999);
-				}
-
-				renderedFrameTime = 0;
-			}
-
-			pixelRamIndex++;
-
-			if (pixelRamIndex >= 65535)
-				pixelRamIndex = 61439;
-
-		}
-
 		// Standalone microinstructions (ungrouped)
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 1)))
-		{ // CE
-			programCounter = clamp(programCounter + 1, 0, 65534);
+		if (mcode & STANDALONE_CE)
+		{
+			programCounter++;
 		}
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 2)))
-		{ // ST
+		if (mcode & STANDALONE_ST)
+		{
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
 			exit(1);
 		}
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 3)))
-		{ // EI
+		if (mcode & STANDALONE_EI)
+		{
 			break;
 		}
 	}
@@ -679,6 +642,76 @@ bool Update(double deltatime)
 		iterations = 1;
 
 	return true;
+}
+
+static void DrawNextPixel() {
+	int characterRamValue = memoryBytes[characterRamIndex + 16382];
+	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
+
+	int pixelVal = memoryBytes[pixelRamIndex];
+	int r, g, b;
+
+	if (charPixRomVal == true && imgX < 60) {
+		r = 255;
+		g = 255;
+		b = 255;
+	}
+	else {
+		r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
+		g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
+		b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
+	}
+
+	set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
+
+
+	imgX++;
+	charPixX++;
+	if (charPixX >= 6) {
+		charPixX = 0;
+		characterRamIndex++;
+	}
+
+	// If x-coord is max, reset and increment y-coord
+	if (imgX >= 64)
+	{
+		imgY++;
+		charPixY++;
+		charPixX = 0;
+		imgX = 0;
+
+		if (charPixY < 6)
+			characterRamIndex -= 10;
+	}
+
+	if (charPixY >= 6) {
+		charPixY = 0;
+	}
+
+
+	if (imgY >= 64) // The final layer is done, reset counter and render image
+	{
+		imgY = 0;
+
+		characterRamIndex = 0;
+		charPixY = 0;
+		charPixX = 0;
+
+		apply_pixels(pixels, texture, 64);
+		DisplayTexture(gRenderer, texture);
+	}
+
+	pixelRamIndex++;
+}
+
+void Draw() {
+	while (true) {
+		DrawNextPixel();
+		if (pixelRamIndex >= 65535) {
+			pixelRamIndex = 61439;
+			break;
+		}
+	}
 }
 
 void DrawPixel(int x, int y, int r, int g, int b)
@@ -842,15 +875,9 @@ vector<string> splitByComparator(string str) {
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
 unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 {
-	const unsigned max_n = CHAR_BIT * sizeof(unsigned);
-	if (offset >= max_n)
-		return 0; /* value is padded with infinite zeros on the left */
-	value >>= offset; /* drop offset bits */
-	if (n >= max_n)
-		return value; /* all  bits requested */
-	const unsigned mask = (1u << n) - 1; /* n '1's */
-	return value & mask;
+	return(value >> offset) & ((1u << n) - 1);
 }
+
 string DecToHexFilled(int input, int desiredSize)
 {
 	stringstream ss;
@@ -879,12 +906,6 @@ string BinToHexFilled(const string& input, int desiredSize)
 int BinToDec(const string& input)
 {
 	return stoi(input, nullptr, 2);
-}
-
-uint16_t BinaryRangeToInt(uint16_t num, int min, int max) {
-	int bmin = (MICROINSTR_SIZE - 1) - max;
-	int bmax = (MICROINSTR_SIZE - 1) - min;
-	return (num & ((1 << (bmax + 1)) - 1)) >> bmin;
 }
 
 string DecToBin(int input)
@@ -2065,9 +2086,6 @@ void GenerateMicrocode()
 	// Generate zeros in data
 	vector<string> output;
 	microinstructionData.resize(2048);
-	microALU.resize(2048);
-	microREAD.resize(2048);
-	microWRITE.resize(2048);
 	for (int osind = 0; osind < 2048; osind++) {
 		output.push_back("00000");
 	}
@@ -2274,14 +2292,6 @@ void GenerateMicrocode()
 		}
 	}
 
-	for (int i = 0; i < microinstructionData.size(); i++)
-	{
-		uint16_t mcode = microinstructionData.at(i);
-
-		microALU[i] = BinaryRangeToInt(mcode, 12, 13);
-		microREAD[i] = BinaryRangeToInt(mcode, 9, 11);
-		microWRITE[i] = BinaryRangeToInt(mcode, 5, 8);
-	}
 
 	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
