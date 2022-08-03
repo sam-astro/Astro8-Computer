@@ -67,14 +67,56 @@ vector<int> memoryBytes;
 vector<int> charRam;
 
 string action = "";
-#define MICROINSTR_SIZE 14
-vector<uint16_t> microinstructionData;
-static_assert(sizeof(decltype(microinstructionData)::value_type) * 8 >= MICROINSTR_SIZE,
-	"Size of microinstruction is too large! Increase the width of `microinstructionData`'s value type...");
 
-vector<uint16_t> microALU;
-vector<uint16_t> microREAD;
-vector<uint16_t> microWRITE;
+
+// Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
+
+#define MICROINSTR_SIZE 14
+using MicroInstruction = uint16_t;
+static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
+	"Size of MicroInstruction is too small, increase its width...");
+
+vector<MicroInstruction> microinstructionData;
+
+enum ALUInstruction : MicroInstruction {
+	ALU_SU   = 0b00000000000001,
+	ALU_MU   = 0b00000000000010,
+	ALU_DI   = 0b00000000000011,
+	ALU_MASK = 0b00000000000011,
+};
+
+enum ReadInstruction : MicroInstruction {
+	READ_RA   = 0b00000000000100,
+	READ_RB   = 0b00000000001000,
+	READ_RC   = 0b00000000001100,
+	READ_RM   = 0b00000000010000,
+	READ_IR   = 0b00000000010100,
+	READ_CR   = 0b00000000011000,
+	READ_RE   = 0b00000000011100,
+	READ_MASK = 0b00000000011100,
+};
+
+enum WriteInstruction : MicroInstruction {
+	WRITE_WA   = 0b00000000100000,
+	WRITE_WB   = 0b00000001000000,
+	WRITE_WC   = 0b00000001100000,
+	WRITE_IW   = 0b00000010000000,
+	WRITE_DW   = 0b00000010100000,
+	WRITE_WM   = 0b00000011000000,
+	WRITE_J    = 0b00000011100000,
+	WRITE_AW   = 0b00000100000000,
+	WRITE_WE   = 0b00000100100000,
+	WRITE_MASK = 0b00000111100000,
+};
+
+enum StandaloneInstruction : MicroInstruction {
+	STANDALONE_FL   = 0b00001000000000,
+	STANDALONE_EI   = 0b00010000000000,
+	STANDALONE_ST   = 0b00100000000000,
+	STANDALONE_CE   = 0b01000000000000,
+	STANDALONE_EO   = 0b10000000000000,
+};
+
 
 vector<bool> characterRom;
 
@@ -109,7 +151,6 @@ static inline void rtrim(std::string& s);
 static inline string trim(std::string s);
 void GenerateMicrocode();
 string SimplifiedHertz(float input);
-uint16_t BinaryRangeToInt(uint16_t num, int min, int max);
 string CompileCode(const string& inputcode);
 vector<string> splitByComparator(string str);
 int ParseValue(const string& input);
@@ -432,56 +473,49 @@ bool Update(double deltatime)
 
 		// Address in microcode ROM
 		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
-		uint16_t mcode = microinstructionData.at(microcodeLocation);
+		MicroInstruction mcode = microinstructionData.at(microcodeLocation);
 
 
 		// Check for any reads and execute if applicable
-		uint16_t readInstr = microREAD.at(microcodeLocation);
-
+		MicroInstruction readInstr = mcode & READ_MASK;
 		switch (readInstr)
 		{
-		case 1:
-			// RA
+		case READ_RA:
 			bus = AReg;
 			break;
-		case 2:
-			// RB
+		case READ_RB:
 			bus = BReg;
 			break;
-		case 3:
-			// RC
+		case READ_RC:
 			bus = CReg;
 			break;
-		case 4:
-			// RM
+		case READ_RM:
 			bus = memoryBytes.at(clamp(memoryIndex, 0, 65534));
 			break;
-		case 5:
-			// IR
+		case READ_IR:
 			bus = BitRange(InstructionReg, 0, 11);
 			break;
-		case 6:
-			// CR
+		case READ_CR:
 			bus = programCounter;
 			break;
-		case 7:
-			// RE
+		case READ_RE:
 			bus = expansionPort;
 			break;
+		default: break;
 		}
 
 
 		// Find ALU modifiers
-		uint16_t aluInstr = microALU.at(microcodeLocation);
+		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 0)))
-		{ // EO
+		if (mcode & STANDALONE_EO)
+		{
 			flags[0] = 0;
 			flags[1] = 0;
 			switch (aluInstr)
 			{
-			case 1: // Subtract
+			case ALU_SU: // Subtract
 				flags[1] = 1;
 				if (AReg - BReg == 0)
 					flags[0] = 1;
@@ -493,7 +527,7 @@ bool Update(double deltatime)
 				}
 				break;
 
-			case 2: // Multiply
+			case ALU_MU: // Multiply
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
@@ -504,7 +538,7 @@ bool Update(double deltatime)
 				}
 				break;
 
-			case 3: // Divide
+			case ALU_DI: // Divide
 				// Dont divide by zero
 				if (BReg != 0) {
 					if (AReg / BReg == 0)
@@ -538,39 +572,31 @@ bool Update(double deltatime)
 
 
 		// Check for any writes and execute if applicable
-		uint16_t writeInstr = microWRITE.at(microcodeLocation);
+		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
-		case 1:
-			// WA
+		case WRITE_WA:
 			AReg = bus;
 			break;
-		case 2:
-			// WB
+		case WRITE_WB:
 			BReg = bus;
 			break;
-		case 3:
-			// WC
+		case WRITE_WC:
 			CReg = bus;
 			break;
-		case 4:
-			// IW
+		case WRITE_IW:
 			InstructionReg = bus;
 			break;
-		case 6:
-			// WM
+		case WRITE_WM:
 			memoryBytes.at(clamp(memoryIndex, 0, 65534)) = bus;
 			break;
-		case 7:
-			// J
-			programCounter = clamp(bus, 0, 65534);
+		case WRITE_J:
+			programCounter = clamp(bus, 0, 65534); 
 			break;
-		case 8:
-			// AW
+		case WRITE_AW:
 			memoryIndex = bus;
 			break;
-		case 9:
-			// WE
+		case WRITE_WE:
 			expansionPort = bus;
 			break;
 		}
@@ -656,20 +682,20 @@ bool Update(double deltatime)
 		}
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 1)))
-		{ // CE
+		if (mcode & STANDALONE_CE)
+		{
 			programCounter = clamp(programCounter + 1, 0, 65534);
 		}
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 2)))
-		{ // ST
+		if (mcode & STANDALONE_ST)
+		{
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
 			exit(1);
 		}
-		if (mcode & (1 << ((MICROINSTR_SIZE - 1) - 3)))
-		{ // EI
+		if (mcode & STANDALONE_EI)
+		{
 			break;
 		}
 	}
@@ -879,12 +905,6 @@ string BinToHexFilled(const string& input, int desiredSize)
 int BinToDec(const string& input)
 {
 	return stoi(input, nullptr, 2);
-}
-
-uint16_t BinaryRangeToInt(uint16_t num, int min, int max) {
-	int bmin = (MICROINSTR_SIZE - 1) - max;
-	int bmax = (MICROINSTR_SIZE - 1) - min;
-	return (num & ((1 << (bmax + 1)) - 1)) >> bmin;
 }
 
 string DecToBin(int input)
@@ -2065,9 +2085,6 @@ void GenerateMicrocode()
 	// Generate zeros in data
 	vector<string> output;
 	microinstructionData.resize(2048);
-	microALU.resize(2048);
-	microREAD.resize(2048);
-	microWRITE.resize(2048);
 	for (int osind = 0; osind < 2048; osind++) {
 		output.push_back("00000");
 	}
@@ -2274,14 +2291,6 @@ void GenerateMicrocode()
 		}
 	}
 
-	for (int i = 0; i < microinstructionData.size(); i++)
-	{
-		uint16_t mcode = microinstructionData.at(i);
-
-		microALU[i] = BinaryRangeToInt(mcode, 12, 13);
-		microREAD[i] = BinaryRangeToInt(mcode, 9, 11);
-		microWRITE[i] = BinaryRangeToInt(mcode, 5, 8);
-	}
 
 	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
