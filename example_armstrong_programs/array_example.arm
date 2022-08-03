@@ -1,0 +1,9 @@
+#AS
+
+array $arr[15] // Initialize array with a size of 15
+
+change $arr[1] = 5
+
+// Use another variable as the array index
+change $index = 14
+change $arr[$index] = 1

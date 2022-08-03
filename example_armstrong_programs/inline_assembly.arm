@@ -1,0 +1,10 @@
+#AS
+
+change $x = 1
+
+asm"
+    ldia 1
+    ldib 2
+    add
+    stlge
+"
