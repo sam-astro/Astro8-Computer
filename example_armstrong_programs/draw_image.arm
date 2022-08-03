@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// This program is for writing pixel data from 200-4296 into video memory, and can display images //
+// It will only display BLACK if no data is loaded in.                                            //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+change $pixOffset = 61439
+change $pixCount = 0
+#loop
+add $pixOffset,$pixCount -> $outLoc
+add $pixCount,200 -> $inLoc
+change *$outLoc = *$inLoc
+add $pixCount,1 -> $pixCount
+gotoif $pixCount<8000, #loop
+#idle
+goto #idle
