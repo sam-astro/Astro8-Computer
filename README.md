@@ -17,7 +17,7 @@ There are some demos for the Astro-8, such as the pong game and a typing program
 
 
 ## Programming
-The two most supported ways to program for the computer is using the [assembly language](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html) or [Armstrong](https://sam-astro.github.io/Astro8-Computer/docs/Armstrong/README.html).
+The two most supported ways to program for the computer is using the [assembly language](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html) or [Armstrong](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html).
 
 ## Documentation
 [![Button Documentation]][Documentation] 
