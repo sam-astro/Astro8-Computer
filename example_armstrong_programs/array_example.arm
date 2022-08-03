@@ -7,3 +7,34 @@ change $arr[1] = 5
 // Use another variable as the array index
 change $index = 14
 change $arr[$index] = 1
+
+// Assembly version of above ^
+asm"
+    , array $arr[15]
+    , Allocate memory 16528 - 16543, store beginning (16528) and size (15) in ArmArr
+
+
+    , change $arr[1] = 5
+    ldia 5
+    stlge
+    here 16529  , (calculate ArmArr.beginning + 1 ($arr index))
+
+
+    , change $index = 14
+    ldia 14
+    stlge
+    here 16544
+
+
+    , change $arr[$index] = 1
+    ldlge
+    here 16544
+    swp             , load $index into @B
+    ldw
+    here 16528     , load array beginning into @A
+    add       , add to get actual memory address of $arr[$index]
+    ldib 1         , load 1 into @B ( = 1)
+    staout       , store @B into the address stored in @A
+
+
+"
