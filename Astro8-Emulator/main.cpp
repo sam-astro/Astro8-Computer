@@ -464,15 +464,15 @@ bool Update(double deltatime)
 			memoryIndex = programCounter;
 			// RM
 			// IW
-			InstructionReg = memoryBytes[clamp(memoryIndex, 0, 65534)];
+			InstructionReg = memoryBytes[memoryIndex];
 			// CE
-			programCounter = clamp(programCounter + 1, 0, 65534);
+			programCounter = programCounter + 1;
 			step = 1;
 			continue;
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = (BitRange((unsigned)InstructionReg, 11, 5) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
+		int microcodeLocation = ((InstructionReg >> 11) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
@@ -490,10 +490,10 @@ bool Update(double deltatime)
 			bus = CReg;
 			break;
 		case READ_RM:
-			bus = memoryBytes[clamp(memoryIndex, 0, 65534)];
+			bus = memoryBytes[memoryIndex];
 			break;
 		case READ_IR:
-			bus = BitRange(InstructionReg, 0, 11);
+			bus = InstructionReg & ((1<<11)-1);
 			break;
 		case READ_CR:
 			bus = programCounter;
@@ -588,10 +588,10 @@ bool Update(double deltatime)
 			InstructionReg = bus;
 			break;
 		case WRITE_WM:
-			memoryBytes[clamp(memoryIndex, 0, 65534)] = bus;
+			memoryBytes[memoryIndex] = bus;
 			break;
 		case WRITE_J:
-			programCounter = clamp(bus, 0, 65534); 
+			programCounter = bus; 
 			break;
 		case WRITE_AW:
 			memoryIndex = bus;
@@ -605,10 +605,10 @@ bool Update(double deltatime)
 		// Display current pixel
 		if (iterations % frameSpeed == 0)
 		{
-			int characterRamValue = memoryBytes[clamp(characterRamIndex + 16382, 0, 65534)];
+			int characterRamValue = memoryBytes[characterRamIndex + 16382];
 			bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-			int pixelVal = memoryBytes[clamp(pixelRamIndex, 0, 65534)];
+			int pixelVal = memoryBytes[pixelRamIndex];
 			int r, g, b;
 
 			if (charPixRomVal == true && imgX < 60) {
@@ -684,7 +684,7 @@ bool Update(double deltatime)
 		// Standalone microinstructions (ungrouped)
 		if (mcode & STANDALONE_CE)
 		{
-			programCounter = clamp(programCounter + 1, 0, 65534);
+			programCounter++;
 		}
 		if (mcode & STANDALONE_ST)
 		{
@@ -868,15 +868,9 @@ vector<string> splitByComparator(string str) {
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
 unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 {
-	const unsigned max_n = CHAR_BIT * sizeof(unsigned);
-	if (offset >= max_n)
-		return 0; /* value is padded with infinite zeros on the left */
-	value >>= offset; /* drop offset bits */
-	if (n >= max_n)
-		return value; /* all  bits requested */
-	const unsigned mask = (1u << n) - 1; /* n '1's */
-	return value & mask;
+	return(value >> offset) & ((1u << n) - 1);
 }
+
 string DecToHexFilled(int input, int desiredSize)
 {
 	stringstream ss;
