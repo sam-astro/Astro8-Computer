@@ -15,7 +15,6 @@ word 0  |                                         .                             
 ```
 
 <br>
-<br>
 
 ## Program Memory
 
@@ -25,7 +24,6 @@ Words: `16382`
 
 Contains the program instructions.
 
-<br>
 <br>
 
 ## Character Memory
@@ -38,7 +36,6 @@ Contains the indexes of the characters to <br>
 be displayed at the corresponding location.
 
 <br>
-<br>
 
 ## Variable and General Purpose Memory
 
@@ -46,7 +43,10 @@ Percent: `25-93%` <br>
 Range: `16528 - 61439` <br>
 Words: `44911`
 
-<br>
+Memory that the compiler automatically <br>
+allocates as needed for variables, or you <br>
+can use for other general purposes.
+
 <br>
 
 ## Video Memory
@@ -54,5 +54,8 @@ Words: `44911`
 Percent: `93-100%` <br>
 Range: `61439 - 65535` <br>
 Words: `4096`
+
+Contains the pixel's color data to be <br>
+displayed at the corresponding location.
 
 <br>
