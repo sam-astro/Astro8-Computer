@@ -31,7 +31,7 @@ I created a video about the creation of this and how it works, which you can vie
 ## Demos
 There are some demos for the Astro-8, such as the pong game and a typing program. You can locate those in the folder `/example_armstrong_programs/`.
 
-<img src="https://github.com/sam-astro/Astro8-Computer/blob/main/images/pong.gif"/>
+<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/pong.gif"/>
 
 
 ## Programming
