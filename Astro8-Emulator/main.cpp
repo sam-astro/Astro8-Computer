@@ -1030,7 +1030,7 @@ bool IsDec(const string& in) {
 }
 
 void PutSetOnCurrentLine(const string& value) {
-	compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + value);
+	compiledLines.push_back("here " + value);
 }
 
 // Loading of memory value into register, automatically allowing large addressing as needed
@@ -1443,11 +1443,15 @@ string CompileCode(const string& inputcode) {
 				if (splitBySpace.size() <= 1)
 					continue;
 
-				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
+				// Make sure it is a set instruction, and replace if it contains a label that matches.
 				if (splitBySpace[0].size() >= 3) {
-					if (splitBySpace[0] == "set") { // If a set followed by label placeholder
+					if (splitBySpace[0] == "set") { // If a "set" followed by label placeholder
 						if (splitBySpace[2] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);// Replace
+							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal); // Replace
+					}
+					if (splitBySpace[0] == "here") { // If a "here" followed by label placeholder
+						if (splitBySpace[1] == command) // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " "+ to_string(labelLineVal); // Replace
 					}
 				}
 			}
@@ -1724,7 +1728,7 @@ string CompileCode(const string& inputcode) {
 
 
 			compiledLines.push_back("jmp"); // Jump to v
-			compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+			compiledLines.push_back("here " + addrProcessed);
 
 
 			continue;
@@ -1756,46 +1760,46 @@ string CompileCode(const string& inputcode) {
 			// If using equal to '==' comparer
 			if (comparer == "==") {
 				compiledLines.push_back("jmpz");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 5));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 5));
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 
 
@@ -1933,7 +1937,7 @@ vector<string> parseCode(const string& input)
 		// Set the current location in memory equal to a value: here <value>
 		if (splitBySpace[0] == "HERE")
 		{
-			int addr = i;
+			int addr = memaddr;
 			string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
 			if (addr <= 16382)
 				outputBytes[addr] = hVal;
