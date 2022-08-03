@@ -1353,7 +1353,7 @@ string CompileCode(const string& inputcode) {
 	auto isComment = [](const std::string& s) {
 		if (trim(s).size() >= 2)
 			return trim(s)[0] == '/' && trim(s)[1] == '/';
-		return true;
+		return false;
 	};
 	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isEmptyOrBlank), codelines.end());
 	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isComment), codelines.end());
@@ -1833,7 +1833,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'asm' inline assembly
-		else if (trim(split(command, "\"")[0]) == "asm")
+		else if (trim(split(codelines[i], "\"")[0]) == "asm")
 		{
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "asm:\n";
@@ -1843,9 +1843,9 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(split(codelines[i], "\"")[1]);
 			for (i = i + 1; i < codelines.size(); i++)
 			{
-				compiledLines.push_back(split(codelines[i], "\"")[0]);
-				if (std::count(codelines[i].begin(), codelines[i].end(), '\"') == 1)
+				if (std::count(codelines[i].begin(), codelines[i].end(), '\"') >= 1)
 					break;
+				compiledLines.push_back(split(codelines[i], "\"")[0]);
 			}
 
 			continue;
