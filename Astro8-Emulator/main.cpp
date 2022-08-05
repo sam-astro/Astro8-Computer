@@ -40,7 +40,7 @@ int flags[3] = { 0, 0, 0 };
 int bus = 0;
 int outputReg = 0;
 uint16_t memoryIndex = 0;
-uint16_t programCounter = 0;
+uint64_t programCounter = 0;
 
 int imgX = 0;
 int imgY = 0;
@@ -50,14 +50,12 @@ int characterRamIndex = 0;
 int pixelRamIndex = 0xefff;
 
 
-// 1000000 = 1.0MHz
+// 10000000 = 10.0MHz
 #define TARGET_CPU_FREQ 10000000
 #define TARGET_RENDER_FPS 60.0
 
-unsigned int iterations = 0;
-
-vector<int> memoryBytes;
-vector<int> charRam;
+static vector<int> memoryBytes;
+static vector<int> charRam;
 
 string action = "";
 
@@ -69,49 +67,49 @@ using MicroInstruction = uint16_t;
 static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 	"Size of MicroInstruction is too small, increase its width...");
 
-vector<MicroInstruction> microinstructionData;
+static MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU   = 0b00000000000001,
-	ALU_MU   = 0b00000000000010,
-	ALU_DI   = 0b00000000000011,
+	ALU_SU =   0b00000000000001,
+	ALU_MU =   0b00000000000010,
+	ALU_DI =   0b00000000000011,
 	ALU_MASK = 0b00000000000011,
 };
 
 enum ReadInstruction : MicroInstruction {
-	READ_RA   = 0b00000000000100,
-	READ_RB   = 0b00000000001000,
-	READ_RC   = 0b00000000001100,
-	READ_RM   = 0b00000000010000,
-	READ_IR   = 0b00000000010100,
-	READ_CR   = 0b00000000011000,
-	READ_RE   = 0b00000000011100,
+	READ_RA =   0b00000000000100,
+	READ_RB =   0b00000000001000,
+	READ_RC =   0b00000000001100,
+	READ_RM =   0b00000000010000,
+	READ_IR =   0b00000000010100,
+	READ_CR =   0b00000000011000,
+	READ_RE =   0b00000000011100,
 	READ_MASK = 0b00000000011100,
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA   = 0b00000000100000,
-	WRITE_WB   = 0b00000001000000,
-	WRITE_WC   = 0b00000001100000,
-	WRITE_IW   = 0b00000010000000,
-	WRITE_DW   = 0b00000010100000,
-	WRITE_WM   = 0b00000011000000,
-	WRITE_J    = 0b00000011100000,
-	WRITE_AW   = 0b00000100000000,
-	WRITE_WE   = 0b00000100100000,
+	WRITE_WA =   0b00000000100000,
+	WRITE_WB =   0b00000001000000,
+	WRITE_WC =   0b00000001100000,
+	WRITE_IW =   0b00000010000000,
+	WRITE_DW =   0b00000010100000,
+	WRITE_WM =   0b00000011000000,
+	WRITE_J =    0b00000011100000,
+	WRITE_AW =   0b00000100000000,
+	WRITE_WE =   0b00000100100000,
 	WRITE_MASK = 0b00000111100000,
 };
 
 enum StandaloneInstruction : MicroInstruction {
-	STANDALONE_FL   = 0b00001000000000,
-	STANDALONE_EI   = 0b00010000000000,
-	STANDALONE_ST   = 0b00100000000000,
-	STANDALONE_CE   = 0b01000000000000,
-	STANDALONE_EO   = 0b10000000000000,
+	STANDALONE_FL = 0b00001000000000,
+	STANDALONE_EI = 0b00010000000000,
+	STANDALONE_ST = 0b00100000000000,
+	STANDALONE_CE = 0b01000000000000,
+	STANDALONE_EO = 0b10000000000000,
 };
 
 
-vector<bool> characterRom;
+static vector<bool> characterRom;
 
 SDL_Rect r;
 
@@ -125,12 +123,12 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update();
-void Draw();
-void DrawPixel(int x, int y, int r, int g, int b);
+static void Update();
+static void Draw();
+static void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
-unsigned BitRange(unsigned value, unsigned offset, unsigned n);
+static unsigned BitRange(unsigned value, unsigned offset, unsigned n);
 string DecToHexFilled(int input, int desiredSize);
 string BinToHexFilled(const string& input, int desiredSize);
 int BinToDec(const string& input);
@@ -154,10 +152,10 @@ int ConvertAsciiToSdcii(int asciiCode);
 int GetVariableAddress(const string& id);
 
 SDL_Texture* texture;
-std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+static std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "HLT", "OUT" };
+string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC" };
 
 string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -191,12 +189,10 @@ string instructioncodes[] = {
 		"ldw( 2=cr,aw & 3=ce,rm,wa & 4=ei", // Load value directly after counter, and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
-		"hlt( 2=st & 3=ei", // Stop the computer clock
-		"out( 2=ra,dw & 3=ei", // Output to decimal display and LCD screen
 };
 
 
-void apply_pixels(
+static void apply_pixels(
 	std::vector<unsigned char>& pixels,
 	SDL_Texture* texture,
 	unsigned int screen_width)
@@ -210,7 +206,7 @@ void apply_pixels(
 	);
 }
 
-void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)
+static void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)
 {
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
@@ -222,17 +218,17 @@ void clear_buffers(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	SDL_RenderClear(renderer);
 }
 
-void set_pixel(
+static void set_pixel(
 	std::vector<unsigned char>* pixels,
 	int x, int y, int screen_width,
 	Uint8 r, Uint8 g, Uint8 b, Uint8 a
 )
 {
 	const unsigned int offset = (y * 4 * screen_width) + x * 4;
-	(*pixels)[offset + 0] = r;        // b
-	(*pixels)[offset + 1] = g;        // g
-	(*pixels)[offset + 2] = b;        // r
-	(*pixels)[offset + 3] = a;    // a
+	(*pixels)[offset + 0] = r;
+	(*pixels)[offset + 1] = g;
+	(*pixels)[offset + 2] = b;
+	(*pixels)[offset + 3] = a;
 }
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
@@ -330,8 +326,6 @@ int main(int argc, char** argv)
 		}
 		else
 			exit(0);
-
-		//exit(0);
 	}
 	else
 		ColorAndPrintAssembly(code);
@@ -394,7 +388,7 @@ int main(int argc, char** argv)
 	bool keyPress = false;
 	bool running = true;
 	SDL_Event event;
-	
+
 	int updateCount = 0;
 	int frameCount = 0;
 	auto lastSecond = std::chrono::high_resolution_clock::now();
@@ -466,7 +460,7 @@ int main(int argc, char** argv)
 }
 
 
-bool Update()
+static void Update()
 {
 
 	for (int step = 0; step < 16; step++)
@@ -477,24 +471,22 @@ bool Update()
 		{
 			// CR
 			// AW
-			memoryIndex = programCounter;
 			// RM
 			// IW
-			InstructionReg = memoryBytes[memoryIndex];
+			InstructionReg = memoryBytes[programCounter];
 			// CE
-			programCounter = programCounter + 1;
-			step = 1;
-			continue;
+			programCounter += 1;
+			step = 2;
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = ((InstructionReg >> 11) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
+		int microcodeLocation = ((InstructionReg >> 5) & 0b11111000000) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
 		// Check for any reads and execute if applicable
 		MicroInstruction readInstr = mcode & READ_MASK;
-		switch (readInstr)
+		switch (readInstr)[[likely]]
 		{
 		case READ_RA:
 			bus = AReg;
@@ -509,7 +501,7 @@ bool Update()
 			bus = memoryBytes[memoryIndex];
 			break;
 		case READ_IR:
-			bus = InstructionReg & ((1<<11)-1);
+			bus = InstructionReg & ((1 << 11) - 1);
 			break;
 		case READ_CR:
 			bus = programCounter;
@@ -517,7 +509,6 @@ bool Update()
 		case READ_RE:
 			bus = expansionPort;
 			break;
-		default: break;
 		}
 
 
@@ -525,7 +516,7 @@ bool Update()
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode & STANDALONE_EO)
+		if (mcode & STANDALONE_EO) [[unlikely]]
 		{
 			flags[0] = 0;
 			flags[1] = 0;
@@ -591,6 +582,7 @@ bool Update()
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
+		[[likely]] default: break;
 		case WRITE_WA:
 			AReg = bus;
 			break;
@@ -607,7 +599,7 @@ bool Update()
 			memoryBytes[memoryIndex] = bus;
 			break;
 		case WRITE_J:
-			programCounter = bus; 
+			programCounter = bus;
 			break;
 		case WRITE_AW:
 			memoryIndex = bus;
@@ -619,29 +611,15 @@ bool Update()
 
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode & STANDALONE_CE)
+		if (mcode & STANDALONE_CE) [[unlikely]]
 		{
 			programCounter++;
-		}
-		if (mcode & STANDALONE_ST)
-		{
-			cout << ("\n== PAUSED from HLT ==\n\n");
-			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-			cout << "\n\nPress Enter to Exit...";
-			cin.ignore();
-			exit(1);
 		}
 		if (mcode & STANDALONE_EI)
 		{
 			break;
 		}
 	}
-
-	iterations += 1;
-	if (iterations >= 0xFFFFFFFF)
-		iterations = 1;
-
-	return true;
 }
 
 static void DrawNextPixel() {
@@ -704,7 +682,7 @@ static void DrawNextPixel() {
 	pixelRamIndex++;
 }
 
-void Draw() {
+static void Draw() {
 	while (true) {
 		DrawNextPixel();
 		if (pixelRamIndex >= 65535) {
@@ -873,7 +851,7 @@ vector<string> splitByComparator(string str) {
 }
 
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
-unsigned BitRange(unsigned value, unsigned offset, unsigned n)
+static unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 {
 	return(value >> offset) & ((1u << n) - 1);
 }
@@ -1034,7 +1012,7 @@ bool IsDec(const string& in) {
 }
 
 void PutSetOnCurrentLine(const string& value) {
-	compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + value);
+	compiledLines.push_back("here " + value);
 }
 
 // Loading of memory value into register, automatically allowing large addressing as needed
@@ -1126,19 +1104,6 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 	}
 }
 
-//string RegIdToMRead(string in, string followingValue) {
-//	if (in == "@A")
-//		return "ain " + followingValue;
-//	if (in == "@B")
-//		return "bin " + followingValue;
-//	if (in == "@C")
-//		return "cin " + followingValue;
-//	if (in == "@EX")
-//		return "ain " + followingValue + "\n" + "wrexp";
-//
-//	return "";
-//}
-
 string MoveFromRegToReg(const string& from, const string& destination) {
 	if (from == destination)
 		return "";
@@ -1177,22 +1142,13 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 int GetLineNumber() {
 	string outStr = "";
 	for (int i = 0; i < compiledLines.size(); i++)
-	{
 		outStr += trim(compiledLines[i]) + "\n";
-	}
 
 	compiledLines = split(outStr, "\n");
 	int outInt = 0;
 	for (int i = 0; i < compiledLines.size(); i++)
-	{
 		if (trim(compiledLines[i]) != "" && AccomodateSetInProgramRange(compiledLines[i], outInt) && split(compiledLines[i], " ")[0] != "endif" && compiledLines[i][0] != ',')
-		{
 			outInt++;
-			//PrintColored(compiledLines[i] + "  ^ INC ^\n", redFGColor, "");
-		}
-		//else
-		//	PrintColored(compiledLines[i] + "  - STAY -\n", blueFGColor, "");
-	}
 
 	return outInt;
 }
@@ -1200,9 +1156,7 @@ int GetLineNumber() {
 int ActualLineNumFromNum(int x) {
 	string outStr = "";
 	for (int i = 0; i < compiledLines.size(); i++)
-	{
 		outStr += trim(compiledLines[i]) + "\n";
-	}
 
 	compiledLines = split(outStr, "\n");
 	int outInt = 1;
@@ -1223,10 +1177,8 @@ int ActualLineNumFromNum(int x) {
 int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
-	{
 		if (id == vars[i])
 			return i + 16528;
-	}
 
 	// Not found, add to list and return size-1
 	vars.push_back(id);
@@ -1235,11 +1187,9 @@ int GetVariableAddress(const string& id) {
 
 int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
 	for (int i = 0; i < labels.size(); i++)
-	{
-		if (labelName == labels[i]) {
+		if (labelName == labels[i])
 			return labelLineValues[i];
-		}
-	}
+
 	// Not found return -1
 	return -1;
 }
@@ -1369,6 +1319,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 
 }
 
+// Compile Armstrong into assembly
 string CompileCode(const string& inputcode) {
 
 	// Pre-process lines of code
@@ -1384,7 +1335,7 @@ string CompileCode(const string& inputcode) {
 	auto isComment = [](const std::string& s) {
 		if (trim(s).size() >= 2)
 			return trim(s)[0] == '/' && trim(s)[1] == '/';
-		return true;
+		return false;
 	};
 	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isEmptyOrBlank), codelines.end());
 	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isComment), codelines.end());
@@ -1420,10 +1371,8 @@ string CompileCode(const string& inputcode) {
 		if (trim(codelines[i]) == "endif") {
 			openIfs--;
 			// found matching, get location and remove endif
-			if (openIfs == 0) {
+			if (openIfs == 0)
 				codelines[i] = "#__IF-ID" + to_string(ifID) + "__";
-				//break;
-			}
 		}
 
 		// If there are still more 'if' statements, restart
@@ -1476,11 +1425,15 @@ string CompileCode(const string& inputcode) {
 				if (splitBySpace.size() <= 1)
 					continue;
 
-				// Make sure it is a jmp instruction, and replace if it contains a label that matches.
+				// Make sure it is a set instruction, and replace if it contains a label that matches.
 				if (splitBySpace[0].size() >= 3) {
-					if (splitBySpace[0] == "set") { // If a set followed by label placeholder
+					if (splitBySpace[0] == "set") { // If a "set" followed by label placeholder
 						if (splitBySpace[2] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);// Replace
+							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal); // Replace
+					}
+					if (splitBySpace[0] == "here") { // If a "here" followed by label placeholder
+						if (splitBySpace[1] == command) // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " "+ to_string(labelLineVal); // Replace
 					}
 				}
 			}
@@ -1757,7 +1710,7 @@ string CompileCode(const string& inputcode) {
 
 
 			compiledLines.push_back("jmp"); // Jump to v
-			compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+			compiledLines.push_back("here " + addrProcessed);
 
 
 			continue;
@@ -1789,50 +1742,46 @@ string CompileCode(const string& inputcode) {
 			// If using equal to '==' comparer
 			if (comparer == "==") {
 				compiledLines.push_back("jmpz");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 5));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 5));
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
 				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + to_string(GetLineNumber() + 3));
+				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
-				compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
-				//compiledLines.push_back("jmpz"); // Jump past jump to endif if false
-				//compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
-				//compiledLines.push_back("jmpc");
-				//compiledLines.push_back("set " + to_string(GetLineNumber()) + " " + addrProcessed);
+				compiledLines.push_back("here " + addrProcessed);
 			}
 
 
@@ -1865,14 +1814,22 @@ string CompileCode(const string& inputcode) {
 			continue;
 		}
 
-		// 'stop' statement
-		else if (command == "stop")
+		// 'asm' inline assembly
+		else if (trim(split(codelines[i], "\"")[0]) == "asm")
 		{
 			PrintColored("ok.	", greenFGColor, "");
-			cout << "stop:\n";
+			cout << "asm:\n";
 
-			compiledLines.push_back(",\n, " + string("stop"));
-			compiledLines.push_back("hlt");
+			compiledLines.push_back(",\n, " + string("inline assembly"));
+
+			compiledLines.push_back(split(codelines[i], "\"")[1]);
+			for (i = i + 1; i < codelines.size(); i++)
+			{
+				if (std::count(codelines[i].begin(), codelines[i].end(), '\"') >= 1)
+					break;
+				compiledLines.push_back(split(codelines[i], "\"")[0]);
+			}
+
 			continue;
 		}
 
@@ -1909,11 +1866,9 @@ string CompileCode(const string& inputcode) {
 
 		return "";
 	}
-
-
-
 }
 
+// Convert assembly into bytes
 vector<string> parseCode(const string& input)
 {
 	vector<string> outputBytes;
@@ -1945,6 +1900,8 @@ vector<string> parseCode(const string& input)
 #endif
 			continue;
 		}
+
+		// Sets the specified memory location to a value:  set <addr> <val>
 		if (splitBySpace[0] == "SET")
 		{
 			int addr = stoi(splitBySpace[1]);
@@ -1953,6 +1910,21 @@ vector<string> parseCode(const string& input)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
+#if DEV_MODE
+			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
+#endif
+			continue;
+		}
+
+		// Set the current location in memory equal to a value: here <value>
+		if (splitBySpace[0] == "HERE")
+		{
+			int addr = memaddr;
+			string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
+			if (addr <= 16382)
+				outputBytes[addr] = hVal;
+			else
+				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[1]);
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -2081,11 +2053,11 @@ void ComputeStepInstructions(const string& stepContents, char* stepComputedInstr
 	}
 }
 
+// Generate microcode rom from instructioncodes array
 void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
-	microinstructionData.resize(2048);
 	for (int osind = 0; osind < 2048; osind++) {
 		output.push_back("00000");
 	}

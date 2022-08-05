@@ -1,0 +1,12 @@
+#AS
+
+change $x = 1
+
+asm"
+    , This is a comment
+    
+    ldia 1
+    ldib 2
+    add
+    stlge
+"

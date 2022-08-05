@@ -1,0 +1,753 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 229,
+                  "startColumn": 12,
+                  "endLine": 229,
+                  "endColumn": 21
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "set_pixel",
+                  "decoratedName": "?set_pixel@@YAXPEAV?$vector@EV?$allocator@E@std@@@std@@HHHEEEE@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 230,
+                  "startColumn": 12,
+                  "endLine": 230,
+                  "endColumn": 21
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "set_pixel",
+                  "decoratedName": "?set_pixel@@YAXPEAV?$vector@EV?$allocator@E@std@@@std@@HHHEEEE@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 231,
+                  "startColumn": 12,
+                  "endLine": 231,
+                  "endColumn": 21
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "set_pixel",
+                  "decoratedName": "?set_pixel@@YAXPEAV?$vector@EV?$allocator@E@std@@@std@@HHHEEEE@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 635,
+                  "startColumn": 38,
+                  "endLine": 635,
+                  "endColumn": 58
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "DrawNextPixel",
+                  "decoratedName": "?DrawNextPixel@@YAXXZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 636,
+                  "startColumn": 37,
+                  "endLine": 636,
+                  "endColumn": 80
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "DrawNextPixel",
+                  "decoratedName": "?DrawNextPixel@@YAXXZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 636,
+                  "startColumn": 37,
+                  "endLine": 636,
+                  "endColumn": 75
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "DrawNextPixel",
+                  "decoratedName": "?DrawNextPixel@@YAXXZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '*' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '*' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 636,
+                  "startColumn": 37,
+                  "endLine": 636,
+                  "endColumn": 57
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "DrawNextPixel",
+                  "decoratedName": "?DrawNextPixel@@YAXXZ",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '+' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '+' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 847,
+                  "startColumn": 22,
+                  "endLine": 847,
+                  "endColumn": 46
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "splitByComparator",
+                  "decoratedName": "?splitByComparator@@YA?AV?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '-' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '-' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 945,
+                  "startColumn": 15,
+                  "endLine": 945,
+                  "endColumn": 24
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "HexToDec",
+                  "decoratedName": "?HexToDec@@YAHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '-' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '-' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 948,
+                  "startColumn": 15,
+                  "endLine": 948,
+                  "endColumn": 24
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "HexToDec",
+                  "decoratedName": "?HexToDec@@YAHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "C26451",
+          "message": {
+            "text": "Arithmetic overflow: Using operator '-' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator '-' to avoid overflow (io.2)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+                },
+                "region": {
+                  "startLine": 951,
+                  "startColumn": 15,
+                  "endLine": 951,
+                  "endColumn": 24
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "HexToDec",
+                  "decoratedName": "?HexToDec@@YAHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z",
+                  "kind": "function"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "PREfast",
+          "fullName": "PREfast Code Analysis",
+          "version": "14.32.31328.0",
+          "informationUri": "https://aka.ms/cpp/ca"
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "artifacts": [
+        {
+          "location": {
+            "uri": "file:///D:/Code/Astro8-Computer/Astro8-Emulator/main.cpp"
+          },
+          "roles": [
+            "analysisTarget",
+            "resultFile"
+          ],
+          "hashes": {
+            "sha-256": "92c29da4991f0baf1fc4ade61f1a0b58dabf325ed0ad7007aeeb7dc39a318e89"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl.h"
+          },
+          "hashes": {
+            "sha-256": "d1fccf859815fb0e9f23c763dfae9756f2b08d37ea6cb04fce677f68b00b5072"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_main.h"
+          },
+          "hashes": {
+            "sha-256": "1e9a1c2d69f5e2688d2666bfd5c5043b64afd81d8dd4525b136b90d138bc8d58"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_stdinc.h"
+          },
+          "hashes": {
+            "sha-256": "3c36de5abb54957dd867f786ad8c3f6d33027367cf21b71b5d54487b5870ebe1"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_config.h"
+          },
+          "hashes": {
+            "sha-256": "1549baba7c919c6fbe3d86efba5a6c535a5c15c38716df1f8fd643deb62b3f3b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_platform.h"
+          },
+          "hashes": {
+            "sha-256": "c8dc707e0b918085d996c60a9eba6583b95175dea25a68914f28f36f521ba64c"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/begin_code.h"
+          },
+          "hashes": {
+            "sha-256": "54f920bd66e024bdb2c50dce8ad5f52a3c67c8bd79a8d02bdef9e0aeafb79d80"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/close_code.h"
+          },
+          "hashes": {
+            "sha-256": "c4a53d63c3474e9c089340ae7620398ee3d4d7300ddbc7b930428d3bc2ae7abb"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_assert.h"
+          },
+          "hashes": {
+            "sha-256": "9242d184ce044e75ea0110219700e533ed114ce0f23e4b762ca0837cd1c1d464"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_atomic.h"
+          },
+          "hashes": {
+            "sha-256": "3964b086d798bab01363fb038ba9c68390e77e7b094add45022d58f74d3a8afc"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_audio.h"
+          },
+          "hashes": {
+            "sha-256": "b0eaa84beba8accfd657236fa8827202a6e7b9de018481a5375b2ed10cff0148"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_error.h"
+          },
+          "hashes": {
+            "sha-256": "25c028795dc4cc91acc53e9d0b4ff3de478ed58831e41e39cdb4938ec7e84362"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_endian.h"
+          },
+          "hashes": {
+            "sha-256": "4712c88b1746472c9a81d649ddce73aea1311aeb18d25d72a716b4487659d538"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_mutex.h"
+          },
+          "hashes": {
+            "sha-256": "2fbd52857ed9261a1b48bcb7cf29be72cb4d4a1c862da3965491b0a74334ec72"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_thread.h"
+          },
+          "hashes": {
+            "sha-256": "52b816a485bcded01b1a26b19d572451ce9ba5a7a1eaf8b83985596e6d224710"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_rwops.h"
+          },
+          "hashes": {
+            "sha-256": "cc67e06d695ebc9df59f7d21769adfd85a83e342628f5c2dcf3f350b5a32e1c8"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_clipboard.h"
+          },
+          "hashes": {
+            "sha-256": "f48e7ee117a098c2681d326f6ef4bb5df7b3fa3babbdff75289ec1ecec7bf457"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_cpuinfo.h"
+          },
+          "hashes": {
+            "sha-256": "bf4a90d072224cd5313536360f6a785691714ca13276d36bf06d400fe3f81c1d"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_events.h"
+          },
+          "hashes": {
+            "sha-256": "f7d66663f506d33c3c232711eeee19c2af996921ffed6061b85790204d16ace8"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_video.h"
+          },
+          "hashes": {
+            "sha-256": "87cd0c4beed3822c16a9e210db8feab5a68ec123e72b330116696a5a897f0791"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_pixels.h"
+          },
+          "hashes": {
+            "sha-256": "e27b3b58ec9867276c6d80977c02359515f6d077eaa98db11cee92cfa9a0b4cd"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_rect.h"
+          },
+          "hashes": {
+            "sha-256": "533d522d100fc9d216842f9ef237dc0832a47e28ae36e4cf26373ff8eab98ae6"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_surface.h"
+          },
+          "hashes": {
+            "sha-256": "191469ad7d0c579616ea4b2378a2505ab4796c0e15f0de9d657ca2726985737c"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_blendmode.h"
+          },
+          "hashes": {
+            "sha-256": "a28cab0cfd260382b5f5fc899c209355c9ee8b04ffd96faa97e62184e19ccebf"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_keyboard.h"
+          },
+          "hashes": {
+            "sha-256": "c358cbf7542087bbdbef40a5677d69cca0dffba510425b79ea94fae9b52781b0"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_keycode.h"
+          },
+          "hashes": {
+            "sha-256": "5dd04f82033353a798e0e431da49ce48d3fee8539136691d44899a9e57bbe04e"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_scancode.h"
+          },
+          "hashes": {
+            "sha-256": "624be34ea7b5710709dc203835268734d427a30762d3e02d4ba1084c5955bb9c"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_mouse.h"
+          },
+          "hashes": {
+            "sha-256": "55bb5f717ade8c45870d993de743c08f195af703569202a0623e08d455f036c4"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_joystick.h"
+          },
+          "hashes": {
+            "sha-256": "d3867c70e484076ea312096307fa4dc8fb96026a14114f32236090640cd7a14b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_gamecontroller.h"
+          },
+          "hashes": {
+            "sha-256": "161c705769a7733ab614590524d10d34bae81b26da54fb79713b9f9994d38daf"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_sensor.h"
+          },
+          "hashes": {
+            "sha-256": "6e89d33d44a100c710c4156e8e96bf484be1719540e200b203cae7db7942eb0f"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_quit.h"
+          },
+          "hashes": {
+            "sha-256": "317adcb8b472ec7f130615a7271ab2ecf827c5f1ae3fe3be2009ec3496147982"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_gesture.h"
+          },
+          "hashes": {
+            "sha-256": "6ad20e0ad74eebb535aa72c4e92918f50f423a4731565080b580ded5f4f61fdf"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_touch.h"
+          },
+          "hashes": {
+            "sha-256": "4b77a2091a5d27f87af629340603289e65171e38d5574b278e411c602edad27d"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_filesystem.h"
+          },
+          "hashes": {
+            "sha-256": "5b53b8870a09a05144773d308b4f0cf74c7162b9e913306664a1d0da314cb7db"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_haptic.h"
+          },
+          "hashes": {
+            "sha-256": "fb90add4ebffd9e5b5431e52b56fb1302afb2e4c54541ad75ce38690b1ab27ab"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_hidapi.h"
+          },
+          "hashes": {
+            "sha-256": "276e1a30e0ee9c7e9267ab3dc74c2d800ef5d11186ecad3e72b7c477a8141e4e"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_hints.h"
+          },
+          "hashes": {
+            "sha-256": "4bead8e87ac65e25fee2954368716c0bdb9334020fa51077ed283eaae100a005"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_loadso.h"
+          },
+          "hashes": {
+            "sha-256": "3e05c32c3256d5d01f67251533f2938b27f37ef3cd4ccd497222f44ddc239a97"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_log.h"
+          },
+          "hashes": {
+            "sha-256": "c96d6935b73b42a8bc037037780e1aa3b9d465a45a308f913c99c3de49776c16"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_messagebox.h"
+          },
+          "hashes": {
+            "sha-256": "3d17eb9169251c620959273f2470aef32fcdd3c52a4eba0ab94da0035dbf0dd1"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_metal.h"
+          },
+          "hashes": {
+            "sha-256": "e5e858c3c24882776a0a37c9c99da0f7bbcc81d289b3565975e7a49afad41e3b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_power.h"
+          },
+          "hashes": {
+            "sha-256": "da2db28f9b0e9506a8c743c12806c6935e794049702ad4fc0849257a5f7a9c7b"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_render.h"
+          },
+          "hashes": {
+            "sha-256": "6228adff79211e28631d80ec3208e091d7176e60f3a8ab367964bed4cde35a97"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_shape.h"
+          },
+          "hashes": {
+            "sha-256": "cf2e283d2e05f7b23eb936dec5d06c795ec7fae84cd00a6dea87a1e8a2ba43bf"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_system.h"
+          },
+          "hashes": {
+            "sha-256": "d18a7b1dad5c71c581bdf06a6e50017d1d5cb91d00fec6b442a0ad9ad64f11f3"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_timer.h"
+          },
+          "hashes": {
+            "sha-256": "ea0a1e33da371052b34719de49238d9496ca3c5d53f82dbdfa45aa17360dd754"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_version.h"
+          },
+          "hashes": {
+            "sha-256": "6313b3a0242473f3c0fc30c04f3b2c8fb8290de3caadd9a67c658164eaa5b5de"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_locale.h"
+          },
+          "hashes": {
+            "sha-256": "8000e74e51738970ae8e06fc55c711aa50ae0161d9c2b2f75622a4f7bc6dddf3"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/sdl2-2.0.18/include/sdl_misc.h"
+          },
+          "hashes": {
+            "sha-256": "81f963a0657a922b90d9bcc69e2943ad6c7710b57f7490a38820ccc7d2ddd92c"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/astro8-computer/astro8-emulator/colorprint.h"
+          },
+          "hashes": {
+            "sha-256": "0634fd6d95ef06be3424bf8e3d5b71b8c84b7e4a2c224a80f7763d294e3398ce"
+          }
+        },
+        {
+          "location": {
+            "uri": "file:///d:/code/astro8-computer/astro8-emulator/color.hpp"
+          },
+          "hashes": {
+            "sha-256": "b11c90d2877d517d3ffb7f08a8a58571aec82ca8b29d7cdc099af07959e61127"
+          }
+        }
+      ]
+    }
+  ]
+}
