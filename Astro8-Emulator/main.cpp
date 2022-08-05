@@ -54,8 +54,6 @@ int pixelRamIndex = 0xefff;
 #define TARGET_CPU_FREQ 10000000
 #define TARGET_RENDER_FPS 60.0
 
-uint64_t iterations = 0;
-
 static vector<int> memoryBytes;
 static vector<int> charRam;
 
@@ -473,14 +471,12 @@ static void Update()
 		{
 			// CR
 			// AW
-			memoryIndex = programCounter;
 			// RM
 			// IW
-			InstructionReg = memoryBytes[memoryIndex];
+			InstructionReg = memoryBytes[programCounter];
 			// CE
-			programCounter = programCounter + 1;
-			step = 1;
-			continue;
+			programCounter += 1;
+			step = 2;
 		}
 
 		// Address in microcode ROM
@@ -490,9 +486,8 @@ static void Update()
 
 		// Check for any reads and execute if applicable
 		MicroInstruction readInstr = mcode & READ_MASK;
-		switch (readInstr)
+		switch (readInstr)[[likely]]
 		{
-		[[likely]] default: break;
 		case READ_RA:
 			bus = AReg;
 			break;
@@ -620,23 +615,11 @@ static void Update()
 		{
 			programCounter++;
 		}
-		if (mcode & STANDALONE_ST) [[unlikely]]
-		{
-			cout << ("\n== PAUSED from HLT ==\n\n");
-			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
-			cout << "\n\nPress Enter to Exit...";
-			cin.ignore();
-			exit(1);
-		}
 		if (mcode & STANDALONE_EI)
 		{
 			break;
 		}
 	}
-
-	iterations += 1;
-	if (iterations >= 0xFFFFFFFF)
-		iterations = 1;
 }
 
 static void DrawNextPixel() {
