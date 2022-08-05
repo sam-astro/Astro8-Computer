@@ -40,7 +40,7 @@ int flags[3] = { 0, 0, 0 };
 int bus = 0;
 int outputReg = 0;
 uint16_t memoryIndex = 0;
-uint16_t programCounter = 0;
+uint64_t programCounter = 0;
 
 int imgX = 0;
 int imgY = 0;
@@ -54,10 +54,10 @@ int pixelRamIndex = 0xefff;
 #define TARGET_CPU_FREQ 10000000
 #define TARGET_RENDER_FPS 60.0
 
-unsigned int iterations = 0;
+uint64_t iterations = 0;
 
-vector<int> memoryBytes;
-vector<int> charRam;
+static vector<int> memoryBytes;
+static vector<int> charRam;
 
 string action = "";
 
@@ -69,7 +69,7 @@ using MicroInstruction = uint16_t;
 static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 	"Size of MicroInstruction is too small, increase its width...");
 
-vector<MicroInstruction> microinstructionData;
+static MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
 	ALU_SU =   0b00000000000001,
@@ -111,7 +111,7 @@ enum StandaloneInstruction : MicroInstruction {
 };
 
 
-vector<bool> characterRom;
+static vector<bool> characterRom;
 
 SDL_Rect r;
 
@@ -125,12 +125,12 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Surface* gScreenSurface = NULL;
 
 // Function List
-bool Update();
-void Draw();
-void DrawPixel(int x, int y, int r, int g, int b);
+static void Update();
+static void Draw();
+static void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 string charToString(char* a);
-unsigned BitRange(unsigned value, unsigned offset, unsigned n);
+static unsigned BitRange(unsigned value, unsigned offset, unsigned n);
 string DecToHexFilled(int input, int desiredSize);
 string BinToHexFilled(const string& input, int desiredSize);
 int BinToDec(const string& input);
@@ -154,7 +154,7 @@ int ConvertAsciiToSdcii(int asciiCode);
 int GetVariableAddress(const string& id);
 
 SDL_Texture* texture;
-std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+static std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
 string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC" };
@@ -194,7 +194,7 @@ string instructioncodes[] = {
 };
 
 
-void apply_pixels(
+static void apply_pixels(
 	std::vector<unsigned char>& pixels,
 	SDL_Texture* texture,
 	unsigned int screen_width)
@@ -208,7 +208,7 @@ void apply_pixels(
 	);
 }
 
-void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)
+static void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)
 {
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
@@ -220,7 +220,7 @@ void clear_buffers(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	SDL_RenderClear(renderer);
 }
 
-void set_pixel(
+static void set_pixel(
 	std::vector<unsigned char>* pixels,
 	int x, int y, int screen_width,
 	Uint8 r, Uint8 g, Uint8 b, Uint8 a
@@ -462,7 +462,7 @@ int main(int argc, char** argv)
 }
 
 
-bool Update()
+static void Update()
 {
 
 	for (int step = 0; step < 16; step++)
@@ -484,7 +484,7 @@ bool Update()
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = ((InstructionReg >> 11) * 64) + (step * 4) + (flags[0] * 2) + flags[1];
+		int microcodeLocation = ((InstructionReg >> 5) & 0b11111000000) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
@@ -492,6 +492,7 @@ bool Update()
 		MicroInstruction readInstr = mcode & READ_MASK;
 		switch (readInstr)
 		{
+		[[likely]] default: break;
 		case READ_RA:
 			bus = AReg;
 			break;
@@ -513,7 +514,6 @@ bool Update()
 		case READ_RE:
 			bus = expansionPort;
 			break;
-		default: break;
 		}
 
 
@@ -521,7 +521,7 @@ bool Update()
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
-		if (mcode & STANDALONE_EO)
+		if (mcode & STANDALONE_EO) [[unlikely]]
 		{
 			flags[0] = 0;
 			flags[1] = 0;
@@ -587,6 +587,7 @@ bool Update()
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
+		[[likely]] default: break;
 		case WRITE_WA:
 			AReg = bus;
 			break;
@@ -615,11 +616,11 @@ bool Update()
 
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode & STANDALONE_CE)
+		if (mcode & STANDALONE_CE) [[unlikely]]
 		{
 			programCounter++;
 		}
-		if (mcode & STANDALONE_ST)
+		if (mcode & STANDALONE_ST) [[unlikely]]
 		{
 			cout << ("\n== PAUSED from HLT ==\n\n");
 			cout << ("FINAL VALUES |=   A: " + to_string(AReg) + " B: " + to_string(BReg) + " C: " + to_string(CReg) + " bus: " + to_string(bus) + " Ins: " + to_string(InstructionReg) + " img:(" + to_string(imgX) + ", " + to_string(imgY) + ")\n");
@@ -636,8 +637,6 @@ bool Update()
 	iterations += 1;
 	if (iterations >= 0xFFFFFFFF)
 		iterations = 1;
-
-	return true;
 }
 
 static void DrawNextPixel() {
@@ -700,7 +699,7 @@ static void DrawNextPixel() {
 	pixelRamIndex++;
 }
 
-void Draw() {
+static void Draw() {
 	while (true) {
 		DrawNextPixel();
 		if (pixelRamIndex >= 65535) {
@@ -869,7 +868,7 @@ vector<string> splitByComparator(string str) {
 }
 
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
-unsigned BitRange(unsigned value, unsigned offset, unsigned n)
+static unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 {
 	return(value >> offset) & ((1u << n) - 1);
 }
@@ -2076,7 +2075,6 @@ void GenerateMicrocode()
 {
 	// Generate zeros in data
 	vector<string> output;
-	microinstructionData.resize(2048);
 	for (int osind = 0; osind < 2048; osind++) {
 		output.push_back("00000");
 	}
