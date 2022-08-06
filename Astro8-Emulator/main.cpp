@@ -9,6 +9,8 @@
 #include <sstream>
 #include <fstream>
 #include "colorprint.h"
+#include <stdio.h>
+#include <codecvt>
 
 #ifdef _WIN32
 #define SYS_PAUSE system("pause")
@@ -21,6 +23,14 @@
 #endif
 
 #define DEV_MODE false
+
+
+#if UNIX
+#include <unistd.h>
+#include <filesystem>
+#elif WINDOWS
+#include <windows.h>
+#endif
 
 
 using namespace std;
@@ -57,7 +67,8 @@ int pixelRamIndex = 0xefff;
 static vector<int> memoryBytes;
 static vector<int> charRam;
 
-string action = "";
+
+string projectDirectory;
 
 
 // Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
@@ -248,6 +259,42 @@ int clamp(int x, int min, int max) {
 	return x;
 }
 
+vector<string> PreProcess(string unProcessed) {
+	// Pre-process lines of code
+
+	cout << "Preprocessing...";
+	vector<string> codelines = split(unProcessed, "\n");
+	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
+
+	// Remove line if it is blank or is just a comment
+	auto isEmptyOrBlank = [](const std::string& s) {
+		return s.find_first_not_of(" \t/") == std::string::npos;
+	};
+	auto isComment = [](const std::string& s) {
+		if (trim(s).size() >= 2)
+			return trim(s)[0] == '/' && trim(s)[1] == '/';
+		return false;
+	};
+	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isEmptyOrBlank), codelines.end());
+	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isComment), codelines.end());
+
+	return codelines;
+}
+
+// Convert vector of strings into single string separated by \n character
+string VecToString(const vector<string>& vec) {
+	string newStr;
+
+	for (int i = 0; i < (int)vec.size(); i++)
+	{
+		newStr += vec[i];
+		if (i != (int)vec.size() - 1)
+			newStr += "\n";
+	}
+
+	return newStr;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -302,6 +349,8 @@ int main(int argc, char** argv)
 			cin.ignore();
 			exit(1);
 		}
+
+		projectDirectory = path.substr(0, path.find_last_of("/\\"));
 	}
 	else if (argc != 1) {
 		PrintColored("\nError: could not open file ", redFGColor, "");
@@ -314,9 +363,60 @@ int main(int argc, char** argv)
 	// If the code inputted is marked as written in armstrong with #AS
 	if (split(code, "\n")[0] == "#AS")
 	{
+		vector<string> codelines = PreProcess(code);
+
+		for (int i = 0; i < codelines.size(); i++)
+		{
+			// If including another file:    #include "./path/to/file.arm"
+			if (split(codelines[i], " ")[0] == "#include") {
+				string clCpy = codelines[i];
+
+				codelines.erase(codelines.begin() + i); // Remove the #include
+
+				string path = trim(split(clCpy, " ")[1]);
+				path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
+				path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
+
+				// If the path is relative, append the known project path to make it absolute.
+				if (path[0] == '.')
+					path = projectDirectory + path;
+
+				// Open and read file, appending code onto it after
+				string codeTmp = "";
+				string li;
+				ifstream fileStr(path);
+				if (fileStr.is_open())
+				{
+					while (getline(fileStr, li)) {
+						if(li!="#AS") // We don't need another Armstrong label, so we can remove it
+							codeTmp += li + "\n";
+					}
+					fileStr.close();
+				}
+				else {
+					PrintColored("\nError: could not open file ", redFGColor, "");
+					PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
+					PrintColored("as used with include here:  ", redFGColor, "");
+					PrintColored(clCpy + "\n", yellowFGColor, "");
+					cout << "\n\nPress Enter to Exit...";
+					cin.ignore();
+					exit(1);
+				}
+
+				code = codeTmp + "\n\n" + VecToString(codelines);
+
+				// Reprocess and go back to beginning
+				codelines = PreProcess(code);
+				i = 0;
+			}
+		}
+
+
+
+
+		// Compile
 		cout << "Compiling AS..." << endl;
 		code = CompileCode(code);
-		//code = CompileCode("#AS\nmult @C,0x2f -> 0xfff\nchange $variable = 6\nadd @A,$variable -> 0xfff\nchange $variable = @B\n#jmpHere\nchange @EX = @C\nchange $variable = 123\nchange $variable = 3\ndefine 400 3\n#anotherlabel\nchange $variable = 234\nchange $variable = 3\nif @A==@C:\nchange $variable = 0x2f\ngoto 0x0\nendif\ngoto #jmpHere\ngotoif @A==0x13,0x0\nchange $variable = @C\nchange @C = $variable\n");
 
 		if (code != "") {
 			cout << "Output:\n";
@@ -1322,24 +1422,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 // Compile Armstrong into assembly
 string CompileCode(const string& inputcode) {
 
-	// Pre-process lines of code
-
-	cout << "Preprocessing started...";
-	vector<string> codelines = split(inputcode, "\n");
-	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
-
-	// Remove line if it is blank or is just a comment
-	auto isEmptyOrBlank = [](const std::string& s) {
-		return s.find_first_not_of(" \t/") == std::string::npos;
-	};
-	auto isComment = [](const std::string& s) {
-		if (trim(s).size() >= 2)
-			return trim(s)[0] == '/' && trim(s)[1] == '/';
-		return false;
-	};
-	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isEmptyOrBlank), codelines.end());
-	codelines.erase(std::remove_if(codelines.begin(), codelines.end(), isComment), codelines.end());
-
+	vector<string> codelines = PreProcess(inputcode);
 
 	cout << endl;
 	// Remove comments from end of lines and trim whitespace
