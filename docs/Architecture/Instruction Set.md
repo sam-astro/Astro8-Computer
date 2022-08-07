@@ -7,7 +7,11 @@ nav_order : 3
 
 # Instruction Set
 
-## List:
+## Unindexed:
+* [SET](#set)
+* [HERE](#here)
+
+## Indexed:
 0. [NOP](#nop)
 1. [AIN](#ain)
 2. [BIN](#bin)
@@ -36,10 +40,32 @@ nav_order : 3
 
 <br>
 
-## NOP
-*No operation: acts as a fetch without an instruction.*
+## SET
+*Set the specified memory location to a value during assembly*
 
+### Syntax:
+
+```
+SET〈 Ａｄｄｒｅｓｓ 〉〈 Ｖａｌｕｅ 〉
+```
+
+<br>
+
+## HERE
+*Set the location of the `HERE` in memory equal to a value during assembly*
+
+### Syntax:
+
+```
+HERE〈 Ｖａｌｕｅ 〉
+```
+
+<br>
+
+## NOP
 ID: `0`, `0b00000`
+
+*No operation: acts as a fetch without an instruction.*
 
 ### Syntax:
 
@@ -93,7 +119,7 @@ CIN 〈 Ａｄｄｒｅｓｓ 〉
 
 ## LDIA
 
-ID: `4`, `00100`
+ID: `4`, `0b00100`
 
 *Load immediate value into register* ***A***
 
@@ -107,7 +133,7 @@ LDIA 〈 Ｖａｌｕｅ 〉
 
 ## LDIB
 
-ID: `5`, `00101`
+ID: `5`, `0b00101`
 
 *Load immediate value into register* ***B***
 
@@ -119,59 +145,65 @@ LDIB 〈 Ｖａｌｕｅ 〉
 
 <br>
 
-## Expansion Port
+## RDEXP
 
-`00110`   `00111`
+ID: `6`, `0b00110`
 
-Read from / write to the expansion port to / from register B.
-
-<br>
+Read from the expansion port into register A.
 
 ### Syntax
-
-**Expansion Port 🠖 B**
 
 ```
 RDEXP
 ```
 
-**Expansion Port 🠔 B**
+<br>
+
+## WREXP
+
+ID: `7`, `0b00111`
+
+Write from register A onto the expansion port.
+
+### Syntax
 
 ```
 WREXP
 ```
 
 <br>
-<br>
 
-## Store Value
+## STA
 
-`01000`   `01001`
+ID: `8`, `0b01000`
 
-Store the register value at the given memory address.
-
-<br>
+Store register A into the given memory address.
 
 ### Syntax
-
-**A 🠖 Memory**
 
 ```
 STA 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
-**C 🠖 Memory**
+<br>
+
+## STC
+
+ID: `9`, `0b01001`
+
+Store register C into the given memory address.
+
+### Syntax
 
 ```
 STC 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
 <br>
-<br>
 
 ## Math
 
-`01010`   `01011`   `01100`   `01101`
+10, `0b01010`   11, `0b01011`   12, `0b01100`   13, `0b01101`
 
 Execute the mathematic operation on <br>
 register A & B and save the result in A.
@@ -179,25 +211,28 @@ register A & B and save the result in A.
 <br>
 
 ### Syntax
-
+#### ADD
 **A  +  B  🠖  A**
 
 ```
 ADD
 ```
 
+#### SUB
 **A    -    B  🠖  A**
 
 ```
 SUB
 ```
 
+#### MULT
 **A  ×  B  🠖  A**
 
 ```
 MULT
 ```
 
+#### DIV
 **A**  **÷**  **B**  **🠖**  **A**
 
 ```
@@ -205,141 +240,151 @@ DIV
 ```
 
 <br>
-<br>
 
 ## Jump
 
-`01110`   `01111`   `10000`
+14, `0b01110`   15, `0b01111`   16, `0b10000`   17, `0b10001`
 
 Jumps to the given instruction position, <br>
-which intern sets the program counter.
+done by setting the program counter. <br>
+The address is given by the value stored <br>
+directly after this instruction in memory
 
-<br>
 
 ### Syntax
-
+#### JMP
 ```
-JMP 〈 Ｖａｌｕｅ 〉
+JMP
+HERE〈 Ａｄｄｒｅｓｓ 〉
 ```
 
+#### JMPZ
 Jump if register **A** is zero
-
 ```
-JMPZ 〈 Ｖａｌｕｅ 〉
+JMPZ
+HERE〈 Ａｄｄｒｅｓｓ 〉
 ```
 
+#### JMPC
 Jump if the carry bit is set
-
 ```
-JMPC 〈 Ｖａｌｕｅ 〉
+JMPC
+HERE〈 Ａｄｄｒｅｓｓ 〉
+```
+
+#### JREG
+Jump to the value stored in register A
+```
+JREG
 ```
 
 <br>
-<br>
 
-## Exchange Memory
+## LDAIN
 
-`10001`   `10010`
+ID: 18, `0b10010`
 
 Use register **A**s value as memory address <br>
-to either load or store a memory value.
+to load a value from RAM into register **A**
+
+### Syntax
+**Memory  🠖  A**
+```
+LDAIN
+```
+
+<br>
+
+## STAOUT
+
+ID: 19, `0b10011`
+
+Use register **A**s value as memory address to then <br>
+store the value inside of register **B** into RAM
 
 <br>
 
 ### Syntax
-
 **Memory  🠖  A**
-
 ```
 LDAIN
 ```
 
 **B  🠖  Memory**
-
 ```
 STAOUT
 ```
 
 <br>
-<br>
 
 ## LDLGE
 
-`10011`
+ID: 20, `0b10100`
 
-Use value directly after instruction <br>
-as address to copy from memory <br>
-to reg A and advance counter by 2.
-
-<br>
+Use value directly after instruction as <br>
+address to read from memory into register **A**
 
 ### Syntax
 
 ```
 LDLGE
+HERE 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
-<br>
 <br>
 
 ## STLGE
 
-`10100`
+ID: 21, `0b10101`
 
 Use value directly after counter as <br>
-address, then copy value from reg A <br>
-to memory and advance counter by 2.
-
-<br>
+address to write from register **A** into memory
 
 ### Syntax
 
 ```
 STLGE
+HERE 〈 Ａｄｄｒｅｓｓ 〉
 ```
 
 <br>
+
+## LDW
+
+ID: 22, `0b10110`
+
+Load value directly after this into <br>
+register **A**
+
+### Syntax
+
+```
+LDW
+HERE 〈 Ｖａｌｕｅ 〉
+```
+
 <br>
 
 ## Swap
 
-`10101`   `10110`
+23, `10111`   24, `11000`
 
 Swaps two registers with each other <br>
-& as a side-effect overrides the third.
-
-<br>
+& as a side-effect overwrites the third.
 
 ### Syntax
-
-**A  ⟷  B   Overrides C**
-
+#### SWP
+**A  ⟷  B   Overwrites C**
 ```
 SWP
 ```
 
-**A  ⟷  C   Overrides B** 
-
+#### SWPC
+**A  ⟷  C   Overwrites B** 
 ```
 SWPC
 ```
 
 <br>
-<br>
 
-## Halt
-
-`10111`
-
-Stop the clock and thus execution.
-
-<br>
-
-### Syntax
-
-```
-HLT
-```
-
-<br>
 
