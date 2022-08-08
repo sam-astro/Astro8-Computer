@@ -43,7 +43,7 @@ The two most supported ways to program for the computer is using the [assembly l
 
 ## Other projects related to the Astro-8:
 > These projects are not always compatable with the main branch of the official Astro8-Computer repository. Please read the instructions in their project's repo before using.
-* Astro8-VM by @LucasJG1994 https://github.com/LucasJG1994/Astro8-VM
+* https://github.com/LucasJG1994/Astro8-VM  -  Astro8-VM by [@LucasJG1994](https://github.com/LucasJG1994)
 
 
 <br>
