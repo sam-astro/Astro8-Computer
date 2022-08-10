@@ -1,5 +1,4 @@
-#ifndef BUILTIN_H
-#define BUILTIN_H
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -21,109 +20,52 @@
 #include "color.hpp"
 #endif
 
+#include "processing.h"
+
 using namespace std;
 
 // Foreground colors
-const std::string blackFGColor = "\x1B[30m";
-const std::string redFGColor = "\x1B[31m";
-const std::string greenFGColor = "\x1B[32m";
-const std::string yellowFGColor = "\x1B[33m";
-const std::string blueFGColor = "\x1B[34m";
-const std::string magentaFGColor = "\x1B[35m";
-const std::string cyanFGColor = "\x1B[36m";
-const std::string whiteFGColor = "\x1B[37m";
-const std::string brightBlackFGColor = "\x1B[90m";
-const std::string brightRedFGColor = "\x1B[91m";
-const std::string brightGreenFGColor = "\x1B[92m";
-const std::string brightYellowFGColor = "\x1B[93m";
-const std::string brightBlueFGColor = "\x1B[94m";
-const std::string brightMagentaFGColor = "\x1B[95m";
-const std::string brightCyanFGColor = "\x1B[96m";
-const std::string brightWhiteFGColor = "\x1B[97m";
+static const std::string blackFGColor = "\x1B[30m";
+static const std::string redFGColor = "\x1B[31m";
+static const std::string greenFGColor = "\x1B[32m";
+static const std::string yellowFGColor = "\x1B[33m";
+static const std::string blueFGColor = "\x1B[34m";
+static const std::string magentaFGColor = "\x1B[35m";
+static const std::string cyanFGColor = "\x1B[36m";
+static const std::string whiteFGColor = "\x1B[37m";
+static const std::string brightBlackFGColor = "\x1B[90m";
+static const std::string brightRedFGColor = "\x1B[91m";
+static const std::string brightGreenFGColor = "\x1B[92m";
+static const std::string brightYellowFGColor = "\x1B[93m";
+static const std::string brightBlueFGColor = "\x1B[94m";
+static const std::string brightMagentaFGColor = "\x1B[95m";
+static const std::string brightCyanFGColor = "\x1B[96m";
+static const std::string brightWhiteFGColor = "\x1B[97m";
 //Background colors
-const std::string blackBGColor = "\x1B[40m";
-const std::string redBGColor = "\x1B[41m";
-const std::string greenBGColor = "\x1B[42m";
-const std::string yellowBGColor = "\x1B[43m";
-const std::string blueBGColor = "\x1B[44m";
-const std::string magentaBGColor = "\x1B[45m";
-const std::string cyanBGColor = "\x1B[46m";
-const std::string whiteBGColor = "\x1B[47m";
-const std::string brightBlackBGColor = "\x1B[100m";
-const std::string brightRedBGColor = "\x1B[101m";
-const std::string brightGreenBGColor = "\x1B[102m";
-const std::string brightYellowBGColor = "\x1B[103m";
-const std::string brightBlueBGColor = "\x1B[104m";
-const std::string brightMagentaBGColor = "\x1B[105m";
-const std::string brightCyanBGColor = "\x1B[106m";
-const std::string brightWhiteBGColor = "\x1B[107m";
+static const std::string blackBGColor = "\x1B[40m";
+static const std::string redBGColor = "\x1B[41m";
+static const std::string greenBGColor = "\x1B[42m";
+static const std::string yellowBGColor = "\x1B[43m";
+static const std::string blueBGColor = "\x1B[44m";
+static const std::string magentaBGColor = "\x1B[45m";
+static const std::string cyanBGColor = "\x1B[46m";
+static const std::string whiteBGColor = "\x1B[47m";
+static const std::string brightBlackBGColor = "\x1B[100m";
+static const std::string brightRedBGColor = "\x1B[101m";
+static const std::string brightGreenBGColor = "\x1B[102m";
+static const std::string brightYellowBGColor = "\x1B[103m";
+static const std::string brightBlueBGColor = "\x1B[104m";
+static const std::string brightMagentaBGColor = "\x1B[105m";
+static const std::string brightCyanBGColor = "\x1B[106m";
+static const std::string brightWhiteBGColor = "\x1B[107m";
 // Reset color
-const std::string resetColor = "\033[0m";
+static const std::string resetColor = "\033[0m";
 
 
-// trim from start (in place)
-static inline void ltrim(std::string& s) {
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-		return !std::isspace(ch);
-		}));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string& s) {
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-		return !std::isspace(ch);
-		}).base(), s.end());
-}
-
-// trim from both ends (in place)
-static inline string trim(std::string s) {
-	string ss = s;
-	ltrim(ss);
-	rtrim(ss);
-	return ss;
-}
-
-vector<string> split(string str, string token) {
-	vector<string>result;
-	while (str.size()) {
-		int index = str.find(token);
-		if (index != string::npos) {
-			result.push_back(str.substr(0, index));
-			str = str.substr(index + token.size());
-			if (str.size() == 0)result.push_back(str);
-		}
-		else {
-			result.push_back(str);
-			str = "";
-		}
-	}
-	return result;
-}
-
-string IndentText(string text) {
-	vector<string> nstr = split(text, "\n");
-	string outStr = "";
-	for (size_t i = 0; i < nstr.size(); i++)
-	{
-		outStr += "	" + nstr[i] + "\n";
-	}
-
-	return outStr;
-}
-
-string JoinRange(vector<string> strs, int start, int max) {
-	string outStr = "";
-	for (size_t i = start; i < strs.size()&&i<=max; i++)
-	{
-		outStr += strs[i]+" ";
-	}
-
-	return outStr;
-}
 
 
-bool AccomodateSetInProgramRange(string entireLine, int currentLineCount) {
-	string command = split(entireLine, " ")[0];
+static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineCount) {
+	std::string command = split(entireLine, " ")[0];
 	if (trim(command) != "set") // Not 'set', passes test
 		return true;
 
@@ -137,7 +79,7 @@ bool AccomodateSetInProgramRange(string entireLine, int currentLineCount) {
 		return false; // If just a normal 'set', passes and doesn't increment counter.
 }
 
-void PrintColored(std::string text, std::string fgColor, std::string bgColor)
+static void PrintColored(std::string text, std::string fgColor, std::string bgColor)
 {
 #if WINDOWS
 	// Normal FG colors
@@ -216,8 +158,8 @@ void PrintColored(std::string text, std::string fgColor, std::string bgColor)
 #endif
 }
 
-void ColorAndPrintAssembly(std::string asmb) {
-	vector<string> nstr = split(asmb, "\n");
+static void ColorAndPrintAssembly(std::string asmb) {
+	vector<std::string> nstr = split(asmb, "\n");
 	int actualNum = 0;
 	for (size_t i = 0; i < nstr.size(); i++)
 	{
@@ -248,5 +190,3 @@ void ColorAndPrintAssembly(std::string asmb) {
 		}
 	}
 }
-
-#endif
