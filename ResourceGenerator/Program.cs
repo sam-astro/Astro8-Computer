@@ -46,8 +46,8 @@ public class Program
                 code += "define " + (200 + currentMemIndex) + " " + decval + "\r";
                 currentMemIndex++;
             }
-            code += File.ReadAllText("../../../../draw_image.txt") + "\r";
-            File.WriteAllText("../../../../code_text_val.txt", code, Encoding.UTF8);
+            code += File.ReadAllText("./draw_image.txt") + "\r";
+            File.WriteAllText("./code_text_val.txt", code, Encoding.UTF8);
 
         }
 

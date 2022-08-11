@@ -1,0 +1,92 @@
+#AS
+
+#start
+
+change $pixOffset = 61439 // Beginning of video memory
+change $charOffset = 16382 // Beginning of character memory
+
+// Start of memory where the line of pixel positions are stored
+change $pixelLineStart = 20000
+// Memory that dictates the direction each pixel is moving in
+change $pixelLineDirStart = 20100
+
+change $pixelLineCount = 0
+
+change $tmp = 0
+change $tmp2 = 0
+
+change $memoryLocationA = 0
+change $memoryLocationB = 0
+
+
+// #include "./dot.armstrong"
+
+#update
+
+change $pixelSingleCount = 1
+
+#SinglePixelLoop
+
+// Change position of pixel
+add $pixelLineCount,$pixelLineStart -> $memoryLocationA     // Position
+add $pixelLineCount,$pixelLineDirStart -> $memoryLocationB  // Direction
+change $valInA = *$memoryLocationA
+
+if *$memoryLocationB==0: // If pixel is moving down
+    // Clear last pixel
+    mult $valInA,64 -> $tmp
+    add $tmp,$pixelLineCount -> $tmp
+    add $tmp,$pixOffset -> $tmp
+    change *$tmp = 0
+    // Move location
+    add $valInA,1 -> $valInA
+    if *$memoryLocationA==16:
+        change *$memoryLocationB = 1
+    endif
+    // Render pixel
+    mult $valInA,64 -> $tmp
+    add $tmp,$pixelLineCount -> $tmp
+    add $tmp,$pixOffset -> $tmp
+    change *$tmp = 65534
+endif
+if *$memoryLocationB==1: // If pixel is moving up
+    // Clear last pixel
+    mult $valInA,64 -> $tmp
+    add $tmp,$pixelLineCount -> $tmp
+    add $tmp,$pixOffset -> $tmp
+    change *$tmp = 0
+    // Move location
+    sub $valInA,1 -> $valInA
+    if *$memoryLocationA==0:
+        change *$memoryLocationB = 0
+    endif
+    // Render pixel
+    mult $valInA,64 -> $tmp
+    add $tmp,$pixelLineCount -> $tmp
+    add $tmp,$pixOffset -> $tmp
+    change *$tmp = 65534
+endif
+
+change *$memoryLocationA = $valInA
+
+
+sub $pixelSingleCount,1 -> $pixelSingleCount
+
+gotoif $pixelSingleCount!=0, #SinglePixelLoop
+
+
+
+
+// Handle which pixel we are on
+add $pixelLineCount,1 -> $pixelLineCount
+if $pixelLineCount==64:
+    change $pixelLineCount = 0
+endif
+
+
+// change $_DOT_X = $pixelLineCount
+// change $_DOT_Y = *$memoryLocationA
+// add $_DOT_Y,32 -> $_DOT_Y
+// goto #DrawDot
+
+goto #update
