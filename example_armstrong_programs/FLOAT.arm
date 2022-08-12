@@ -1,0 +1,15 @@
+#AS
+
+// // Skip executing includes
+// goto #start
+
+// Includes
+#include "./STACK.arm"
+
+#start
+
+change $_FLOAT_SIGN = 0
+change $_FLOAT_EXPONENT = 0
+change $_FLOAT_MANTISSA = 0
+
+

@@ -1,0 +1,21 @@
+#AS
+
+change $_STACK_POINTER = 61438  // End of general purpose memory
+change $_STACK_LAST = 0
+change $_STACK_VAL = 0
+// change $_STACK_PROGRAM_COUNTER = 0
+
+// #_STACK_PUSH
+// sub $_STACK_POINTER,1 -> $_STACK_POINTER
+// change *$_STACK_POINTER = $_STACK_VAL
+
+// #_STACK_POP
+// change $_STACK_VAL = *$_STACK_POINTER
+// add $_STACK_POINTER,1 -> $_STACK_POINTER
+
+
+
+// asm"
+// pcr
+// "
+// change $_STACK_PROGRAM_COUNTER = @A

@@ -22,7 +22,7 @@
 	")   </dev/tty")
 #endif
 
-#define DEV_MODE true
+#define DEV_MODE false
 
 
 #if UNIX
@@ -68,52 +68,55 @@ std::string projectDirectory;
 
 // Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
 
-#define MICROINSTR_SIZE 15
+#define MICROINSTR_SIZE 16
 using MicroInstruction = uint16_t;
 static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 	"Size of MicroInstruction is too small, increase its width...");
 
-MicroInstruction microinstructionData[4096];
+MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU = 0b000000000000001,
-	ALU_MU = 0b000000000000010,
-	ALU_DI = 0b000000000000011,
-	ALU_SL = 0b000000000000100,
-	ALU_SR = 0b000000000000101,
-	ALU_MASK = 0b000000000000111,
+	ALU_SU =   0b0000000000000001,
+	ALU_MU =   0b0000000000000010,
+	ALU_DI =   0b0000000000000011,
+	ALU_SL =   0b0000000000000100,
+	ALU_SR =   0b0000000000000101,
+	ALU_AND =  0b0000000000000110,
+	ALU_OR =   0b0000000000000111,
+	ALU_NOT =  0b0000000000001000,
+	ALU_MASK = 0b0000000000001111,
 };
 
 enum ReadInstruction : MicroInstruction {
-	READ_RA = 0b000000000001000,
-	READ_RB = 0b000000000010000,
-	READ_RC = 0b000000000011000,
-	READ_RM = 0b000000000100000,
-	READ_IR = 0b000000000101000,
-	READ_CR = 0b000000000110000,
-	READ_RE = 0b000000000111000,
-	READ_MASK = 0b000000000111000,
+	READ_RA = 0b0000000000010000,
+	READ_RB = 0b0000000000100000,
+	READ_RC = 0b0000000000110000,
+	READ_RM = 0b0000000001000000,
+	READ_IR = 0b0000000001010000,
+	READ_CR = 0b0000000001100000,
+	READ_RE = 0b0000000001110000,
+	READ_MASK = 0b0000000001110000,
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA = 0b000000001000000,
-	WRITE_WB = 0b000000010000000,
-	WRITE_WC = 0b000000011000000,
-	WRITE_IW = 0b000000100000000,
-	WRITE_DW = 0b000000101000000,
-	WRITE_WM = 0b000000110000000,
-	WRITE_J = 0b000000111000000,
-	WRITE_AW = 0b000001000000000,
-	WRITE_WE = 0b000001001000000,
-	WRITE_MASK = 0b000001111000000,
+	WRITE_WA = 0b0000000010000000,
+	WRITE_WB = 0b0000000100000000,
+	WRITE_WC = 0b0000000110000000,
+	WRITE_IW = 0b0000001000000000,
+	WRITE_DW = 0b0000001010000000,
+	WRITE_WM = 0b0000001100000000,
+	WRITE_J = 0b0000001110000000,
+	WRITE_AW = 0b0000010000000000,
+	WRITE_WE = 0b0000010010000000,
+	WRITE_MASK = 0b0000011110000000,
 };
 
 enum StandaloneInstruction : MicroInstruction {
-	STANDALONE_FL = 0b000010000000000,
-	STANDALONE_EI = 0b000100000000000,
-	STANDALONE_ST = 0b001000000000000,
-	STANDALONE_CE = 0b010000000000000,
-	STANDALONE_EO = 0b100000000000000,
+	STANDALONE_FL = 0b0000100000000000,
+	STANDALONE_EI = 0b0001000000000000,
+	STANDALONE_ST = 0b0010000000000000,
+	STANDALONE_CE = 0b0100000000000000,
+	STANDALONE_EO = 0b1000000000000000,
 };
 
 
@@ -145,12 +148,12 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-std::string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "BSL", "BSR" };
+std::string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
-std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR" };
+std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT"};
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
 
 std::string instructioncodes[] = {
@@ -179,8 +182,12 @@ std::string instructioncodes[] = {
 		"ldw( 2=cr,aw & 3=ce,rm,wa & 4=ei", // Load value directly after counter into A, and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
+		"pcr( 2=cr,wa & 3=ei", // Program counter read, get the current program counter value and put it into register A
 		"bsl( 2=sl,wa,eo,fl & 3=ei", // Bit shift left A register, the number of bits to shift determined by the value in register B
 		"bsr( 2=sr,wa,eo,fl & 3=ei", // Bit shift left A register, the number of bits to shift determined by the value in register B
+		"and( 2=and,wa,eo,fl & 3=ei", // Logical AND operation on register A and register B, with result put back into register A
+		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
+		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 };
 
 
@@ -347,10 +354,13 @@ int main(int argc, char** argv)
 				ifstream fileStr(path);
 				if (fileStr.is_open())
 				{
+					//int randNum = rand() % 9999;
+					//codeTmp += "\ngoto #" + path + to_string(randNum);
 					while (getline(fileStr, li)) {
 						if (li != "#AS") // We don't need another Armstrong label, so we can remove it
 							codeTmp += li + "\n";
 					}
+					//codeTmp += "#" + path + to_string(randNum);
 					fileStr.close();
 				}
 				else {
@@ -624,7 +634,7 @@ void Update()
 				}
 				break;
 
-			case ALU_SL: // Shift left
+			case ALU_SL: // Logical bit shift left
 				bus = AReg << (BReg & 0b1111);
 
 				if (bus == 0)
@@ -637,8 +647,47 @@ void Update()
 				}
 				break;
 
-			case ALU_SR: // Shift right
+			case ALU_SR: // Logical bit shift right
 				bus = AReg >> (BReg & 0b1111);
+
+				if (bus == 0)
+					flags[0] = 1;
+
+				if (bus >= 65534)
+				{
+					bus = bus - 65534;
+					flags[1] = 1;
+				}
+				break;
+
+			case ALU_AND: // Logical AND
+				bus = AReg & BReg;
+
+				if (bus == 0)
+					flags[0] = 1;
+
+				if (bus >= 65534)
+				{
+					bus = bus - 65534;
+					flags[1] = 1;
+				}
+				break;
+
+			case ALU_OR: // Logical OR
+				bus = AReg | BReg;
+
+				if (bus == 0)
+					flags[0] = 1;
+
+				if (bus >= 65534)
+				{
+					bus = bus - 65534;
+					flags[1] = 1;
+				}
+				break;
+
+			case ALU_NOT: // Logical NOT
+				bus = ~AReg;
 
 				if (bus == 0)
 					flags[0] = 1;
@@ -701,6 +750,7 @@ void Update()
 		{
 			programCounter++;
 		}
+
 			if (mcode & STANDALONE_EI)
 			{
 				break;
@@ -1114,10 +1164,11 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 		{ // Check all ALU instruction types
 			if (stepContents.find(aluInstructionSpecialAddress[minsother]) != std::string::npos)
 			{
-				std::string binaryval = DecToBinFilled(minsother + 1, 3);
+				std::string binaryval = DecToBinFilled(minsother + 1, 4);
 				stepComputedInstruction[12] = binaryval[0];
 				stepComputedInstruction[13] = binaryval[1];
 				stepComputedInstruction[14] = binaryval[2];
+				stepComputedInstruction[15] = binaryval[3];
 			}
 		}
 
@@ -1177,7 +1228,7 @@ void GenerateMicrocode()
 #if DEV_MODE
 	cout << "\n\ngenerate fetch... \n";
 #endif
-	for (int ins = 0; ins < 32; ins++) // Iterate through all definitions of instructions
+	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
 		int correctedIndex = ins;
 
@@ -1191,7 +1242,7 @@ void GenerateMicrocode()
 
 			std::string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
@@ -1258,7 +1309,7 @@ void GenerateMicrocode()
 
 			std::string midaddress = DecToBinFilled(actualStep, 4);
 
-			char stepComputedInstruction[MICROINSTR_SIZE] = { '0','0', '0','0', '0','0', '0','0', '0','0', '0','0', '0','0','0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 

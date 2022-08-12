@@ -14,3 +14,10 @@ mult $_DOT_Y,64 -> $_DOT_TMP
 add $_DOT_X,$_DOT_TMP -> $_DOT_TMP
 add $_DOT_pixOffset,$_DOT_TMP -> $_DOT_TMP
 change *$_DOT_TMP = $_DOT_COLOR
+
+
+// Return:
+change $_STACK_VAL = *$_STACK_POINTER
+add $_STACK_POINTER,1 -> $_STACK_POINTER
+change @A = $_STACK_VAL
+asm"jreg"
