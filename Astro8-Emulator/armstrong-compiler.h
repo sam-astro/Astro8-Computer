@@ -7,6 +7,7 @@
 #include <iostream>
 #include "colorprint.h"
 #include <sstream>
+#include <cctype>
 
 #include "processing.h"
 

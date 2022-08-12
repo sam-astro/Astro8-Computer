@@ -11,6 +11,79 @@ vector<string> compiledLines;
 
 
 
+int ConvertAsciiToSdcii(int asciiCode) {
+	int conversionTable[600];  // [ascii] = sdcii
+	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
+		conversionTable[i] = -1;
+
+	// Special characters
+	conversionTable[44] = 0;	// space -> blank
+	conversionTable[58] = 1;	// f1 -> smaller solid square
+	conversionTable[59] = 2;	// f2 -> full solid square
+	conversionTable[87] = 3;	// num+ -> +
+	conversionTable[86] = 4;	// num- -> -
+	conversionTable[85] = 5;	// num* -> *
+	conversionTable[84] = 6;	// num/ -> /
+	conversionTable[60] = 7;	// f3 -> full hollow square
+	conversionTable[45] = 8;	// _ -> _
+	conversionTable[80] = 9;	// l-arr -> <
+	conversionTable[79] = 10;	// r-arr -> >
+	conversionTable[82] = 71;	// u-arr -> u-arr
+	conversionTable[81] = 72;	// d-arr -> d-arr
+	conversionTable[49] = 11;	// | -> vertical line |
+	conversionTable[66] = 12;	// f9 -> horizontal line --
+
+	// Letters
+	conversionTable[4] = 13;	// a -> a
+	conversionTable[5] = 14;	// b -> b
+	conversionTable[6] = 15;	// c -> c
+	conversionTable[7] = 16;	// d -> d
+	conversionTable[8] = 17;	// e -> e
+	conversionTable[9] = 18;	// f -> f
+	conversionTable[10] = 19;	// g -> g
+	conversionTable[11] = 20;	// h -> h
+	conversionTable[12] = 21;	// i -> i
+	conversionTable[13] = 22;	// j -> j
+	conversionTable[14] = 23;	// k -> k
+	conversionTable[15] = 24;	// l -> l
+	conversionTable[16] = 25;	// m -> m
+	conversionTable[17] = 26;	// n -> n
+	conversionTable[18] = 27;	// o -> o
+	conversionTable[19] = 28;	// p -> p
+	conversionTable[20] = 29;	// q -> q
+	conversionTable[21] = 30;	// r -> r
+	conversionTable[22] = 31;	// s -> s
+	conversionTable[23] = 32;	// t -> t
+	conversionTable[24] = 33;	// u -> u
+	conversionTable[25] = 34;	// v -> v
+	conversionTable[26] = 35;	// w -> w
+	conversionTable[27] = 36;	// x -> x
+	conversionTable[28] = 37;	// y -> y
+	conversionTable[29] = 38;	// z -> z
+
+	// Numbers
+	conversionTable[39] = 39;	// 0 -> 0
+	conversionTable[30] = 40;	// 1 -> 1
+	conversionTable[31] = 41;	// 2 -> 2
+	conversionTable[32] = 42;	// 3 -> 3
+	conversionTable[33] = 43;	// 4 -> 4
+	conversionTable[34] = 44;	// 5 -> 5
+	conversionTable[35] = 45;	// 6 -> 6
+	conversionTable[36] = 46;	// 7 -> 7
+	conversionTable[37] = 47;	// 8 -> 8
+	conversionTable[38] = 48;	// 9 -> 9
+
+
+
+	conversionTable[42] = 70;	// backspace -> backspace
+
+	int actualVal = conversionTable[asciiCode];
+	if (actualVal == -1) // -1 Means unspecified value
+		actualVal = 168;
+
+	return actualVal;
+}
+
 string DecToHexFilled(int input, int desiredSize)
 {
 	stringstream ss;
@@ -317,6 +390,12 @@ int ParseValue(const string& input) {
 			return HexToDec(split(input, "0x")[1]);
 		else if (IsBin(input)) // If preceded by '0b', then it is a binary number
 			return BinToDec(split(input, "0b")[1]);
+		else if (input[0] == '\'') { // If preceded by ', then it is a char
+			if (ConvertAsciiToSdcii((int)toupper(input[1]) - 61) != 168)
+				return ConvertAsciiToSdcii((int)toupper(input[1]) - 61);
+			else
+				return (int)toupper(input[1]) - 61;
+		}
 	}
 	if (IsVar(input)) // If a variable
 		return GetVariableAddress(input);
@@ -580,7 +659,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting to a new integer value
-			else if (IsHex(addrPre) && IsDec(valuePre)) {
+			else if (IsHex(addrPre) || IsDec(addrPre) && IsDec(valuePre)) {
 				RegIdToLDI("@A", to_string(value));
 				StoreAddress("@A", addrPre);
 			}
@@ -605,7 +684,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting to another memory location
-			else if (IsHex(addrPre) && IsHex(valuePre)) {
+			else if (IsHex(addrPre) || IsDec(addrPre) && IsHex(valuePre)) {
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
@@ -630,7 +709,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting equal to a variable
-			else if (IsHex(addrPre) && IsVar(valuePre)) {
+			else if (IsHex(addrPre) || IsDec(addrPre) && IsVar(valuePre)) {
 				LoadAddress("@A", to_string(value));
 				StoreAddress("@A", to_string(addr));
 			}
@@ -655,7 +734,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre);
 			}
 			// If changing memory value at an address and setting equal to a register
-			else if (IsHex(addrPre) && IsReg(valuePre)) {
+			else if (IsHex(addrPre) || IsDec(addrPre) && IsReg(valuePre)) {
 				StoreAddress(valuePre, to_string(addr));
 			}
 			// If changing a register value and setting equal to a register
@@ -679,7 +758,7 @@ string CompileCode(const string& inputcode) {
 				StoreIntoPointer(addrPre); // Store B into other pointer
 			}
 			// If changing memory value at an address and setting equal to a pointer
-			else if (IsHex(addrPre) && IsPointer(valuePre)) {
+			else if (IsHex(addrPre) || IsDec(addrPre) && IsPointer(valuePre)) {
 				LoadPointer(valuePre); // Load pointer val to change TO into A
 				StoreAddress("@A", to_string(addr));
 			}

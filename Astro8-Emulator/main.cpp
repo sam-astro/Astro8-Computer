@@ -512,7 +512,7 @@ int main(int argc, char** argv)
 					// Keyboard support
 					expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-					cout << "  expansionPort: " << expansionPort << endl;
+					cout << "  expansionPort: " << (int)(event.key.keysym.scancode) << endl;
 				}
 				else if (event.type == SDL_KEYUP) {
 
@@ -857,7 +857,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	// Initialize SDL components
 	SDL_Init(SDL_INIT_VIDEO);
 
-	gWindow = SDL_CreateWindow(windowTitle.c_str(), 40, 40, WINDOW_WIDTH * PIXEL_SCALE, WINDOW_HEIGHT * PIXEL_SCALE, SDL_WINDOW_SHOWN | SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	gWindow = SDL_CreateWindow(windowTitle.c_str(), 40, 40, WINDOW_WIDTH * PIXEL_SCALE, WINDOW_HEIGHT * PIXEL_SCALE, SDL_WINDOW_SHOWN | SDL_RENDERER_ACCELERATED);
 	gRenderer = SDL_CreateRenderer(gWindow, -1, 0);
 	SDL_RenderSetLogicalSize(gRenderer, WINDOW_WIDTH * PIXEL_SCALE, WINDOW_HEIGHT * PIXEL_SCALE);
 	SDL_RenderSetScale(gRenderer, PIXEL_SCALE, PIXEL_SCALE);
@@ -880,81 +880,6 @@ std::string charToString(char* a)
 	std::string s(a);
 	return s;
 }
-
-int ConvertAsciiToSdcii(int asciiCode) {
-	int conversionTable[600];  // [ascii] = sdcii
-	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
-		conversionTable[i] = -1;
-
-	// Special characters
-	conversionTable[44] = 0;	// space -> blank
-	conversionTable[58] = 1;	// f1 -> smaller solid square
-	conversionTable[59] = 2;	// f2 -> full solid square
-	conversionTable[87] = 3;	// num+ -> +
-	conversionTable[86] = 4;	// num- -> -
-	conversionTable[85] = 5;	// num* -> *
-	conversionTable[84] = 6;	// num/ -> /
-	conversionTable[60] = 7;	// f3 -> full hollow square
-	conversionTable[45] = 8;	// _ -> _
-	conversionTable[80] = 9;	// l-arr -> <
-	conversionTable[79] = 10;	// r-arr -> >
-	conversionTable[82] = 71;	// u-arr -> u-arr
-	conversionTable[81] = 72;	// d-arr -> d-arr
-	conversionTable[49] = 11;	// | -> vertical line |
-	conversionTable[66] = 12;	// f9 -> horizontal line --
-
-	// Letters
-	conversionTable[4] = 13;	// a -> a
-	conversionTable[5] = 14;	// b -> b
-	conversionTable[6] = 15;	// c -> c
-	conversionTable[7] = 16;	// d -> d
-	conversionTable[8] = 17;	// e -> e
-	conversionTable[9] = 18;	// f -> f
-	conversionTable[10] = 19;	// g -> g
-	conversionTable[11] = 20;	// h -> h
-	conversionTable[12] = 21;	// i -> i
-	conversionTable[13] = 22;	// j -> j
-	conversionTable[14] = 23;	// k -> k
-	conversionTable[15] = 24;	// l -> l
-	conversionTable[16] = 25;	// m -> m
-	conversionTable[17] = 26;	// n -> n
-	conversionTable[18] = 27;	// o -> o
-	conversionTable[19] = 28;	// p -> p
-	conversionTable[20] = 29;	// q -> q
-	conversionTable[21] = 30;	// r -> r
-	conversionTable[22] = 31;	// s -> s
-	conversionTable[23] = 32;	// t -> t
-	conversionTable[24] = 33;	// u -> u
-	conversionTable[25] = 34;	// v -> v
-	conversionTable[26] = 35;	// w -> w
-	conversionTable[27] = 36;	// x -> x
-	conversionTable[28] = 37;	// y -> y
-	conversionTable[29] = 38;	// z -> z
-
-	// Numbers
-	conversionTable[39] = 39;	// 0 -> 0
-	conversionTable[30] = 40;	// 1 -> 1
-	conversionTable[31] = 41;	// 2 -> 2
-	conversionTable[32] = 42;	// 3 -> 3
-	conversionTable[33] = 43;	// 4 -> 4
-	conversionTable[34] = 44;	// 5 -> 5
-	conversionTable[35] = 45;	// 6 -> 6
-	conversionTable[36] = 46;	// 7 -> 7
-	conversionTable[37] = 47;	// 8 -> 8
-	conversionTable[38] = 48;	// 9 -> 9
-
-
-
-	conversionTable[42] = 70;	// backspace -> backspace
-
-	int actualVal = conversionTable[asciiCode];
-	if (actualVal == -1) // -1 Means unspecified value
-		actualVal = 168;
-
-	return actualVal;
-}
-
-
 
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
 unsigned BitRange(unsigned value, unsigned offset, unsigned n)
@@ -1006,10 +931,9 @@ vector<std::string> parseCode(const std::string& input)
 	int memaddr = 0;
 	for (int i = 0; i < splitcode.size(); i++)
 	{
-		if (trim(splitcode[i]) == "")
-		{
+		splitcode[i] = trim(splitcode[i]);
+		if (splitcode[i] == "")
 			continue;
-		}
 
 		vector<std::string> splitBySpace = explode(splitcode[i], ' ');
 
