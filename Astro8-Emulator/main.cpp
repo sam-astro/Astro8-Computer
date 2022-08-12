@@ -35,6 +35,10 @@
 
 using namespace std;
 
+bool compileOnly=false;
+bool assembleOnly=false;
+bool runAstroExecutable=false;
+
 
 int AReg = 0;
 int BReg = 0;
@@ -76,14 +80,14 @@ static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU =   0b0000000000000001,
-	ALU_MU =   0b0000000000000010,
-	ALU_DI =   0b0000000000000011,
-	ALU_SL =   0b0000000000000100,
-	ALU_SR =   0b0000000000000101,
-	ALU_AND =  0b0000000000000110,
-	ALU_OR =   0b0000000000000111,
-	ALU_NOT =  0b0000000000001000,
+	ALU_SU = 0b0000000000000001,
+	ALU_MU = 0b0000000000000010,
+	ALU_DI = 0b0000000000000011,
+	ALU_SL = 0b0000000000000100,
+	ALU_SR = 0b0000000000000101,
+	ALU_AND = 0b0000000000000110,
+	ALU_OR = 0b0000000000000111,
+	ALU_NOT = 0b0000000000001000,
 	ALU_MASK = 0b0000000000001111,
 };
 
@@ -153,7 +157,7 @@ std::string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEX
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
-std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT"};
+std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
 
 std::string instructioncodes[] = {
@@ -262,12 +266,41 @@ std::string VecToString(const vector<std::string>& vec) {
 	return newStr;
 }
 
+int GenerateCharacterROM() {
+
+	// Generate character rom from existing generated file (generate first using C# assembler)
+	std::string chline;
+
+	const std::string charsetFilename = "./char_set_memtape";
+	ifstream charset(charsetFilename);
+
+	if (charset.is_open())
+	{
+		getline(charset, chline);
+		chline.erase(chline.find_last_not_of(" \n\r\t") + 1);
+		for (int i = 0; i < chline.length(); i++)
+		{
+			characterRom.push_back(chline[i] == '1');
+		}
+		charset.close();
+	}
+	else {
+		PrintColored("\nError: could not open file ", redFGColor, "");
+		PrintColored("\"" + charsetFilename + "\"\n", brightBlueFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
+		exit(1);
+	}
+
+	return chline.length();
+}
+
 
 int main(int argc, char** argv)
 {
 	std::string code = "";
 
-	// If no path is provided
+	// If no arguments are provided
 	if (argc == 1)
 	{
 		// Gather user inputted code
@@ -281,10 +314,11 @@ int main(int argc, char** argv)
 			code += line + "\n";
 		}
 	}
-	// Otherwise it is a path
+	// Otherwise argv[1] is a path
 	else
 		code = argv[1];
 
+	// Make sure path/code isn't empty
 	if (code.empty()) {
 		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
 		cout << "\n\nPress Enter to Exit...";
@@ -292,8 +326,22 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
+	// Search for options in arguments
+	for (int i = 0; i < argc; i++)
+	{
+		string argval = trim(argv[i]);
+		if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
+			compileOnly = true;
+		else if (argval == "-a" || argval == "--assemble") // Only assemble code. Will not start emulator.
+			assembleOnly = true;
+		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
+			runAstroExecutable = true;
+	}
+	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
+
+
 	// If the input is a path to a file
-	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find("\\") != std::string::npos || split(code, "\n").size() < 3) {
+	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find('\\') != std::string::npos) {
 		std::string path = trim(split(code, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
@@ -305,7 +353,7 @@ int main(int argc, char** argv)
 		if (fileStr.is_open())
 		{
 			while (getline(fileStr, li)) {
-				code += li + "\n";
+				code += trim(li) + "\n";
 			}
 			fileStr.close();
 		}
@@ -327,8 +375,9 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	// If the code inputted is marked as written in armstrong with #AS
-	if (split(code, "\n")[0] == "#AS")
+	// If the code inputted is marked as written in armstrong with #AS,
+	// or the user has used the "--compile" option
+	if ((split(code, "\n")[0] == "#AS" || compileOnly) && !assembleOnly && !runAstroExecutable)
 	{
 		vector<std::string> codelines = PreProcess(code);
 
@@ -354,13 +403,18 @@ int main(int argc, char** argv)
 				ifstream fileStr(path);
 				if (fileStr.is_open())
 				{
-					//int randNum = rand() % 9999;
-					//codeTmp += "\ngoto #" + path + to_string(randNum);
+					// Add jump to end (this prevents this code from executing accidentally)
+					int randNum = rand() % 9999;
+					codeTmp += "\ngoto #" + path + to_string(randNum);
+
+					// Get all lines of file
 					while (getline(fileStr, li)) {
 						if (li != "#AS") // We don't need another Armstrong label, so we can remove it
 							codeTmp += li + "\n";
 					}
-					//codeTmp += "#" + path + to_string(randNum);
+
+					// Label to jump to
+					codeTmp += "#" + path + to_string(randNum);
 					fileStr.close();
 				}
 				else {
@@ -381,11 +435,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-
-
-
 		// Compile
-		cout << "Compiling AS..." << endl;
+		cout << "Compiling Armstrong..." << endl;
 		code = CompileCode(code);
 
 		if (code != "") {
@@ -397,61 +448,66 @@ int main(int argc, char** argv)
 		else
 			exit(0);
 	}
-	else
+	else if (!runAstroExecutable)
 		ColorAndPrintAssembly(code);
 
-	// Generate character rom from existing generated file (generate first using C# assembler)
-	cout << "Generating Character ROM...";
-	std::string chline;
 
-	// CWD should be "Astro8-Computer/Astro8-Emulator/linux-build"
-	const std::string charsetFilename = "./char_set_memtape";
-	ifstream charset(charsetFilename);
-
-	if (charset.is_open())
-	{
-		getline(charset, chline);
-		chline.erase(chline.find_last_not_of(" \n\r\t") + 1);
-		for (int i = 0; i < chline.length(); i++)
+	// Attempt to parse assembly, will throw error if not proper assembly
+	if (!runAstroExecutable) {
+		try
 		{
-			characterRom.push_back(chline[i] == '1');
+			// Generate memory from code and convert from hex to decimal
+			vector<std::string> mbytes = parseCode(code);
+			for (int memindex = 0; memindex < mbytes.size(); memindex++)
+				memoryBytes.push_back(HexToDec(mbytes[memindex]));
+
+			// Store memory into an .AEXE file
+			std::ofstream f("./out.aexe");
+			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
+				f << *i << '\n';
+			}
+			f.close();
 		}
-		charset.close();
-	}
-	else {
-		PrintColored("\nError: could not open file ", redFGColor, "");
-		PrintColored("\"" + charsetFilename + "\"\n", brightBlueFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
-		exit(1);
-	}
-	PrintColored("  " + to_string(chline.length()) + "px  Done!\n\n", greenFGColor, "");
-
-	// Attempt to parse code, will throw error if not proper assembly
-	try
-	{
-		// Generate memory from code and convert from hex to decimal
-		vector<std::string> mbytes = parseCode(code);
-		for (int memindex = 0; memindex < mbytes.size(); memindex++)
-			memoryBytes.push_back(HexToDec(mbytes[memindex]));
-	}
-	catch (const std::exception&)
-	{
-		PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
-		exit(1);
+		catch (const std::exception&)
+		{
+			PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
+			exit(1);
+		}
 	}
 
+	// User is trying to run an .AEXE file, so parse it into the memory vector
+	if (runAstroExecutable) {
+		vector<std::string> filelines = split(code, "\n");
+
+		for (int memindex = 0; memindex < filelines.size(); memindex++)
+			memoryBytes.push_back(HexToDec(filelines[memindex]));
+	}
+
+	// Generate ROM
+	cout << "Generating Character ROM...";
+	int pixnum = GenerateCharacterROM();
+	PrintColored("  " + to_string(pixnum) + "px  Done!\n\n", greenFGColor, "");
 
 	// Generate microcode
 	cout << "Generating microcode from instruction set...";
 	GenerateMicrocode();
 	PrintColored("  Done!\n\n", greenFGColor, "");
 
+
+	if (compileOnly || assembleOnly) {
+		PrintColored("\nFinished successfully", greenFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
+		exit(1);
+	}
+
+
+	// Start Emulation
+
 	cout << "\nStarting Emulation...\n";
 
-	// Start graphics
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
 

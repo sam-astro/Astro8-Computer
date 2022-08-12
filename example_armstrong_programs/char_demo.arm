@@ -7,3 +7,6 @@ change 16383 = 'e'
 change 16384 = 'l'
 change 16385 = 'l'
 change 16386 = 'o'
+
+#loop
+goto #loop
