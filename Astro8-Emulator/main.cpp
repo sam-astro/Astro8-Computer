@@ -653,7 +653,7 @@ void Update()
 				bus = AReg - BReg;
 				if (bus < 0)
 				{
-					bus = 65534 + bus;
+					bus = 65535 + bus;
 					flags[1] = 0;
 				}
 				break;
@@ -662,9 +662,9 @@ void Update()
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -681,9 +681,9 @@ void Update()
 					bus = 0;
 				}
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -694,9 +694,9 @@ void Update()
 				if (bus == 0)
 					flags[0] = 1;
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -707,9 +707,9 @@ void Update()
 				if (bus == 0)
 					flags[0] = 1;
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -720,9 +720,9 @@ void Update()
 				if (bus == 0)
 					flags[0] = 1;
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -733,9 +733,9 @@ void Update()
 				if (bus == 0)
 					flags[0] = 1;
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -746,9 +746,9 @@ void Update()
 				if (bus == 0)
 					flags[0] = 1;
 
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;
@@ -757,9 +757,9 @@ void Update()
 				if (AReg + BReg == 0)
 					flags[0] = 1;
 				bus = AReg + BReg;
-				if (bus >= 65534)
+				if (bus >= 65535)
 				{
-					bus = bus - 65534;
+					bus = bus - 65535;
 					flags[1] = 1;
 				}
 				break;

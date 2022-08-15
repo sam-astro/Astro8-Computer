@@ -19,6 +19,6 @@ D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1200,42): warning C4267: '=': c
   Generating code
   1 of 1222 functions (<0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
