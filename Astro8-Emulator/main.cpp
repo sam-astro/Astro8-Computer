@@ -35,9 +35,7 @@
 
 using namespace std;
 
-bool compileOnly=false;
-bool assembleOnly=false;
-bool runAstroExecutable=false;
+bool compileOnly, assembleOnly, runAstroExecutable;
 
 
 int AReg = 0;
@@ -188,7 +186,7 @@ std::string instructioncodes[] = {
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
 		"pcr( 2=cr,wa & 3=ei", // Program counter read, get the current program counter value and put it into register A
 		"bsl( 2=sl,wa,eo,fl & 3=ei", // Bit shift left A register, the number of bits to shift determined by the value in register B
-		"bsr( 2=sr,wa,eo,fl & 3=ei", // Bit shift left A register, the number of bits to shift determined by the value in register B
+		"bsr( 2=sr,wa,eo,fl & 3=ei", // Bit shift right A register, the number of bits to shift determined by the value in register B
 		"and( 2=and,wa,eo,fl & 3=ei", // Logical AND operation on register A and register B, with result put back into register A
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A

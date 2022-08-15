@@ -1,10 +1,7 @@
 #AS
 
-// // Skip executing includes
-// goto #start
-
 // Includes
-#include "./STACK.arm"
+#include "./NEGATIVE.arm"
 
 #start
 
@@ -12,4 +9,110 @@ change $_FLOAT_SIGN = 0
 change $_FLOAT_EXPONENT = 0
 change $_FLOAT_MANTISSA = 0
 
+// float = $_FLOAT_SIGN * $_FLOAT_MANTISSA * (2 ^ $_FLOAT_EXPONENT)
 
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// This is a function which converts a number from int to float from register C //
+//////////////////////////////////////////////////////////////////////////////////
+    #IntToFloat
+
+    change $_FLOAT_INT_TMP = @C
+
+    if $_FLOAT_SIGN==0:
+        
+    endif
+
+    ///////////////////////////////////////////////////////////////////
+    // This is a "return;" statement. It will end function execution //
+    // and continue after the function call                          //
+    ///////////////////////////////////////////////////////////////////
+        change $_STACK_VAL = *$_STACK_POINTER
+        add $_STACK_POINTER,1 -> $_STACK_POINTER
+        change @A = $_STACK_VAL
+        asm"
+        jreg
+        "
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// This is a function which converts a number from float to int from register C //
+//////////////////////////////////////////////////////////////////////////////////
+    #FloatToInt
+
+    change $_FLOAT_TMP_MANTISSA = $_FLOAT_MANTISSA
+    change $_FLOAT_TMP_EXPONENT = $_FLOAT_EXPONENT
+    change $_FLOAT_TMP = 0
+    change $_FLOAT_SHIFT_DIRECTION = 0  //  0 -> left    1 -> right
+
+    // If negative
+    if $_FLOAT_SIGN==1:
+        change @C = $_FLOAT_MANTISSA
+
+        ///////////////////////////////////////////////////////////
+        // This code calls the function called "RegCToNegative". //
+        ///////////////////////////////////////////////////////////
+            asm"
+            pcr
+            "
+            add @A,18 -> $_STACK_VAL
+            sub $_STACK_POINTER,1 -> $_STACK_POINTER
+            change *$_STACK_POINTER = $_STACK_VAL
+            goto #RegCToNegative
+
+        change $_FLOAT_TMP_MANTISSA = @C
+    endif
+
+
+    // Determine which way to bit shift based off of exponent sign
+    change @A = $_FLOAT_TMP_EXPONENT
+    asm"
+    ldib 32
+    and
+    "
+    change $_FLOAT_TMP = @A
+    // If the exponent is negative
+    if $_FLOAT_TMP==32:
+        change $_FLOAT_SHIFT_DIRECTION = 1
+        change @C = $_FLOAT_TMP_EXPONENT
+        ///////////////////////////////////////////////////////////
+        // This code calls the function called "RegCToNegative". //
+        ///////////////////////////////////////////////////////////
+            asm"
+            pcr
+            "
+            add @A,18 -> $_STACK_VAL
+            sub $_STACK_POINTER,1 -> $_STACK_POINTER
+            change *$_STACK_POINTER = $_STACK_VAL
+            goto #RegCToNegative
+        change $_FLOAT_TMP_EXPONENT = @C
+    endif
+
+    // Bit shift in the appropriate direction
+    change @A = $_FLOAT_TMP_MANTISSA
+    change @B = $_FLOAT_TMP_EXPONENT
+    if $_FLOAT_SHIFT_DIRECTION==0: // left
+        asm"
+        bsl
+        "
+    endif
+    if $_FLOAT_SHIFT_DIRECTION==1: // right
+        asm"
+        bsr
+        "
+    endif
+
+
+    ///////////////////////////////////////////////////////////////////
+    // This is a "return;" statement. It will end function execution //
+    // and continue after the function call                          //
+    ///////////////////////////////////////////////////////////////////
+        change $_STACK_VAL = *$_STACK_POINTER
+        add $_STACK_POINTER,1 -> $_STACK_POINTER
+        change @A = $_STACK_VAL
+        asm"
+        jreg
+        "

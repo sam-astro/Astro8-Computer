@@ -1,0 +1,43 @@
+
+// Includes
+#include "./STACK.arm"
+
+
+// ///////////////////////////////////////////////////////////
+// // This code calls the function called "RegCToNegative". //
+// // Similar to "RegCToNegative();" in c++                 //
+// // Uncomment this and place it where you want it called  //
+// ///////////////////////////////////////////////////////////
+//     asm"
+//     pcr
+//     "
+//     add @A,18 -> $_STACK_VAL
+//     sub $_STACK_POINTER,1 -> $_STACK_POINTER
+//     change *$_STACK_POINTER = $_STACK_VAL
+//     goto #RegCToNegative
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// This is a function which converts a number to/from a negative using twos compliment //
+/////////////////////////////////////////////////////////////////////////////////////////
+    #RegCToNegative
+
+    asm"
+    swpc
+    not
+    ldib 1
+    add
+    swpc
+    "
+
+    ///////////////////////////////////////////////////////////////////
+    // This is a "return;" statement. It will end function execution //
+    // and continue after the above function call                    //
+    ///////////////////////////////////////////////////////////////////
+        change $_STACK_VAL = *$_STACK_POINTER
+        add $_STACK_POINTER,1 -> $_STACK_POINTER
+        change @A = $_STACK_VAL
+        asm"
+        jreg
+        "
