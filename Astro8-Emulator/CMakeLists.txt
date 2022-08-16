@@ -8,7 +8,7 @@ project(Astro8-Emulator)
 SET(programName Astro8-Emulator)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeFiles/")
 
-add_executable (Astro8-Emulator main.cpp color.hpp colorprint.h)
+add_executable (Astro8-Emulator main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h )
 
 find_package(SDL2 REQUIRED)
 
