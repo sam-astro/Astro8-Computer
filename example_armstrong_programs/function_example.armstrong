@@ -1,0 +1,39 @@
+#AS
+
+
+#include "./STACK.arm"
+
+
+
+/////////////////////////////////////////////////
+// This code calls the function called "Func". //
+// Similar to "Func();" in c++                 //
+/////////////////////////////////////////////////
+    asm"
+    pcr
+    "
+    add @A,18 -> $_STACK_VAL
+    sub $_STACK_POINTER,1 -> $_STACK_POINTER
+    change *$_STACK_POINTER = $_STACK_VAL
+    goto #Func
+
+
+
+///////////////////////////////////////////////////
+// This is the function declaration. In c++ this //
+// would be a simple "void Func() {"             //
+///////////////////////////////////////////////////
+    #Func
+
+    // Function contents go here ...
+
+    ///////////////////////////////////////////////////////////////////
+    // This is a "return;" statement. It will end function execution //
+    // and continue after the above function call                    //
+    ///////////////////////////////////////////////////////////////////
+        change $_STACK_VAL = *$_STACK_POINTER
+        add $_STACK_POINTER,1 -> $_STACK_POINTER
+        change @A = $_STACK_VAL
+        asm"
+        jreg
+        "

@@ -1,27 +1,24 @@
 ﻿  main.cpp
-D:\Code\Astro8-Computer\Astro8-Emulator\colorprint.h(89,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(409,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(489,23): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(507,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(519,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(585,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(614,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(727,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(727,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(827,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(828,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(829,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(830,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(831,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(832,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(936,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(939,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(942,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1185,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2100,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(71,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(134,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(135,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(136,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(137,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(138,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(139,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(293,24): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(533,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(613,24): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(631,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(643,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(774,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(803,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(917,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(917,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1200,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  1 of 1068 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+  1 of 1222 functions (<0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\Astro8-Emulator.exe

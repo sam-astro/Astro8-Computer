@@ -1,0 +1,36 @@
+#AS
+
+change $pixOffset = 61439 // Beginning of video memory
+change $charOffset = 16382 // Beginning of character memory
+
+change $locationX = 32
+change $locationY = 32
+
+change $length = 5
+change $currentLength = $length
+
+change $dirX = 1
+change $dirY = 1
+
+
+#DrawLineLoop
+// Get memory location
+mult $locationY,64 -> $tmpAddr
+add $locationX,$tmpAddr -> $tmpAddr
+add $tmpAddr,$pixOffset -> $tmpAddr
+
+// Draw pixel
+change *$tmpAddr = 65534
+
+// Calculate next position
+mult $dirY,$length -> $tmp
+add $locationY,$tmp -> $locationY
+mult $dirX,$length -> $tmp
+add $locationX,$tmp -> $locationX
+sub $currentLength,1 -> $currentLength
+
+gotoif $currentLength>0, #DrawLineLoop
+
+
+#endloop
+goto #endloop

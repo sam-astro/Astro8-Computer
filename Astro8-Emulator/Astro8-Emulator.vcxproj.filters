@@ -18,12 +18,27 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="armstrong-compiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="assembler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="color.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="colorprint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="color.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="armstrong-compiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="processing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="assembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
