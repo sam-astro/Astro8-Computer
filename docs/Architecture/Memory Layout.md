@@ -19,8 +19,8 @@ word 0  |                                         .                             
 ## Program Memory
 
 Percent: `0 - 25%` <br>
-Range: `0 - 16382` <br>
-Words: `16382`
+Range: `0 - 16381` <br>
+Words: `16381`
 
 Contains the program instructions.
 
@@ -29,8 +29,8 @@ Contains the program instructions.
 ## Character Memory
 
 Percent: `25-25%` <br>
-Range: `16383 - 16527` <br>
-Words: `144`
+Range: `16382 - 16527` <br>
+Words: `145`
 
 Contains the indexes of the characters to <br>
 be displayed at the corresponding location.
@@ -40,8 +40,8 @@ be displayed at the corresponding location.
 ## Variable and General Purpose Memory
 
 Percent: `25-93%` <br>
-Range: `16528 - 61439` <br>
-Words: `44911`
+Range: `16528 - 61438` <br>
+Words: `44910`
 
 Memory that the compiler automatically <br>
 allocates as needed for variables, or you <br>
