@@ -404,7 +404,7 @@ int main(int argc, char** argv)
 				{
 					// Add jump to end (this prevents this code from executing accidentally)
 					int randNum = rand() % 9999;
-					codeTmp += "\ngoto #" + path + to_string(randNum);
+					codeTmp += "\ngoto #" + path + to_string(randNum) + "\n";
 
 					// Get all lines of file
 					while (getline(fileStr, li)) {
@@ -413,7 +413,7 @@ int main(int argc, char** argv)
 					}
 
 					// Label to jump to
-					codeTmp += "#" + path + to_string(randNum);
+					codeTmp += "\n#" + path + to_string(randNum);
 					fileStr.close();
 				}
 				else {
