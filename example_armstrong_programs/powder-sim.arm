@@ -1,0 +1,9 @@
+#AS
+
+//#include "./STACK.arm"
+
+change $pixOffset = 61439
+
+define $x = 65535
+
+change *$pixOffset = $x

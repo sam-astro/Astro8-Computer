@@ -1005,7 +1005,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 16382)
+			if (addr <= 16382|| addr > 16527)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
@@ -1020,7 +1020,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = memaddr;
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
-			if (addr <= 16382)
+			if (addr <= 16382 || addr > 16527)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[1]);
@@ -1983,8 +1983,8 @@ string CompileCode(const string& inputcode) {
 		// "set" command (set <addr> <value>)
 		if (command == "define")
 		{
-			string addrPre = trim(split(codelines[i], " ")[1]);
-			string valuePre = trim(split(codelines[i], " ")[2]);
+			string addrPre = split(trim(split(split(codelines[i], "define ")[1], "=")[0]), " ")[0];
+			string valuePre = split(trim(split(split(codelines[i], "define ")[1], "=")[1]), " ")[0];
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "define:     ";
 			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
@@ -2002,8 +2002,8 @@ string CompileCode(const string& inputcode) {
 		// "change" command (change <location> = <value or location>)
 		else if (command == "change")
 		{
-			string addrPre = trim(split(split(codelines[i], "change ")[1], " = ")[0]);
-			string valuePre = trim(split(split(codelines[i], "change ")[1], " = ")[1]);
+			string addrPre = trim(split(split(codelines[i], "change ")[1], "=")[0]);
+			string valuePre = trim(split(split(codelines[i], "change ")[1], "=")[1]);
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "change:     ";
 			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");

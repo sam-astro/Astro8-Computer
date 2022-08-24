@@ -21,8 +21,8 @@ D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1535,28): warning C4244: '+=': 
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1538,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1743,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  1 of 1088 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+  2 of 1088 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    20 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
