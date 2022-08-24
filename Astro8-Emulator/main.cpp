@@ -1005,7 +1005,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 16382|| addr > 16527)
+			if (addr <= 16382 || addr > 16527)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
@@ -1578,7 +1578,7 @@ bool IsPointer(const string& in) {
 	return false;
 }
 bool IsDec(const string& in) {
-	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
+	if (!IsHex(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }

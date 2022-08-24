@@ -1,9 +1,63 @@
 #AS
 
-//#include "./STACK.arm"
+#include "./STACK.arm"
 
-change $pixOffset = 61439
+///////////////
+// Variables //
+///////////////
+change $pixOffset = 0b111110000000000 // Beginning of video memory
+define $charOffset = 16382 // Beginning of character memory
 
-define $x = 65535
+define $CursorMoveSpeed = 15000
+define $cursorCount = 0
 
-change *$pixOffset = $x
+define $drawing = 1 // Drawing bool: 0 = not drawing, 1 = drawing
+
+define $cursorX = 32
+define $cursorY = 32
+
+change @EX = 168
+
+
+#Cursor
+
+if $CursorMoveSpeed==$cursorCount:
+
+    // Get center pixel
+    mult $cursorY,64 -> $temp
+    add $cursorX,$temp -> $temp
+    add $pixOffset,$temp -> $temp
+    change *$temp = 31744
+    // Left crosshair
+    sub $temp,3 -> $temp
+    change *$temp = 65535
+    sub $temp,1 -> $temp
+    change *$temp = 65535
+    // Top crosshair
+    sub $temp,192 -> $temp
+    change *$temp = 65535
+    sub $temp,1 -> $temp
+    change *$temp = 65535
+
+    change $keypress = @EX
+
+    if $keypress=='w':
+        sub $cursorY,1 -> $cursorY
+    endif
+    if $keypress=='s':
+        add $cursorY,1 -> $cursorY
+    endif
+    if $keypress=='a':
+        sub $cursorX,1 -> $cursorX
+    endif
+    if $keypress=='d':
+        add $cursorX,1 -> $cursorX
+    endif
+
+    change $cursorCount = 0
+endif
+
+add 1,$cursorCount -> $cursorCount
+
+goto #Cursor
+
