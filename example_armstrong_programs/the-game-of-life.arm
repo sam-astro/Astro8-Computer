@@ -15,10 +15,10 @@ define $cursorY = 32
 
 define $drawSpeed = 10000
 define $drawCount = 0
-define $drawType = 1 // 0 = nothing, 1 = sand, 2 = water
+define $drawType = 1 // 0 = none, 1 = draw
+define $paused = 1 // 0 = playing, 1 = paused
 
-define $waterColor = 3484
-define $sandColor = 0b110111011101110
+define $celColor = 0b011101111011011
 
 change @EX = 168
 
@@ -29,11 +29,12 @@ define $bufferBLoc = 24096
 
 #Start
 // Set default UI
-change 16382 = 's'
-change 16383 = 'a'
-change 16384 = 'n'
-change 16385 = 'd'
+change 16382 = 'd'
+change 16383 = 'r'
+change 16384 = 'a'
+change 16385 = 'w'
 change 16386 = 0
+change 16387 = 7
 
 
 #MainLoop
@@ -46,109 +47,68 @@ if $drawCount==$drawSpeed:
     add $bufferALoc,$copyOffset -> $loc1
     add $bufferBLoc,$copyOffset -> $loc2
 
+    if $paused==0:
+        change $currentPixel = *$loc1
+        change $neighbors = 0
 
-    change $currentPixel = *$loc1
-    if $currentPixel==0: // Only process pixels with something in them
-        add 1,$copyOffset -> $copyOffset
-        goto #Processor
-    endif
-    if $loc1>24032: // Only process pixels that aren't in the bottom layer
-        goto #EndofProcessLoop
-    endif
+        // mult $copyOffset,10 -> $celColor // <- Rainbow colored cels
 
-    // Handle sand type
-    if $currentPixel==$sandColor:
-        // Calculate next position
-        add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
-        if $pixelVal1==0: // If the pixel below this one is empty
+        // Count the number of neighbors
+        sub $loc1,65 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,62 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,2 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,62 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+
+
+        // Change state depending on neighbor count
+
+        if $neighbors<2: // Underpopulation
             change *$loc2 = 0
-            add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
         endif
-        if $pixelVal1==$waterColor: // If the pixel below this one is water, then fall through it
-            change *$loc2 = $waterColor
-            add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
+        if $neighbors>3: // Overpopulation
+            change *$loc2 = 0
         endif
-        if $pixelVal1!=0: // If the pixel below this one is full
-            // Check if bottom-left pixel is empty
-            sub $loc1,1 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
-                add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,63 -> $loc2
-                change *$loc2 = $currentPixel
-                goto #EndofProcessLoop
+        add $bufferALoc,$copyOffset -> $loc1
+        if *$loc1!=0:
+            if $neighbors==2:
+                change *$loc2 = $celColor
             endif
-            // Check if bottom-right pixel is empty
-            add $loc1,2 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
-                add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,65 -> $loc2
-                change *$loc2 = $currentPixel
-                goto #EndofProcessLoop
-            endif
+        endif
+        if $neighbors==3:
+            change *$loc2 = $celColor
         endif
     endif
-    // Handle water type
-    if $currentPixel==$waterColor:
-        // Calculate next position
-        add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
-        if $pixelVal1==0: // If the pixel below this one is empty
-            change *$loc2 = 0
-            add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
-        endif
-        if $pixelVal1!=0: // If the pixel below this one is full
-            // Check if bottom-left pixel is empty
-            sub $loc1,1 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
-                add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,63 -> $loc2
-                change *$loc2 = $currentPixel
-                goto #EndofProcessLoop
-            endif
-            // Check if bottom-right pixel is empty
-            add $loc1,2 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
-                add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,65 -> $loc2
-                change *$loc2 = $currentPixel
-                goto #EndofProcessLoop
-            endif
-            // Check if right pixel is empty
-            sub $loc1,64 -> $loc1
-            if *$loc1==0:
-                add $loc2,1 -> $loc2
-                if *$loc2==0:
-                    add $bufferBLoc,$copyOffset -> $loc2
-                    change *$loc2 = 0
-                    add $loc2,1 -> $loc2
-                    change *$loc2 = $currentPixel
-                endif
-                goto #EndofProcessLoop
-            endif
-            // Check if left pixel is empty
-            sub $loc1,2 -> $loc1
-            if *$loc1==0:
-                sub $loc2,1 -> $loc2
-                if *$loc2==0:
-                    add $bufferBLoc,$copyOffset -> $loc2
-                    change *$loc2 = 0
-                    sub $loc2,1 -> $loc2
-                    change *$loc2 = $currentPixel
-                endif
-                goto #EndofProcessLoop
-            endif
-        endif
+    
+    if $paused==1:
+        change *$loc2 = *$loc1
     endif
     
     #EndofProcessLoop
@@ -264,7 +224,7 @@ if $CursorMoveSpeed==$cursorCount:
     if $keypress=='o':
         if $keypress!=$lastKey:
             add $drawType,1 -> $drawType
-            if $drawType==3:
+            if $drawType==2:
                 change $drawType = 0
             endif
             if $drawType==0:
@@ -275,23 +235,34 @@ if $CursorMoveSpeed==$cursorCount:
                 change 16386 = 0
             endif
             if $drawType==1:
-                change 16382 = 's'
-                change 16383 = 'a'
-                change 16384 = 'n'
-                change 16385 = 'd'
+                change 16382 = 'd'
+                change 16383 = 'r'
+                change 16384 = 'a'
+                change 16385 = 'w'
                 change 16386 = 0
             endif
-            if $drawType==2:
-                change 16382 = 'w'
-                change 16383 = 'a'
-                change 16384 = 't'
-                change 16385 = 'e'
-                change 16386 = 'r'
+        endif
+    endif
+
+    if $keypress==0:
+        if $keypress!=$lastKey:
+            if $paused==0:
+                change 16387 = 7
+                change $paused = 1
+                goto #ExitIf
+            endif
+            if $paused==1:
+                change 16387 = 10
+                change $paused = 0
+                goto #ExitIf
             endif
         endif
     endif
     #ExitIf
 
+    if $keypress==168:
+        change $lastKey = 168
+    endif
     if $keypress!=$lastKey:
         change $lastKey = $keypress
     endif
@@ -304,14 +275,10 @@ if $CursorMoveSpeed==$cursorCount:
     add $cursorX,$temp -> $temp
     change $bufCoord = $temp
     add $pixOffset,$temp -> $temp
-    // Draw the correct particle
+    // Draw a particle
     if $drawType==1:
         add $bufferALoc,$bufCoord -> $bufCoord
-        change *$bufCoord = $sandColor
-    endif
-    if $drawType==2:
-        add $bufferALoc,$bufCoord -> $bufCoord
-        change *$bufCoord = $waterColor
+        change *$bufCoord = $celColor
     endif
     // Left crosshair
     sub $temp,2 -> $temp
