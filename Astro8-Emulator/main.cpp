@@ -337,7 +337,7 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
-		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator
+		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
 			usingKeyboard = false;
 	}
 	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
@@ -582,17 +582,10 @@ int main(int argc, char** argv)
 					}
 				}
 				// If using the mouse in the expansion port
-				else if (!usingKeyboard) {
-					if (event.type == SDL_MOUSEMOTION) {
-
+				else if (!usingKeyboard)
+					if (event.type == SDL_MOUSEMOTION)
 						// Mouse support
-						//if(event.motion.x)
 						expansionPort = (event.motion.x << 8) + event.motion.y;
-
-						cout << "\n" << (int)(event.motion.x) << " " << (int)(event.motion.y);
-						cout << "\n" << expansionPort;
-					}
-				}
 			}
 		}
 	}
@@ -1120,7 +1113,7 @@ vector<std::string> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-		}
+}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1283,7 +1276,7 @@ void GenerateMicrocode()
 			}
 		}
 
-			}
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1358,7 +1351,7 @@ void GenerateMicrocode()
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
-			}
+	}
 
 	// Print the output
 	std::string processedOutput = "";
@@ -1389,7 +1382,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-		}
+}
 
 vector<string> vars;
 vector<string> labels;
