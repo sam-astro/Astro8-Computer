@@ -38,6 +38,8 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable;
 
+bool usingKeyboard = true;
+
 
 int AReg = 0;
 int BReg = 0;
@@ -335,6 +337,8 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
+		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator
+			usingKeyboard = false;
 	}
 	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
 
@@ -562,17 +566,32 @@ int main(int argc, char** argv)
 				{
 					running = false;
 				}
-				else if (event.type == SDL_KEYDOWN) {
+				// If using the keyboard in the expansion port
+				if (usingKeyboard) {
+					if (event.type == SDL_KEYDOWN) {
 
-					// Keyboard support
-					expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+						// Keyboard support
+						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-					cout << "  expansionPort: " << (int)(event.key.keysym.scancode) << endl;
+						cout << "  expansionPort: " << (int)(event.key.keysym.scancode) << endl;
+					}
+					else if (event.type == SDL_KEYUP) {
+
+						// Keyboard support
+						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+					}
 				}
-				else if (event.type == SDL_KEYUP) {
+				// If using the mouse in the expansion port
+				else if (!usingKeyboard) {
+					if (event.type == SDL_MOUSEMOTION) {
 
-					// Keyboard support
-					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+						// Mouse support
+						//if(event.motion.x)
+						expansionPort = (event.motion.x << 8) + event.motion.y;
+
+						cout << "\n" << (int)(event.motion.x) << " " << (int)(event.motion.y);
+						cout << "\n" << expansionPort;
+					}
 				}
 			}
 		}
@@ -1101,7 +1120,7 @@ vector<std::string> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+		}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1264,7 +1283,7 @@ void GenerateMicrocode()
 			}
 		}
 
-	}
+			}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1339,7 +1358,7 @@ void GenerateMicrocode()
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
-	}
+			}
 
 	// Print the output
 	std::string processedOutput = "";
@@ -1370,7 +1389,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-}
+		}
 
 vector<string> vars;
 vector<string> labels;

@@ -306,54 +306,6 @@ if $CursorMoveSpeed==$cursorCount:
 endif
 
 
-// // Clear buffer B
-// change $copyOffset = 0
-// #Clearer
-// add $bufferBLoc,$copyOffset -> $loc1
-// change *$loc1 = 0
-// add 1,$copyOffset -> $copyOffset
-// gotoif $copyOffset!=4096, #Clearer
-
-
-// //////////////////////////////////////////////////////
-// // Processes everything from buffer A into buffer B //
-// //////////////////////////////////////////////////////
-// change $copyOffset = 0
-// #Processor
-// add $bufferALoc,$copyOffset -> $loc1
-// add $bufferBLoc,$copyOffset -> $loc2
-
-// //change $currentPixel = *$loc1
-// // if $currentPixel==0: // Only process pixels with something in them
-// //     add 1,$copyOffset -> $copyOffset
-// //     goto #Processor
-// // endif
-// // if $loc1>19936: // Only process pixels that aren't in the bottom layer
-// //     goto #EndOfMainLoop
-// // endif
-// // if *$loc2!=0: // Only process pixels that haven't been changed in buffer B
-// //     add 1,$copyOffset -> $copyOffset
-// //     goto #Processor
-// // endif
-
-// // add $loc1,64 -> $loc1
-// // change $pixelVal1 = *$loc1
-// // if $pixelVal1==0: // If the pixel below this one is empty
-// //     add $bufferALoc,$copyOffset -> $loc1
-// //     change *$loc1 = 0
-// //     add $loc2,64 -> $tmp
-// //     change *tmp = 65535
-// // endif
-
-
-
-// change *$loc2 = *$loc1
-// add 1,$copyOffset -> $copyOffset
-// gotoif $copyOffset<4096, #Processor
-
-
-
-
 #EndOfMainLoop
 
 add 1,$cursorCount -> $cursorCount
