@@ -49,7 +49,7 @@ Use decimal values for **Immediate Integers**.
 ### Syntax
 
 ```
-// 〈 Ｙｏｕｒ　Ｃｏｍｍｅｎｔ 〉
+//〈 Comment 〉
 ```
 
 <br>
@@ -72,7 +72,7 @@ Use decimal values for **Immediate Integers**.
 ### Syntax
 
 ```
-@ 〈 Ｒｅｇｉｓｔｅｒ　Ｎａｍｅ 〉
+@〈 Register Name 〉
 ```
 
 <br>
@@ -97,7 +97,7 @@ A label is a place in the program you can jump to. <br>
 ### Syntax
 
 ```
-# 〈 Ｌａｂｅｌ　Ｎａｍｅ 〉
+#〈 Label Name 〉
 ```
 
 <br>
@@ -121,7 +121,7 @@ Variable can contain an an integers only. <br>
 ### Syntax
 
 ```
-$ 〈 Ｖａｒｉａｂｌｅ　Ｎａｍｅ 〉
+$〈 Variable Name 〉
 ```
 
 <br>
@@ -130,6 +130,32 @@ $ 〈 Ｖａｒｉａｂｌｅ　Ｎａｍｅ 〉
 
 ```
 $ballVelocity
+```
+
+<br>
+<br>
+
+## Pointers
+
+Pointers can be placed in front of any variable or int. <br>
+They use the value stored in the variable or int as an <br>
+address to get the actual value.
+
+<br>
+
+### Syntax
+`*` symbol prefix
+```
+* 〈 Variable or Address 〉
+```
+
+<br>
+
+### Example
+
+```
+*$var
+*0xf
 ```
 
 <br>
