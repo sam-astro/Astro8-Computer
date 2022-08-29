@@ -19,7 +19,7 @@ given values before the program is executed.
 ### Syntax
 
 ```
-define 〈 Ａｄｄｒｅｓｓ 〉 〈 Ｖａｌｕｅ 〉
+define〈 Address 〉〈 Value 〉
 ```
 
 ### Example
@@ -38,7 +38,7 @@ Assigns the given address the supplied value.
 ### Syntax
 
 ```
-change 〈 Ａｄｄｒｅｓｓ 〉 = 〈 Ｖａｌｕｅ 〉
+change〈 Address 〉=〈 Value 〉
 ```
 
 ### Example
@@ -58,16 +58,16 @@ operator and saves the result at the given address.
 ### Syntax
 
 ```
-〈 Ｏｐｅｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ａ 〉 , 〈 Ｖａｌｕｅ　Ｂ 〉 -> 〈 Ａｄｄｒｅｓｓ 〉
+〈 Operator 〉〈 Value A 〉,〈 Value B 〉->〈 Output location 〉
 ```
 
 ### Example
 
 ```
-add $A , $B -> $C  //  A + B
-mul $A , $B -> $C  //  A * B
-sub $A , $B -> $C  //  A - B
-div $A , $B -> $C  //  A / B
+add $X , $Y -> $Z  //  Z = X + Y
+mul $X , $Y -> $Z  //  Z = X * Y
+sub $X , $Y -> $Z  //  Z = X - Y
+div $X , $Y -> $Z  //  Z = X / Y
 ```
 
 <br>
@@ -80,7 +80,7 @@ Jumps to the given address or label.
 ### Syntax
 
 ```
-goto 〈 Ａｄｄｒｅｓｓ 〉
+goto〈 Address 〉
 ```
 
 ### Example
@@ -100,14 +100,14 @@ comparison of the two values return true.
 ### Syntax
 
 ```
-gotoif 〈 Ｖａｌｕｅ　Ａ 〉 〈 Ｃｏｍｐａｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ｂ 〉 , 〈 Ａｄｄｒｅｓｓ 〉
+gotoif 〈 Value A 〉〈 Comparator 〉〈 Value B 〉,〈 Address 〉
 ```
 
 ### Example
 
 ```
-gotoif $pixPos < 4095 , #colorScreen
-gotoif $pixPos == 4095 , #colorScreen
+gotoif $var < 4095 , #colorScreen
+gotoif $var == 4095 , #colorScreen
 ```
 
 <br>
@@ -121,9 +121,9 @@ of the two given values returns true.
 ### Syntax
 
 ```
-if 〈 Ｖａｌｕｅ　Ａ 〉 〈 Ｃｏｍｐａｒａｔｏｒ 〉 〈 Ｖａｌｕｅ　Ｂ 〉 :
+if 〈 Value A 〉〈 Comparator 〉〈 Value B 〉:
 
-    〈 Ｌｏｇｉｃ　Ｂｌｏｃｋ 〉
+    〈 Contents 〉
     
 endif
 ```
