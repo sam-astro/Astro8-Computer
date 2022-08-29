@@ -8,7 +8,7 @@ parent: Programming
 
 # Armstrong
 
-Armstrong is a higher level language created to make programming for the Astro-8 a better experience. Here are the syntax and rules of the langauge.
+Armstrong is a higher level language created to make programming for the Astro-8 a better experience. Here are the syntax and rules of the language.
 
 <br>
 <br>
