@@ -8,21 +8,20 @@ D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(138,29): warning C4267: '='
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(139,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(296,24): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(538,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(633,24): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(651,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(663,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(794,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(823,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(937,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(937,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1220,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1551,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1554,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1557,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1762,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(626,24): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(644,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(656,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(787,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(816,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(930,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(930,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1213,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1544,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1547,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1550,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1755,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  2 of 1088 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    10 functions had inline decision re-evaluated but remain unchanged
+  Previous IPDB and IOBJ mismatch, fall back to full compilation.
+  All 1088 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\Astro8-Emulator.exe
