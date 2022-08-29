@@ -573,7 +573,7 @@ int main(int argc, char** argv)
 						// Keyboard support
 						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-						cout << "\n	expansionPort: " << expansionPort;
+						cout << "\n	expansionPort: " << expansionPort << endl;
 					}
 					else if (event.type == SDL_KEYUP) {
 
@@ -808,6 +808,7 @@ void Update()
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
+			PrintColored("\nProgram expansion port output: "+to_string(expansionPort)+"\n", brightBlueFGColor, "");
 			break;
 		}
 

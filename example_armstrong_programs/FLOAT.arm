@@ -5,9 +5,9 @@
 
 #start
 
-change $_FLOAT_SIGN = 0
-change $_FLOAT_EXPONENT = 0
-change $_FLOAT_MANTISSA = 0
+define $_FLOAT_SIGN = 0
+define $_FLOAT_EXPONENT = 0
+define $_FLOAT_MANTISSA = 0
 
 // float = $_FLOAT_SIGN * $_FLOAT_MANTISSA * (2 ^ $_FLOAT_EXPONENT)
 
