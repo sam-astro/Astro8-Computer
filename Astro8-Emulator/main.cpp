@@ -808,7 +808,10 @@ void Update()
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
-			PrintColored("\nProgram expansion port output: "+to_string(expansionPort)+"\n", brightBlueFGColor, "");
+			PrintColored("\nProgram expansion port output: ", brightBlueFGColor, "");
+			PrintColored(to_string(expansionPort), greenFGColor, "");
+			PrintColored(" or ", brightBlueFGColor, "");
+			PrintColored("0b" + DecToBinFilled(expansionPort, 16) + "\n\n", greenFGColor, "");
 			break;
 		}
 
@@ -1084,7 +1087,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1114,7 +1117,7 @@ vector<std::string> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1190,7 +1193,7 @@ void GenerateMicrocode()
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-	}
+		}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -1383,7 +1386,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-}
+	}
 
 vector<string> vars;
 vector<string> labels;

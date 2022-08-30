@@ -6,13 +6,27 @@
 #start
 
 define $_FLOAT_SIGN = 0
-define $_FLOAT_EXPONENT = 0
-define $_FLOAT_MANTISSA = 0
+define $_FLOAT_EXPONENT = 0b10000
+define $_FLOAT_MANTISSA = 0b1001001000
+define $_FLOAT_INT = 0
 
 // float = $_FLOAT_SIGN * $_FLOAT_MANTISSA * (2 ^ $_FLOAT_EXPONENT)
 
+///////////////////////////////////////////////////////////
+// This code calls the function called "FloatToInt". //
+///////////////////////////////////////////////////////////
+    asm"
+    pcr
+    "
+    add @A,18 -> $_STACK_VAL
+    sub $_STACK_POINTER,1 -> $_STACK_POINTER
+    change *$_STACK_POINTER = $_STACK_VAL
+    goto #FloatToInt
 
+change @EX = $_FLOAT_INT
 
+#loop
+goto #loop
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +59,10 @@ define $_FLOAT_MANTISSA = 0
 
     change $_FLOAT_TMP_MANTISSA = $_FLOAT_MANTISSA
     change $_FLOAT_TMP_EXPONENT = $_FLOAT_EXPONENT
+    
+    // Subtract offset from exponent
+    sub $_FLOAT_TMP_EXPONENT,15 -> $_FLOAT_TMP_EXPONENT
+
     change $_FLOAT_TMP = 0
     change $_FLOAT_SHIFT_DIRECTION = 0  //  0 -> left    1 -> right
 
@@ -64,6 +82,11 @@ define $_FLOAT_MANTISSA = 0
             goto #RegCToNegative
 
         change $_FLOAT_TMP_MANTISSA = @C
+    endif
+
+    // Add 1 to mantissa if exponent is not all 0s
+    if $_FLOAT_TMP_EXPONENT!=0:
+        add $_FLOAT_TMP_MANTISSA,1024 -> $_FLOAT_TMP_MANTISSA
     endif
 
 
@@ -91,20 +114,82 @@ define $_FLOAT_MANTISSA = 0
         change $_FLOAT_TMP_EXPONENT = @C
     endif
 
-    // Bit shift in the appropriate direction
-    change @A = $_FLOAT_TMP_MANTISSA
-    change @B = $_FLOAT_TMP_EXPONENT
-    if $_FLOAT_SHIFT_DIRECTION==0: // left
-        asm"
-        bsl
-        "
-    endif
-    if $_FLOAT_SHIFT_DIRECTION==1: // right
-        asm"
-        bsr
-        "
-    endif
 
+    change $_FLOAT_POWEROF = 0
+    change @B = $_FLOAT_TMP_EXPONENT
+        change @A = 2
+    asm"
+    bsl
+    "
+    change $_FLOAT_POWEROF = @A
+
+    
+
+    // remove extra 0s on the end of $_FLOAT_POWEROF and $_FLOAT_TMP_MANTISSA
+    #removeZeros
+    change $boolA = 0
+    change $boolB = 0
+    change @A = $_FLOAT_POWEROF
+    asm"
+    ldib 1
+    and
+    "
+    if @A==0:
+        change $boolA = 1
+    endif
+    change @A = $_FLOAT_TMP_MANTISSA
+    asm"
+    ldib 1
+    and
+    "
+    if @A==0:
+        change $boolB = 1
+    endif
+    // If both have a 0 in their last digit, bit shift right both
+    if $boolA==1:
+        if $boolB==1:
+            change @A = $_FLOAT_TMP_MANTISSA
+            asm"
+            ldib 1
+            bsr
+            "
+            change $_FLOAT_TMP_MANTISSA = @A
+            change @A = $_FLOAT_POWEROF
+            asm"
+            ldib 1
+            bsr
+            "
+            change $_FLOAT_POWEROF = @A
+        endif
+    endif
+    change @EX = 1
+    // Loop if either was a 0, otherwise both are 1s and cannot be truncated more.
+    gotoif $boolA==0, #removeZeros
+    gotoif $boolB==0, #removeZeros
+
+
+    mult $_FLOAT_POWEROF,$_FLOAT_TMP_MANTISSA -> $_FLOAT_TMP_MANTISSA
+
+    // // add $_FLOAT_TMP_EXPONENT,1 -> $_FLOAT_TMP_EXPONENT
+    // // Bit shift in the appropriate direction
+    // if $_FLOAT_SHIFT_DIRECTION==0: // left
+    //     change @B = $_FLOAT_TMP_EXPONENT
+    //     change @A = $_FLOAT_TMP_MANTISSA
+    //     asm"
+    //     bsl
+    //     "
+    //     change $_FLOAT_INT = @A
+    // endif
+    // if $_FLOAT_SHIFT_DIRECTION==1: // right
+    //     change @B = $_FLOAT_TMP_EXPONENT
+    //     change @A = $_FLOAT_TMP_MANTISSA
+    //     asm"
+    //     bsr
+    //     "
+    //     change $_FLOAT_INT = @A
+    // endif
+
+    change $_FLOAT_INT = $_FLOAT_TMP_MANTISSA
 
     ///////////////////////////////////////////////////////////////////
     // This is a "return;" statement. It will end function execution //
@@ -116,3 +201,5 @@ define $_FLOAT_MANTISSA = 0
         asm"
         jreg
         "
+
+
