@@ -38,6 +38,8 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable;
 
+bool usingKeyboard = true;
+
 
 int AReg = 0;
 int BReg = 0;
@@ -335,6 +337,8 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
+		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
+			usingKeyboard = false;
 	}
 	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
 
@@ -562,18 +566,26 @@ int main(int argc, char** argv)
 				{
 					running = false;
 				}
-				else if (event.type == SDL_KEYDOWN) {
+				// If using the keyboard in the expansion port
+				if (usingKeyboard) {
+					if (event.type == SDL_KEYDOWN) {
 
-					// Keyboard support
-					expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+						// Keyboard support
+						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-					cout << "  expansionPort: " << (int)(event.key.keysym.scancode) << endl;
+						cout << "\n	expansionPort: " << expansionPort << endl;
+					}
+					else if (event.type == SDL_KEYUP) {
+
+						// Keyboard support
+						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+					}
 				}
-				else if (event.type == SDL_KEYUP) {
-
-					// Keyboard support
-					expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
-				}
+				// If using the mouse in the expansion port
+				else if (!usingKeyboard)
+					if (event.type == SDL_MOUSEMOTION)
+						// Mouse support
+						expansionPort = (event.motion.x << 8) + event.motion.y;
 			}
 		}
 	}
@@ -796,6 +808,7 @@ void Update()
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
+			PrintColored("\nProgram expansion port output: "+to_string(expansionPort)+"\n", brightBlueFGColor, "");
 			break;
 		}
 
@@ -1005,7 +1018,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 16382)
+			if (addr <= 16382 || addr > 16527)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
@@ -1020,7 +1033,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = memaddr;
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
-			if (addr <= 16382)
+			if (addr <= 16382 || addr > 16527)
 				outputBytes[addr] = hVal;
 			else
 				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[1]);
@@ -1578,7 +1591,7 @@ bool IsPointer(const string& in) {
 	return false;
 }
 bool IsDec(const string& in) {
-	if (!IsHex(in) && !IsBin(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
+	if (!IsHex(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }
@@ -1983,8 +1996,8 @@ string CompileCode(const string& inputcode) {
 		// "set" command (set <addr> <value>)
 		if (command == "define")
 		{
-			string addrPre = trim(split(codelines[i], " ")[1]);
-			string valuePre = trim(split(codelines[i], " ")[2]);
+			string addrPre = split(trim(split(split(codelines[i], "define ")[1], "=")[0]), " ")[0];
+			string valuePre = split(trim(split(split(codelines[i], "define ")[1], "=")[1]), " ")[0];
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "define:     ";
 			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
@@ -2002,8 +2015,8 @@ string CompileCode(const string& inputcode) {
 		// "change" command (change <location> = <value or location>)
 		else if (command == "change")
 		{
-			string addrPre = trim(split(split(codelines[i], "change ")[1], " = ")[0]);
-			string valuePre = trim(split(split(codelines[i], "change ")[1], " = ")[1]);
+			string addrPre = trim(split(split(codelines[i], "change ")[1], "=")[0]);
+			string valuePre = trim(split(split(codelines[i], "change ")[1], "=")[1]);
 			PrintColored("ok.	", greenFGColor, "");
 			cout << "change:     ";
 			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");

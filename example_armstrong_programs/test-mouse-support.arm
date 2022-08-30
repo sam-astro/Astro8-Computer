@@ -1,0 +1,69 @@
+#AS
+
+///////////////////////////////////////////////////////////
+// This program requires keyboard mode to be turned off. //
+// This can be done with the --nokeyboard / -nk option   //
+///////////////////////////////////////////////////////////
+
+
+///////////////
+// Variables //
+///////////////
+define $pixOffset = 61439 // Beginning of video memory
+
+define $xPos = 32
+define $yPos = 32
+
+change @EX = 2080
+
+
+#Update
+
+change $expVal = @EX
+
+change $newX = $expVal
+change $newY = $expVal
+
+// Bit shift X and remove unused bits
+change @A = $newX
+asm"
+    ldib 8
+    bsr
+    ldib 63
+    and
+"
+change $newX = @A
+
+// Bit shift Y and remove unused bits
+change @A = $newY
+asm"
+    ldib 63
+    and
+"
+change $newY = @A
+
+// Redraw only if at a new location from last time
+change $diff = 0
+if $newX!=$xPos:
+    change $diff = 1
+endif
+if $newY!=$yPos:
+    change $diff = 1
+endif
+
+if $diff!=0:
+    mult $yPos,64 -> $temp
+    add $xPos,$temp -> $temp
+    add $pixOffset,$temp -> $temp
+    change *$temp = 0
+
+    change $xPos = $newX
+    change $yPos = $newY
+
+    mult $yPos,64 -> $temp
+    add $xPos,$temp -> $temp
+    add $pixOffset,$temp -> $temp
+    change *$temp = 0b111110000000000
+endif
+
+goto #Update

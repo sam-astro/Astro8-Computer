@@ -1,0 +1,314 @@
+#AS
+
+#include "./STACK.arm"
+
+///////////////
+// Variables //
+///////////////
+define $pixOffset = 61439 // Beginning of video memory
+define $charOffset = 16382 // Beginning of character memory
+
+define $CursorMoveSpeed = 15000
+define $cursorCount = 0
+define $cursorX = 32
+define $cursorY = 32
+
+define $drawSpeed = 10000
+define $drawCount = 0
+define $drawType = 1 // 0 = none, 1 = draw
+define $paused = 1 // 0 = playing, 1 = paused
+
+define $celColor = 0b011101111011011
+
+change @EX = 168
+
+change $lastKey = 168
+
+define $bufferALoc = 20000
+define $bufferBLoc = 24096
+
+#Start
+// Set default UI
+change 16382 = 'd'
+change 16383 = 'r'
+change 16384 = 'a'
+change 16385 = 'w'
+change 16386 = 0
+change 16387 = 7
+
+
+#MainLoop
+
+if $drawCount==$drawSpeed:
+
+    // Process all of the pixels to calculate their next position
+    change $copyOffset = 0
+    #Processor
+    add $bufferALoc,$copyOffset -> $loc1
+    add $bufferBLoc,$copyOffset -> $loc2
+
+    if $paused==0:
+        change $currentPixel = *$loc1
+        change $neighbors = 0
+
+        // mult $copyOffset,10 -> $celColor // <- Rainbow colored cels
+
+        // Count the number of neighbors
+        sub $loc1,65 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,62 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,2 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,62 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+        add $loc1,1 -> $loc1
+        if *$loc1!=0:
+            add $neighbors,1 -> $neighbors
+        endif
+
+
+        // Change state depending on neighbor count
+
+        if $neighbors<2: // Underpopulation
+            change *$loc2 = 0
+        endif
+        if $neighbors>3: // Overpopulation
+            change *$loc2 = 0
+        endif
+        add $bufferALoc,$copyOffset -> $loc1
+        if *$loc1!=0:
+            if $neighbors==2:
+                change *$loc2 = $celColor
+            endif
+        endif
+        if $neighbors==3:
+            change *$loc2 = $celColor
+        endif
+    endif
+    
+    if $paused==1:
+        change *$loc2 = *$loc1
+    endif
+    
+    #EndofProcessLoop
+    add 1,$copyOffset -> $copyOffset
+    gotoif $copyOffset<4096, #Processor
+
+
+
+
+    // Copies everything from buffer B into buffer A
+    change $copyOffset = 0
+    #Copier
+    add $bufferALoc,$copyOffset -> $loc1
+    add $bufferBLoc,$copyOffset -> $loc2
+    
+    change *$loc1 = *$loc2
+
+    add $pixOffset,$copyOffset -> $pixLoc
+    change *$pixLoc = *$loc2
+
+    add 1,$copyOffset -> $copyOffset
+    gotoif $copyOffset<4096, #Copier
+    
+
+    
+    ///////////////////////
+    // Draw cursor color //
+    ///////////////////////
+    // Get center pixel
+    mult $cursorY,64 -> $temp
+    add $cursorX,$temp -> $temp
+    change $bufCoord = $temp
+    add $pixOffset,$temp -> $temp
+    // Left crosshair
+    sub $temp,2 -> $temp
+    change *$temp = 65535
+    sub $temp,1 -> $temp
+    change *$temp = 65535
+    // Right crosshair
+    add $temp,5 -> $temp
+    change *$temp = 65535
+    add $temp,1 -> $temp
+    change *$temp = 65535
+    // Top crosshair
+    sub $temp,3 -> $temp
+    sub $temp,128 -> $temp
+    change *$temp = 65535
+    sub $temp,64 -> $temp
+    change *$temp = 65535
+    // Bottom crosshair
+    add $temp,320 -> $temp
+    change *$temp = 65535
+    add $temp,64 -> $temp
+    change *$temp = 65535
+
+    change $drawCount = 0
+endif
+
+if $CursorMoveSpeed==$cursorCount:
+
+    ////////////////////////
+    // Clear cursor color //
+    ////////////////////////
+    // Get center pixel
+    mult $cursorY,64 -> $temp
+    add $cursorX,$temp -> $temp
+    add $pixOffset,$temp -> $temp
+    // Left crosshair
+    sub $temp,2 -> $temp
+    change *$temp = 0
+    sub $temp,1 -> $temp
+    change *$temp = 0
+    // Right crosshair
+    add $temp,5 -> $temp
+    change *$temp = 0
+    add $temp,1 -> $temp
+    change *$temp = 0
+    // Top crosshair
+    sub $temp,3 -> $temp
+    sub $temp,128 -> $temp
+    change *$temp = 0
+    sub $temp,64 -> $temp
+    change *$temp = 0
+    // Bottom crosshair
+    add $temp,320 -> $temp
+    change *$temp = 0
+    add $temp,64 -> $temp
+    change *$temp = 0
+
+    change $keypress = @EX
+
+    if $keypress=='w':
+        if $cursorY>3:
+            sub $cursorY,1 -> $cursorY
+        endif
+    endif
+    if $keypress=='s':
+        if $cursorY<60:
+            add $cursorY,1 -> $cursorY
+        endif
+    endif
+    if $keypress=='a':
+        if $cursorX>3:
+            sub $cursorX,1 -> $cursorX
+        endif
+    endif
+    if $keypress=='d':
+        if $cursorX<60:
+            add $cursorX,1 -> $cursorX
+        endif
+    endif
+
+    if $keypress=='o':
+        if $keypress!=$lastKey:
+            add $drawType,1 -> $drawType
+            if $drawType==2:
+                change $drawType = 0
+            endif
+            if $drawType==0:
+                change 16382 = 'n'
+                change 16383 = 'o'
+                change 16384 = 'n'
+                change 16385 = 'e'
+                change 16386 = 0
+            endif
+            if $drawType==1:
+                change 16382 = 'd'
+                change 16383 = 'r'
+                change 16384 = 'a'
+                change 16385 = 'w'
+                change 16386 = 0
+            endif
+        endif
+    endif
+
+    if $keypress==0:
+        if $keypress!=$lastKey:
+            if $paused==0:
+                change 16387 = 7
+                change $paused = 1
+                goto #ExitIf
+            endif
+            if $paused==1:
+                change 16387 = 10
+                change $paused = 0
+                goto #ExitIf
+            endif
+        endif
+    endif
+    #ExitIf
+
+    if $keypress==168:
+        change $lastKey = 168
+    endif
+    if $keypress!=$lastKey:
+        change $lastKey = $keypress
+    endif
+
+    ///////////////////////
+    // Draw cursor color //
+    ///////////////////////
+    // Get center pixel
+    mult $cursorY,64 -> $temp
+    add $cursorX,$temp -> $temp
+    change $bufCoord = $temp
+    add $pixOffset,$temp -> $temp
+    // Draw a particle
+    if $drawType==1:
+        add $bufferALoc,$bufCoord -> $bufCoord
+        change *$bufCoord = $celColor
+    endif
+    // Left crosshair
+    sub $temp,2 -> $temp
+    change *$temp = 65535
+    sub $temp,1 -> $temp
+    change *$temp = 65535
+    // Right crosshair
+    add $temp,5 -> $temp
+    change *$temp = 65535
+    add $temp,1 -> $temp
+    change *$temp = 65535
+    // Top crosshair
+    sub $temp,3 -> $temp
+    sub $temp,128 -> $temp
+    change *$temp = 65535
+    sub $temp,64 -> $temp
+    change *$temp = 65535
+    // Bottom crosshair
+    add $temp,320 -> $temp
+    change *$temp = 65535
+    add $temp,64 -> $temp
+    change *$temp = 65535
+
+    change $cursorCount = 0
+endif
+
+
+#EndOfMainLoop
+
+add 1,$cursorCount -> $cursorCount
+add 1,$drawCount -> $drawCount
+goto #MainLoop
+
