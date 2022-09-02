@@ -2184,8 +2184,9 @@ string CompileCode(const string& inputcode) {
 			continue;
 		}
 
-		// arithmetic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
-		else if (command == "add" || command == "sub" || command == "mult" || command == "div")
+		// arithmetic/logic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
+		else if (command == "add" || command == "sub" || command == "mult" || command == "div" ||
+				 command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr")
 		{
 			string valAPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			string valBPre = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[0]);
@@ -2226,6 +2227,10 @@ string CompileCode(const string& inputcode) {
 			else if (IsDec(valBPre)) {
 				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 			}
+			// If second argument is a pointer
+			else if (IsPointer(valBPre)) {
+				LoadPointer(valBPre);
+			}
 
 
 			// If first argument is an address
@@ -2245,6 +2250,10 @@ string CompileCode(const string& inputcode) {
 			// If first argument is a new decimal value
 			else if (IsDec(valAPre)) {
 				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
+			}
+			// If first argument is a pointer
+			else if (IsPointer(valAPre)) {
+				LoadPointer(valAPre);
 			}
 
 
