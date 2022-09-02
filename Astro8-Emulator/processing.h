@@ -23,7 +23,6 @@ static std::string InvertExpression(const std::string& expression);
 vector<std::string> PreProcess(std::string unProcessed) {
 	// Pre-process lines of code
 
-	cout << "Preprocessing...";
 	vector<std::string> codelines = split(unProcessed, "\n");
 	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
 

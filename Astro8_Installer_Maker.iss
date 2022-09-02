@@ -38,10 +38,11 @@ OutputBaseFilename=Astro8-Setup
 SetupIconFile=.\images\A8-Logo-Installer-Small.ico
 Compression=lzma
 SolidCompression=yes
-WizardStyle=modern
+;WizardStyle=modern
+UsePreviousTasks=no
 
 [Tasks]
-Name: modifypath; Description: Add application directory to your environmental path (This allows you to easily use from command line); Flags: unchecked
+Name: modifypath; Description: Add application directory to your environmental path (This allows you to easily use from command line);
 
 [Code]
 const
@@ -83,7 +84,7 @@ Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 
 [Files]
-Source: ".\Astro8-Emulator\x64\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\Astro8-Emulator\x64\Release\{#MyAppExeName}"; DestDir: "{app}";
 Source: ".\Astro8-Emulator\x64\Release\char_set_memtape"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files

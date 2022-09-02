@@ -9,6 +9,7 @@
 #include <fstream>
 #include <codecvt>
 #include "processing.h"
+#include <filesystem>
 
 #include "armstrong-compiler.h"
 
@@ -30,7 +31,6 @@ std::string VERSION = "Astro-8 VERSION: v0.4.0-alpha";
 
 #if UNIX
 #include <unistd.h>
-#include <filesystem>
 #elif WINDOWS
 #include <windows.h>
 #endif
@@ -197,7 +197,7 @@ std::string instructioncodes[] = {
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 };
 
-std::string helpDialog= R"V0G0N(
+std::string helpDialog = R"V0G0N(
 Usage: astro8 [options] <path>
 
 Options:
@@ -350,7 +350,7 @@ int main(int argc, char** argv)
 		string argval = trim(argv[i]);
 		if (argval == "-h" || argval == "--help") { // Print help dialog
 			PrintColored(VERSION, blackFGColor, whiteBGColor);
-			cout <<endl<< helpDialog << endl;
+			cout << endl << helpDialog << endl;
 			exit(1);
 		}
 		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
@@ -366,6 +366,26 @@ int main(int argc, char** argv)
 		else // If not an option, then it should be a path
 			code = argval;
 	}
+
+
+	// Print `building` message if applicable
+	if (!runAstroExecutable)
+		PrintColored("Building:\n\n", blackFGColor, whiteBGColor);
+
+
+	// Generate required resources if the code is to be executed
+	if ((!compileOnly && !assembleOnly) || runAstroExecutable) {
+		cout<<"* Generating emulation resources:"<<endl;
+
+		// Generate ROM
+		cout << "   -  Generating Character ROM..." << endl;
+		int pixnum = GenerateCharacterROM();
+
+		// Generate microcode
+		cout << "   -  Generating microcode from instruction set..." << endl << endl;
+		GenerateMicrocode();
+	}
+
 
 
 	// If the input is a path to a file
@@ -408,7 +428,9 @@ int main(int argc, char** argv)
 	// or the user has used the "--compile" option
 	if ((split(code, "\n")[0] == "#AS" || compileOnly) && !assembleOnly && !runAstroExecutable)
 	{
+		cout << "* Preprocessing raw...";
 		vector<std::string> codelines = PreProcess(code);
+		PrintColored("  Done!\n", brightGreenFGColor, "");
 
 		for (int i = 0; i < codelines.size(); i++)
 		{
@@ -424,7 +446,8 @@ int main(int argc, char** argv)
 
 				// If the path is relative, append the known project path to make it absolute.
 				if (path[0] == '.')
-					path = projectDirectory + path;
+					if (projectDirectory[projectDirectory.size() - 1] != '.')
+						path = projectDirectory + path;
 
 				// Open and read file, appending code onto it after
 				std::string codeTmp = "";
@@ -465,19 +488,19 @@ int main(int argc, char** argv)
 		}
 
 		// Compile
-		cout << "Compiling Armstrong..." << endl;
+		cout << "* Begin Compiling Armstrong..." << endl;
 		code = CompileCode(code);
 
 		if (code != "") {
-			cout << "Output:\n";
-			ColorAndPrintAssembly(code, instructions);
-			cout << "Compiling ";
-			PrintColored("Done!\n\n", greenFGColor, "");
+			if (verbose) {
+				cout << "   -  Output:\n";
+				ColorAndPrintAssembly(code, instructions);
+			}
 		}
 		else
 			exit(0);
 	}
-	else if (!runAstroExecutable)
+	else if (!runAstroExecutable && verbose)
 		ColorAndPrintAssembly(code, instructions);
 
 
@@ -496,7 +519,7 @@ int main(int argc, char** argv)
 				f << *i << '\n';
 			}
 			f.close();
-			PrintColored("\nBinary executable written to " + projectDirectory + programName + ".aexe", whiteFGColor, "");
+			PrintColored("Binary executable written to " + projectDirectory + programName + ".aexe\n", whiteFGColor, "");
 		}
 		catch (const std::exception&)
 		{
@@ -521,20 +544,10 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	// Generate ROM
-	cout << "Generating Character ROM...";
-	int pixnum = GenerateCharacterROM();
-	PrintColored("  " + to_string(pixnum) + "px  Done!\n\n", greenFGColor, "");
-
-	// Generate microcode
-	cout << "Generating microcode from instruction set...";
-	GenerateMicrocode();
-	PrintColored("  Done!\n\n", greenFGColor, "");
-
 
 	// Start Emulation
 
-	cout << "\nStarting Emulation...\n";
+	PrintColored("\n\nStarting Emulation...\n\n", blackFGColor, whiteBGColor);
 
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
@@ -1136,7 +1149,7 @@ vector<std::string> parseCode(const std::string& input)
 
 	// Save the data to ./program_machine_code
 	fstream myStream;
-	myStream.open("./program_machine_code", ios::out);
+	myStream.open("./logisim_pmc.hex", ios::out);
 	myStream << processedOutput;
 
 	return outputBytes;
@@ -1407,7 +1420,7 @@ void GenerateMicrocode()
 
 	// Save the data to ./microinstructions_cpu_v1
 	fstream myStream;
-	myStream.open("./microinstructions_cpu", ios::out);
+	myStream.open("./logisim_mic.hex", ios::out);
 	myStream << processedOutput;
 }
 
@@ -1917,13 +1930,13 @@ int GetLineNumber() {
 // Compile Armstrong into assembly
 string CompileCode(const string& inputcode) {
 
+	cout << "   -  Preprocessing Armstrong...";
+
 	vector<string> codelines = PreProcess(inputcode);
 
-	cout << endl;
 	// Remove comments from end of lines and trim whitespace
 	for (int i = 0; i < codelines.size(); i++) {
 		codelines[i] = trim(split(codelines[i], "//")[0]);
-		PrintColored(codelines[i] + "\n", brightBlackFGColor, "");
 	}
 
 	// Replace 'if' statements with 'gotoif' alternatives,
@@ -1974,7 +1987,7 @@ string CompileCode(const string& inputcode) {
 
 	// Begin actual parsing and compilation
 
-	cout << "\nParsing started...\n";
+	cout << "   -  Compiling Armstrong...\n";
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		string command = trim(split(codelines[i], " ")[0]);
@@ -1986,11 +1999,13 @@ string CompileCode(const string& inputcode) {
 			int labelLineVal = GetLineNumber();
 			labels.push_back(command);
 			labelLineValues.push_back(labelLineVal);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "label:      ";
-			PrintColored("'" + command + "'", brightBlueFGColor, "");
-			PrintColored(" line: ", brightBlackFGColor, "");
-			PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "label:      ";
+				PrintColored("'" + command + "'", brightBlueFGColor, "");
+				PrintColored(" line: ", brightBlackFGColor, "");
+				PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, == " + command + " ==");
 
@@ -2024,11 +2039,13 @@ string CompileCode(const string& inputcode) {
 		{
 			string addrPre = split(trim(split(split(codelines[i], "define ")[1], "=")[0]), " ")[0];
 			string valuePre = split(trim(split(split(codelines[i], "define ")[1], "=")[1]), " ")[0];
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "define:     ";
-			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
-			PrintColored(" as ", brightBlackFGColor, "");
-			PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "define:     ";
+				PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
+				PrintColored(" as ", brightBlackFGColor, "");
+				PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			}
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
@@ -2043,11 +2060,13 @@ string CompileCode(const string& inputcode) {
 		{
 			string addrPre = trim(split(split(codelines[i], "change ")[1], "=")[0]);
 			string valuePre = trim(split(split(codelines[i], "change ")[1], "=")[1]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "change:     ";
-			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
-			PrintColored(" to ", brightBlackFGColor, "");
-			PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "change:     ";
+				PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
+				PrintColored(" to ", brightBlackFGColor, "");
+				PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			}
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
@@ -2186,19 +2205,21 @@ string CompileCode(const string& inputcode) {
 
 		// arithmetic/logic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
 		else if (command == "add" || command == "sub" || command == "mult" || command == "div" ||
-				 command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr")
+			command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr")
 		{
 			string valAPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			string valBPre = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[0]);
 			string outLoc = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[1]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "arithmetic: ";
-			PrintColored("'" + command + "'  ", brightBlueFGColor, "");
-			PrintColored("'" + valAPre + "' ", brightBlueFGColor, "");
-			PrintColored("with ", brightBlackFGColor, "");
-			PrintColored("'" + valBPre + "' ", brightBlueFGColor, "");
-			PrintColored("-> ", brightBlackFGColor, "");
-			PrintColored("'" + outLoc + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "arithmetic: ";
+				PrintColored("'" + command + "'  ", brightBlueFGColor, "");
+				PrintColored("'" + valAPre + "' ", brightBlueFGColor, "");
+				PrintColored("with ", brightBlackFGColor, "");
+				PrintColored("'" + valBPre + "' ", brightBlueFGColor, "");
+				PrintColored("-> ", brightBlackFGColor, "");
+				PrintColored("'" + outLoc + "'\n", brightBlueFGColor, "");
+			}
 
 			int valAProcessed = ParseValue(valAPre);
 			int valBProcessed = ParseValue(valBPre);
@@ -2282,9 +2303,11 @@ string CompileCode(const string& inputcode) {
 		else if (command == "goto")
 		{
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "goto:       ";
-			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "goto:       ";
+				PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			}
 
 			string addrProcessed = to_string(ParseValue(addrPre));
 
@@ -2310,11 +2333,13 @@ string CompileCode(const string& inputcode) {
 			string valBPre = trim(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0]);
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[1]);
 			string comparer = trim(split(split(split(codelines[i], command + " ")[1], valAPre)[1], valBPre)[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "gotoif:     ";
-			PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'", brightBlueFGColor, "");
-			PrintColored(" -> ", brightBlackFGColor, "");
-			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "gotoif:     ";
+				PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'", brightBlueFGColor, "");
+				PrintColored(" -> ", brightBlackFGColor, "");
+				PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'\n");
 			CompareValues(valAPre, comparer, valBPre, vars);
@@ -2381,9 +2406,11 @@ string CompileCode(const string& inputcode) {
 			string valAPre = trim(splitByComparator(split(codelines[i], command + " ")[1])[0]);
 			string valBPre = trim(split(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0], ":")[0]);
 			string comparer = trim(split(split(split(codelines[i], command + " ")[1], valAPre)[1], valBPre)[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "if:         ";
-			PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "if:         ";
+				PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, " + string("if:   '") + valAPre + " " + comparer + " " + valBPre + "'");
 			compiledLines.push_back(codelines[i]);
@@ -2393,8 +2420,10 @@ string CompileCode(const string& inputcode) {
 		// 'endif' statement
 		else if (command == "endif")
 		{
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "endif:\n";
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "endif:\n";
+			}
 
 			compiledLines.push_back(",\n, " + string("endif"));
 			compiledLines.push_back(codelines[i]);
@@ -2404,8 +2433,10 @@ string CompileCode(const string& inputcode) {
 		// 'asm' inline assembly
 		else if (trim(split(codelines[i], "\"")[0]) == "asm")
 		{
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "asm:\n";
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "asm:\n";
+			}
 
 			compiledLines.push_back(",\n, " + string("inline assembly"));
 
@@ -2434,10 +2465,9 @@ string CompileCode(const string& inputcode) {
 		formattedstr += trim(compiledLines[l]) + "\n";
 	}
 	compiledLines = split(formattedstr, "\n");
-	cout << compiledLines.size() << endl;
 
 
-	cout << "Parsing ";
+	cout << "* Compiling Armstrong  ";
 	if (issues == 0) {
 		PrintColored("Done!\n\n", greenFGColor, "");
 
