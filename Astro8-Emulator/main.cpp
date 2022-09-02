@@ -25,6 +25,8 @@
 
 #define DEV_MODE false
 
+std::string VERSION = "Astro-8 VERSION: v0.4.0-alpha";
+
 
 #if UNIX
 #include <unistd.h>
@@ -36,7 +38,7 @@
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
 bool usingKeyboard = true;
 
@@ -153,7 +155,7 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-std::string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -194,6 +196,21 @@ std::string instructioncodes[] = {
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 };
+
+std::string helpDialog= R"V0G0N(
+Usage: astro8 [options] <path>
+
+Options:
+  -h, --help               Display this help menu
+  -c, --compile            Only compile and assemble Armstrong code. Will not
+                           start emulator.
+  -a, --assemble           Only assemble assembly code into AEXE. Will not
+                           start emulator.
+  -r, --run                Run an already assembled program in AstroEXE format
+                           (program.AEXE)
+  -nk, --nokeyboard        Use the mouse mode for the emulator (disables keyboard input)
+  -v, --verbose            Write extra data to console for better debugging
+)V0G0N";
 
 
 void apply_pixels(
@@ -300,6 +317,7 @@ int GenerateCharacterROM() {
 int main(int argc, char** argv)
 {
 	std::string code = "";
+	std::string programName = "program";
 
 	// If no arguments are provided
 	if (argc == 1)
@@ -315,23 +333,27 @@ int main(int argc, char** argv)
 			code += line + "\n";
 		}
 	}
-	// Otherwise argv[1] is a path
 	else
 		code = argv[1];
 
 	// Make sure path/code isn't empty
 	if (code.empty()) {
-		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
+		PrintColored("Error: No path provided\n", redFGColor, "");
 		cout << "\n\nPress Enter to Exit...";
 		cin.ignore();
 		exit(1);
 	}
 
 	// Search for options in arguments
-	for (int i = 0; i < argc; i++)
+	for (int i = 1; i < argc; i++)
 	{
 		string argval = trim(argv[i]);
-		if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
+		if (argval == "-h" || argval == "--help") { // Print help dialog
+			PrintColored(VERSION, blackFGColor, whiteBGColor);
+			cout <<endl<< helpDialog << endl;
+			exit(1);
+		}
+		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
 			compileOnly = true;
 		else if (argval == "-a" || argval == "--assemble") // Only assemble code. Will not start emulator.
 			assembleOnly = true;
@@ -339,8 +361,11 @@ int main(int argc, char** argv)
 			runAstroExecutable = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
 			usingKeyboard = false;
+		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
+			verbose = true;
+		else // If not an option, then it should be a path
+			code = argval;
 	}
-	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
 
 
 	// If the input is a path to a file
@@ -349,6 +374,7 @@ int main(int argc, char** argv)
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
 		code = "";
+		programName = path.substr(path.find_last_of("/\\"), path.size());
 
 		// Open and read file
 		std::string li;
@@ -444,7 +470,7 @@ int main(int argc, char** argv)
 
 		if (code != "") {
 			cout << "Output:\n";
-			ColorAndPrintAssembly(code);
+			ColorAndPrintAssembly(code, instructions);
 			cout << "Compiling ";
 			PrintColored("Done!\n\n", greenFGColor, "");
 		}
@@ -452,7 +478,7 @@ int main(int argc, char** argv)
 			exit(0);
 	}
 	else if (!runAstroExecutable)
-		ColorAndPrintAssembly(code);
+		ColorAndPrintAssembly(code, instructions);
 
 
 	// Attempt to parse assembly, will throw error if not proper assembly
@@ -465,11 +491,12 @@ int main(int argc, char** argv)
 				memoryBytes.push_back(HexToDec(mbytes[memindex]));
 
 			// Store memory into an .AEXE file
-			std::ofstream f("./out.aexe");
+			std::ofstream f("./" + programName + ".aexe");
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
 			f.close();
+			PrintColored("\nBinary executable written to " + projectDirectory + programName + ".aexe", whiteFGColor, "");
 		}
 		catch (const std::exception&)
 		{
@@ -488,6 +515,12 @@ int main(int argc, char** argv)
 			memoryBytes.push_back(HexToDec(filelines[memindex]));
 	}
 
+	// Stop executing if successfully compiled/assembled
+	if (compileOnly || assembleOnly) {
+		PrintColored("\nFinished successfully", greenFGColor, "");
+		exit(1);
+	}
+
 	// Generate ROM
 	cout << "Generating Character ROM...";
 	int pixnum = GenerateCharacterROM();
@@ -497,14 +530,6 @@ int main(int argc, char** argv)
 	cout << "Generating microcode from instruction set...";
 	GenerateMicrocode();
 	PrintColored("  Done!\n\n", greenFGColor, "");
-
-
-	if (compileOnly || assembleOnly) {
-		PrintColored("\nFinished successfully", greenFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
-		exit(1);
-	}
 
 
 	// Start Emulation
@@ -1036,13 +1061,11 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = memaddr;
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
-			if (addr <= 16382 || addr > 16527)
-				outputBytes[addr] = hVal;
-			else
-				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[1]);
+			outputBytes[addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
+			memaddr += 1;
 			continue;
 		}
 
@@ -1056,7 +1079,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 
 		// Find index of instruction
-		for (int f = 0; f < sizeof(instructions) / sizeof(instructions[0]); f++)
+		for (int f = 0; f < instructions.size(); f++)
 		{
 			if (instructions[f] == splitBySpace[0])
 			{
@@ -1087,7 +1110,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -1117,7 +1140,7 @@ vector<std::string> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-	}
+}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1193,7 +1216,7 @@ void GenerateMicrocode()
 		cout << (newStr) << " ." << endl;
 #endif
 		instructioncodes[cl] = newStr;
-		}
+	}
 
 	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
 	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
@@ -1386,7 +1409,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open("./microinstructions_cpu", ios::out);
 	myStream << processedOutput;
-	}
+}
 
 vector<string> vars;
 vector<string> labels;
