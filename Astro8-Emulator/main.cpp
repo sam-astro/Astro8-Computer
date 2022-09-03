@@ -406,7 +406,7 @@ int main(int argc, char** argv)
 		}
 
 		projectDirectory = path.substr(0, path.find_last_of("/\\"));
-		projectDirectory = std::filesystem::canonical(projectDirectory).string();
+		projectDirectory = std::filesystem::canonical(projectDirectory).string()+"/";
 
 	}
 	else if (argc != 1) {
