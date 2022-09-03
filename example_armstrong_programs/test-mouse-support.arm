@@ -21,13 +21,15 @@ change @EX = 2080
 
 change $expVal = @EX
 
+change $isPressingMouseButton = 0
+
 change $newX = $expVal
 change $newY = $expVal
 
 // Bit shift X and remove unused bits
 change @A = $newX
 asm"
-    ldib 8
+    ldib 6
     bsr
     ldib 63
     and
@@ -51,6 +53,24 @@ if $newY!=$yPos:
     change $diff = 1
 endif
 
+
+// Bit shift Left Mouse Button and remove unused bits
+change @A = $expVal
+asm"
+    ldib 12
+    bsr
+"
+change $isPressingMouseButton = @A
+
+
+
+if $isPressingMouseButton!=$lastMouseButton:
+    change $diff = 1
+endif
+
+change $lastMouseButton = $isPressingMouseButton
+
+
 if $diff!=0:
     mult $yPos,64 -> $temp
     add $xPos,$temp -> $temp
@@ -63,7 +83,16 @@ if $diff!=0:
     mult $yPos,64 -> $temp
     add $xPos,$temp -> $temp
     add $pixOffset,$temp -> $temp
-    change *$temp = 0b111110000000000
+
+    if $isPressingMouseButton==0:
+        change *$temp = 0b111110000000000
+    endif
+    if $isPressingMouseButton==1:
+        change *$temp = 0b000000000011111
+    endif
+    if $isPressingMouseButton==2:
+        change *$temp = 0b000001111100000
+    endif
 endif
 
 goto #Update

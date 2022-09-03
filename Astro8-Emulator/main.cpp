@@ -5,6 +5,7 @@
 #include <chrono>
 #include <limits.h>
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include <sstream>
 #include <fstream>
 #include <codecvt>
@@ -71,6 +72,7 @@ vector<int> charRam;
 
 
 std::string projectDirectory;
+std::string executableDirectory;
 
 
 // Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
@@ -153,6 +155,11 @@ int ConvertAsciiToSdcii(int asciiCode);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+
+
+Mix_Chunk* gHigh = NULL;
+Mix_Chunk* gMedium = NULL;
+Mix_Chunk* gLow = NULL;
 
 
 vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
@@ -258,6 +265,13 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
+	Mix_FreeChunk(gHigh);
+	gHigh = NULL;
+	Mix_FreeChunk(gMedium);
+	gMedium = NULL;
+	Mix_FreeChunk(gLow);
+	gLow = NULL;
+
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -293,7 +307,7 @@ int GenerateCharacterROM() {
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
 
-	const std::string charsetFilename = "./char_set_memtape";
+	const std::string charsetFilename = executableDirectory+"/char_set_memtape";
 	ifstream charset(charsetFilename);
 
 	if (charset.is_open())
@@ -320,6 +334,9 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
+	// Get the executable's installed directory
+	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
+
 	std::string code = "";
 	std::string filePath = "";
 	std::string programName = "program";
@@ -365,7 +382,7 @@ int main(int argc, char** argv)
 		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
 			try
 			{
-				target_cpu_freq = stoi(argv[i + 1])*1000000;
+				target_cpu_freq = stoi(argv[i + 1]) * 1000000;
 			}
 			catch (const std::exception&)
 			{
@@ -385,7 +402,7 @@ int main(int argc, char** argv)
 		std::string path = trim(split(filePath, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		programName = path.substr(path.find_last_of("/\\"), path.size());
+		programName = path.substr(path.find_last_of("/\\")+1, path.size());
 
 		// Open and read file
 		std::string li;
@@ -406,7 +423,7 @@ int main(int argc, char** argv)
 		}
 
 		projectDirectory = path.substr(0, path.find_last_of("/\\"));
-		projectDirectory = std::filesystem::canonical(projectDirectory).string()+"/";
+		projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
 
 	}
 	else if (argc != 1) {
@@ -639,24 +656,37 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
-
-						// Keyboard support
-						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+						// Keyboard only uses lowest 8 bits, so the upper ones stay
+						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort & 0b1111111100000000);
 
 						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 						PrintColored(to_string(expansionPort), greenFGColor, "");
+
 					}
 					else if (event.type == SDL_KEYUP) {
 
-						// Keyboard support
 						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
 					}
 				}
 				// If using the mouse in the expansion port
 				else if (!usingKeyboard)
-					if (event.type == SDL_MOUSEMOTION)
-						// Mouse support
-						expansionPort = (event.motion.x << 8) + event.motion.y;
+					if (event.type == SDL_MOUSEMOTION) {
+						// Get mouse location
+						cout << event.motion.x << endl;
+						expansionPort = ((event.motion.x << 6) + event.motion.y) + (expansionPort & 0b1111000000000000);
+					}
+					else if (event.type == SDL_MOUSEBUTTONDOWN) {
+						if (event.button.button == 1)      // Left Mouse Button Down
+							expansionPort = 4096 | expansionPort;
+						else if (event.button.button == 3) // Right Mouse Button Down
+							expansionPort = 8192 | expansionPort;
+					}
+					else if (event.type == SDL_MOUSEBUTTONUP) {
+						if (event.button.button == 1 && (expansionPort & 4096) == 4096)      // Left Mouse Button Up
+							expansionPort = 4096 ^ expansionPort;
+						else if (event.button.button == 3 && (expansionPort & 8192) == 8192) // Right Mouse Button Up
+							expansionPort = 8192 ^ expansionPort;
+					}
 			}
 		}
 	}
@@ -882,6 +912,23 @@ void Update()
 			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
 			PrintColored(to_string(expansionPort), greenFGColor, "");
 			cout << "\n";
+
+
+			// Use upper 8 bits to play audio
+			if (Mix_Playing(0) == false && (expansionPort & 0b100000000) == 0b100000000)
+				Mix_PlayChannel(0, gLow, -1);
+			else if (Mix_Playing(0) == true && (expansionPort & 0b100000000) == 0)
+				Mix_FadeOutChannel(0, 100);
+
+			if (Mix_Playing(1) == false && (expansionPort & 0b1000000000) == 0b1000000000)
+				Mix_PlayChannel(1, gMedium, -1);
+			else if (Mix_Playing(1) == true && (expansionPort & 0b1000000000) == 0)
+				Mix_FadeOutChannel(1, 100);
+
+			if (Mix_Playing(2) == false && (expansionPort & 0b10000000000) == 0b10000000000)
+				Mix_PlayChannel(2, gHigh, -1);
+			else if (Mix_Playing(2) == true && (expansionPort & 0b10000000000) == 0)
+				Mix_FadeOutChannel(2, 100);
 			break;
 		}
 
@@ -996,7 +1043,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	int PIXEL_SCALE = pixelScale;
 
 	// Initialize SDL components
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
 	gWindow = SDL_CreateWindow(windowTitle.c_str(), 40, 40, WINDOW_WIDTH * PIXEL_SCALE, WINDOW_HEIGHT * PIXEL_SCALE, SDL_WINDOW_SHOWN | SDL_RENDERER_ACCELERATED);
 	gRenderer = SDL_CreateRenderer(gWindow, -1, 0);
@@ -1012,6 +1059,21 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 
 	//Get window surface
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
+
+	//Initialize SDL_mixer
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 4, 512) < 0)
+		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+
+	// Load waves
+	gHigh = Mix_LoadWAV((executableDirectory+"/high.wav").c_str());
+	if (gHigh == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	gMedium = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
+	if (gMedium == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	gLow = Mix_LoadWAV((executableDirectory + "/low.wav").c_str());
+	if (gLow == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
 
 	return 0;
 }
@@ -1132,7 +1194,7 @@ vector<std::string> parseCode(const std::string& input)
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
-			}
+		}
 		}
 
 		// Check if any args are after the command
@@ -1155,7 +1217,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1169,7 +1231,7 @@ vector<std::string> parseCode(const std::string& input)
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
-		}
+	}
 		processedOutput += outputBytes[outindex] + " ";
 
 		std::string ttmp = outputBytes[outindex];
@@ -1262,7 +1324,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -1312,7 +1374,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-				}
+			}
 				if (doesntmatch)
 					continue;
 
@@ -1323,7 +1385,7 @@ void GenerateMicrocode()
 			}
 		}
 
-	}
+		}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1385,7 +1447,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-				}
+			}
 				if (doesntmatch)
 					continue;
 
@@ -1394,8 +1456,8 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
 		}
+	}
 	}
 
 	// Print the output
@@ -1427,7 +1489,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-}
+	}
 
 vector<string> vars;
 vector<string> labels;
