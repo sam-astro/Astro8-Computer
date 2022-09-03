@@ -25,7 +25,7 @@ word 0  | ░░░░░░░░░░░░░░░░░ | ▓▓▓▓▓�
 
 Percent: `0 - 25%` <br>
 Range: `0 - 16381` <br>
-Words: `16381`
+Words: `16382`
 
 Contains the program instructions.
 
@@ -35,7 +35,7 @@ Contains the program instructions.
 
 Percent: `25-93%` <br>
 Range: `16382 - 61293` <br>
-Words: `44910`
+Words: `44911`
 
 Memory that the compiler automatically <br>
 allocates as needed for variables, or you <br>
@@ -47,7 +47,7 @@ can use for other general purposes.
 
 Percent: `25-25%` <br>
 Range: `61294 - 61438` <br>
-Words: `145`
+Words: `144`
 
 Contains the indexes of the characters to <br>
 be displayed at the corresponding location.
