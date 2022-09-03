@@ -11,8 +11,9 @@ title : Installation
 <br>
 
 ### Windows
-1. Navigate to **[the most recent release]**, and download the **Windows** version
+1. Navigate to **[the most recent release]**, and download the **Windows** installer
 2. Unzip the downloaded file
+3. Run the installer called `Astro8-Windows-Installer.exe`
 
 ### Linux
 1. Make sure you have **[SDL2 installed]** on your system
@@ -25,7 +26,7 @@ title : Installation
 3. Enter the directory `Astro8-Computer/Astro8-Emulator/linux-build`
 4. Run CMake using `cmake ..` to generate Unix Makefile
 5. Run `make -j5` to generate executable
-6. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/Astro8-Emulator`
+6. The executable is `Astro8-Computer/Astro8-Emulator/linux-build/astro8`
 
 <br>
 

@@ -7,12 +7,24 @@ title : Usage
 # Usage
 
 ## Emulator
-The file called `Astro8-Emulator` serves multiple purposes.
+The program called `astro8` serves multiple purposes.
 * Emulates machine code just like the real hardware
 * Compiles Armstrong into assembly
-* Assembles assembly into machine code and stores it into a file called `program_machine_code`
+* Assembles assembly into machine code and stores it into an `.AEXE` binary file for easy redistribution
 
-To run your code, you may either simply start the program where you will be prompted to input your code - OR, you can provide a path as a command line argument. You can either type directly into the command line (don't use any blank lines), or enter a path to your armstrong or assembly file and press enter ***twice***. The type will be determined by the first line of the file. ***All Armstrong files should have `#AS` as the first line.***
+To run your code or a program, type `astro8` followed by the path of the file:
+
+```
+> astro8 ./main.asm
+```
+OR
+
+```
+> astro8 ./main.armstrong
+```
+
+The type of file will be automatically determined as Armstrong or Assembly.
+
 
 There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
 
