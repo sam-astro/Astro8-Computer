@@ -5,7 +5,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 project(Astro8-Emulator)
 
-SET(programName Astro8-Emulator)
+SET(programName astro8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeFiles/")
 
 add_executable (Astro8-Emulator main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h )
