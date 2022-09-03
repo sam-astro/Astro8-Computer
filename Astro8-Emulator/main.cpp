@@ -27,7 +27,7 @@
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v0.4.0-alpha";
+std::string VERSION = "Astro-8 VERSION: v1.0.1-alpha";
 
 
 #if UNIX
@@ -480,6 +480,7 @@ int main(int argc, char** argv)
 				std::string path = trim(split(clCpy, " ")[1]);
 				path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 				path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
+				path = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 				// If the path is relative, append the known project path to make it absolute.
 				if (path[0] == '.')
