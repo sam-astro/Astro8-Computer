@@ -328,7 +328,7 @@ int main(int argc, char** argv)
 	if (argc == 1)
 	{
 		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
-		cout << endl << helpDialog << endl;
+		cout << "\n" << helpDialog << "\n";
 		cout << ("OR, enter path to file >  ");
 		std::string line;
 		while (true) {
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
 		string argval = trim(argv[i]);
 		if (argval == "-h" || argval == "--help") { // Print help dialog
 			PrintColored(VERSION, blackFGColor, whiteBGColor);
-			cout << endl << helpDialog << endl;
+			cout << "\n" << helpDialog << "\n";
 			exit(1);
 		}
 		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
@@ -432,14 +432,14 @@ int main(int argc, char** argv)
 
 	// Generate required resources if the code is to be executed
 	if ((!compileOnly && !assembleOnly) || runAstroExecutable) {
-		cout << "* Generating emulation resources:" << endl;
+		cout << "* Generating emulation resources:\n";
 
 		// Generate ROM
-		cout << "   -  Generating Character ROM..." << endl;
+		cout << "   -  Generating Character ROM...\n";
 		int pixnum = GenerateCharacterROM();
 
 		// Generate microcode
-		cout << "   -  Generating microcode from instruction set..." << endl << endl;
+		cout << "   -  Generating microcode from instruction set...\n\n";
 		GenerateMicrocode();
 	}
 
@@ -508,7 +508,7 @@ int main(int argc, char** argv)
 		}
 
 		// Compile
-		cout << "* Begin Compiling Armstrong..." << endl;
+		cout << "* Begin Compiling Armstrong...\n";
 		code = CompileCode(code);
 
 		if (code != "") {
@@ -1176,7 +1176,7 @@ vector<std::string> parseCode(const std::string& input)
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 	}
 #if DEV_MODE
-	cout << processedOutput << endl << endl;
+	cout << processedOutput << "\n\n";
 #endif
 
 	// Save the data to logisim_pmc.hex
@@ -1258,7 +1258,7 @@ void GenerateMicrocode()
 		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
-		cout << (newStr) << " ." << endl;
+		cout << (newStr) << " .\n";
 #endif
 		instructioncodes[cl] = newStr;
 	}
