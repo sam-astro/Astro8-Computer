@@ -9,6 +9,8 @@ nav_order : 1
 
 # Memory Layout v1.0.0-alpha +
 
+> This new memory layout moved the Character Memory section next to the Video Memory, and shifted the General Memory to be next to Program Memory. *This change only affected General Memory **and** Character Memory addressing.*
+
 <br>
 
 ```
