@@ -23,10 +23,37 @@ OR
 > astro8 ./main.armstrong
 ```
 
-The type of file will be automatically determined as Armstrong or Assembly.
+The type of file will be automatically determined as Armstrong, Assembly, or AstroEXE, or you may specify it with the options below.
 
+You may also provide extra options like so:
+```
+Usage: astro8 [options] <path>
+```
 
-There is a second executable written in C# called `ResourceGenerator`. This is used to generate binary data from the character-set PNG file. Unless you want to change the font or add new characters, you don't need to use this.
+List of options:
+```
+  -h, --help               Display the help menu
+```
+```
+  -c, --compile            Only compile and assemble Armstrong code. Will not start emulator.
+```
+```
+  -a, --assemble           Only assemble assembly code into AEXE. Will not start emulator.
+```
+```
+  -r, --run                Run an already assembled program in AstroEXE format (program.AEXE)
+```
+```
+  -nk, --nokeyboard        Use the mouse mode for the emulator (disables keyboard input)
+```
+```
+  -v, --verbose            Write extra data to console for better debugging
+```
+```
+  -f, --freq <value>       Override the default CPU target frequency with your own. Default = 10, higher = faster. 
+                           High frequencies may be too hard to reach for some cpus
+```
+
 
 ## Logisim
 Along with the emulator, you can look at the actual circuit design for the system and even run your programs in it. 
