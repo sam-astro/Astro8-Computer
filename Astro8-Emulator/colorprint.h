@@ -158,7 +158,9 @@ static void PrintColored(std::string text, std::string fgColor, std::string bgCo
 #endif
 }
 
-static void ColorAndPrintAssembly(std::string asmb) {
+static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instructions) {
+	cout << instructions.size() << endl;
+
 	vector<std::string> nstr = split(asmb, "\n");
 	int actualNum = 0;
 	for (size_t i = 0; i < nstr.size(); i++)
@@ -168,24 +170,46 @@ static void ColorAndPrintAssembly(std::string asmb) {
 
 		// If line is a comment
 		if (nstr[i][0] == ',')
-			PrintColored("\t\t"+nstr[i] + "\n", brightBlackFGColor, "");
+			PrintColored("\t\t" + nstr[i] + "\n", brightBlackFGColor, "");
 		// Else if uncounted set
-		else if(!AccomodateSetInProgramRange(nstr[i], actualNum)) {
-				//PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
-				PrintColored("\t\t"+split(nstr[i], " ")[0], greenFGColor, "");
-				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+		else if (!AccomodateSetInProgramRange(nstr[i], actualNum)) {
+			//PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
+			PrintColored("\t\t" + split(nstr[i], " ")[0], greenFGColor, "");
+			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
 		}
 		// Else
 		else {
-			if (split(nstr[i], " ").size() > 1) {
-				PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
-				PrintColored("\t"+split(nstr[i], " ")[0], cyanFGColor, "");
-				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+			bool matchesCommand = false;
+
+			std::string instruction = split(nstr[i], " ")[0];
+			transform(instruction.begin(), instruction.end(), instruction.begin(), ::toupper);
+
+			for (int i = 0; i < instructions.size(); i++)
+			{
+				if (instruction == instructions[i]) {
+					matchesCommand = true;
+					break;
+				}
 			}
+
+			// If a valid instruction, print normally
+			if (matchesCommand||instruction=="SET"||instruction=="HERE")
+				if (split(nstr[i], " ").size() > 1) {
+					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
+					PrintColored("\t" + split(nstr[i], " ")[0], cyanFGColor, "");
+					PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+				}
+				else {
+					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
+					PrintColored("\t" + nstr[i] + "\n", cyanFGColor, "");
+				}
+			// If not a valid instruction, print in red
 			else {
+				PrintColored(" !!", redFGColor, "");
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
-				PrintColored("\t" + nstr[i] + "\n", cyanFGColor, "");
+				PrintColored("\t" + nstr[i] + "\n", redFGColor, "");
 			}
+
 			actualNum++;
 		}
 	}

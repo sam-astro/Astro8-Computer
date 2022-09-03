@@ -1,0 +1,7 @@
+#AS
+
+#update
+
+change @EX = 65535
+
+goto #update

@@ -5,10 +5,12 @@
 #include <chrono>
 #include <limits.h>
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include <sstream>
 #include <fstream>
 #include <codecvt>
 #include "processing.h"
+#include <filesystem>
 
 #include "armstrong-compiler.h"
 
@@ -25,10 +27,11 @@
 
 #define DEV_MODE false
 
+std::string VERSION = "Astro-8 VERSION: v1.0.1-alpha";
+
 
 #if UNIX
 #include <unistd.h>
-#include <filesystem>
 #elif WINDOWS
 #include <windows.h>
 #endif
@@ -36,7 +39,7 @@
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
 bool usingKeyboard = true;
 
@@ -61,7 +64,7 @@ int pixelRamIndex = 0xefff;
 
 
 // 10000000 = 10.0MHz
-#define TARGET_CPU_FREQ 10000000
+int target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
 vector<int> memoryBytes;
@@ -69,6 +72,7 @@ vector<int> charRam;
 
 
 std::string projectDirectory;
+std::string executableDirectory;
 
 
 // Refer to https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Micro%20Instructions.html
@@ -153,7 +157,12 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-std::string instructions[] = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
+Mix_Chunk* gHigh = NULL;
+Mix_Chunk* gMedium = NULL;
+Mix_Chunk* gLow = NULL;
+
+
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
@@ -194,6 +203,25 @@ std::string instructioncodes[] = {
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 };
+
+std::string helpDialog = R"V0G0N(
+Usage: astro8 [options] <path>
+
+Options:
+  -h, --help               Display this help menu
+  -c, --compile            Only compile and assemble Armstrong code. Will not
+                           start emulator.
+  -a, --assemble           Only assemble assembly code into AEXE. Will not
+                           start emulator.
+  -r, --run                Run an already assembled program in AstroEXE format
+                           (program.AEXE)
+  -nk, --nokeyboard        Use the mouse mode for the emulator (disables
+                           keyboard input)
+  -v, --verbose            Write extra data to console for better debugging
+  -f, --freq <value>       Override the default CPU target frequency with your
+                           own.      Default = 10    higher = faster
+                           High frequencies may be too hard to reach for some cpus
+)V0G0N";
 
 
 void apply_pixels(
@@ -237,6 +265,13 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
+	Mix_FreeChunk(gHigh);
+	gHigh = NULL;
+	Mix_FreeChunk(gMedium);
+	gMedium = NULL;
+	Mix_FreeChunk(gLow);
+	gLow = NULL;
+
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -272,7 +307,7 @@ int GenerateCharacterROM() {
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
 
-	const std::string charsetFilename = "./char_set_memtape";
+	const std::string charsetFilename = executableDirectory+"/char_set_memtape";
 	ifstream charset(charsetFilename);
 
 	if (charset.is_open())
@@ -299,39 +334,42 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
-	std::string code = "";
+	// Get the executable's installed directory
+	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
 
-	// If no arguments are provided
+	std::string code = "";
+	std::string filePath = "";
+	std::string programName = "program";
+
+	// If no arguments are provided, ask for a path
 	if (argc == 1)
 	{
-		// Gather user inputted code
-		cout << ("v Emu. Code input v\n");
+		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
+		cout << "\n" << helpDialog << "\n";
+		cout << ("OR, enter path to file >  ");
 		std::string line;
 		while (true) {
 			getline(cin, line);
 			if (line.empty()) {
+				continue;
+			}
+			else {
+				filePath = line;
 				break;
 			}
-			code += line + "\n";
 		}
-	}
-	// Otherwise argv[1] is a path
-	else
-		code = argv[1];
-
-	// Make sure path/code isn't empty
-	if (code.empty()) {
-		PrintColored("Error: No filename or '#AS' directive provided on the first line\n", redFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
-		exit(1);
 	}
 
 	// Search for options in arguments
-	for (int i = 0; i < argc; i++)
+	for (int i = 1; i < argc; i++)
 	{
 		string argval = trim(argv[i]);
-		if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
+		if (argval == "-h" || argval == "--help") { // Print help dialog
+			PrintColored(VERSION, blackFGColor, whiteBGColor);
+			cout << "\n" << helpDialog << "\n";
+			exit(1);
+		}
+		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
 			compileOnly = true;
 		else if (argval == "-a" || argval == "--assemble") // Only assemble code. Will not start emulator.
 			assembleOnly = true;
@@ -339,16 +377,32 @@ int main(int argc, char** argv)
 			runAstroExecutable = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
 			usingKeyboard = false;
+		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
+			verbose = true;
+		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
+			try
+			{
+				target_cpu_freq = stoi(argv[i + 1]) * 1000000;
+			}
+			catch (const std::exception&)
+			{
+				PrintColored("\nError: specify a valid integer frequency after -f/--freq option ", redFGColor, "");
+				cout << "\n\nPress Enter to Exit...";
+				cin.ignore();
+				exit(1);
+			}
+		}
+		else // If not an option, then it should be a path
+			filePath = argval;
 	}
-	cout << to_string(compileOnly) << " " << to_string(assembleOnly) << " " << to_string(runAstroExecutable) << " " << endl;
 
 
-	// If the input is a path to a file
-	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find('\\') != std::string::npos) {
-		std::string path = trim(split(code, "\n")[0]);
+	// Open and read the file from the path
+	if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
+		std::string path = trim(split(filePath, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		code = "";
+		programName = path.substr(path.find_last_of("/\\")+1, path.size());
 
 		// Open and read file
 		std::string li;
@@ -369,6 +423,8 @@ int main(int argc, char** argv)
 		}
 
 		projectDirectory = path.substr(0, path.find_last_of("/\\"));
+		projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
+
 	}
 	else if (argc != 1) {
 		PrintColored("\nError: could not open file ", redFGColor, "");
@@ -378,11 +434,40 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
+
+	// Determine if the file is an AstroExecutable AEXE
+	if (trim(split(code, "\n")[0]) == "ASTRO-8 AEXE Executable file")
+		runAstroExecutable = true;
+
+
+	// Print `building` message if applicable
+	if (!runAstroExecutable) {
+		PrintColored("Building:", blackFGColor, whiteBGColor);
+		cout << "\n\n";
+	}
+
+
+	// Generate required resources if the code is to be executed
+	if ((!compileOnly && !assembleOnly) || runAstroExecutable) {
+		cout << "* Generating emulation resources:\n";
+
+		// Generate ROM
+		cout << "   -  Generating Character ROM...\n";
+		int pixnum = GenerateCharacterROM();
+
+		// Generate microcode
+		cout << "   -  Generating microcode from instruction set...\n\n";
+		GenerateMicrocode();
+	}
+
+
 	// If the code inputted is marked as written in armstrong with #AS,
 	// or the user has used the "--compile" option
 	if ((split(code, "\n")[0] == "#AS" || compileOnly) && !assembleOnly && !runAstroExecutable)
 	{
+		cout << "* Preprocessing raw...";
 		vector<std::string> codelines = PreProcess(code);
+		PrintColored("  Done!\n", brightGreenFGColor, "");
 
 		for (int i = 0; i < codelines.size(); i++)
 		{
@@ -395,10 +480,12 @@ int main(int argc, char** argv)
 				std::string path = trim(split(clCpy, " ")[1]);
 				path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 				path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
+				path = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 				// If the path is relative, append the known project path to make it absolute.
 				if (path[0] == '.')
-					path = projectDirectory + path;
+					if (projectDirectory[projectDirectory.size() - 1] != '.')
+						path = projectDirectory + path;
 
 				// Open and read file, appending code onto it after
 				std::string codeTmp = "";
@@ -439,20 +526,20 @@ int main(int argc, char** argv)
 		}
 
 		// Compile
-		cout << "Compiling Armstrong..." << endl;
+		cout << "* Begin Compiling Armstrong...\n";
 		code = CompileCode(code);
 
 		if (code != "") {
-			cout << "Output:\n";
-			ColorAndPrintAssembly(code);
-			cout << "Compiling ";
-			PrintColored("Done!\n\n", greenFGColor, "");
+			if (verbose) {
+				cout << "   -  Output:\n";
+				ColorAndPrintAssembly(code, instructions);
+			}
 		}
 		else
 			exit(0);
 	}
-	else if (!runAstroExecutable)
-		ColorAndPrintAssembly(code);
+	else if (!runAstroExecutable && verbose)
+		ColorAndPrintAssembly(code, instructions);
 
 
 	// Attempt to parse assembly, will throw error if not proper assembly
@@ -465,11 +552,13 @@ int main(int argc, char** argv)
 				memoryBytes.push_back(HexToDec(mbytes[memindex]));
 
 			// Store memory into an .AEXE file
-			std::ofstream f("./out.aexe");
+			std::ofstream f(projectDirectory + programName + ".aexe");
+			f << "ASTRO-8 AEXE Executable file" << '\n';
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
 			f.close();
+			PrintColored("Binary executable written to " + projectDirectory + programName + ".aexe\n", whiteFGColor, "");
 		}
 		catch (const std::exception&)
 		{
@@ -484,32 +573,31 @@ int main(int argc, char** argv)
 	if (runAstroExecutable) {
 		vector<std::string> filelines = split(code, "\n");
 
-		for (int memindex = 0; memindex < filelines.size(); memindex++)
-			memoryBytes.push_back(HexToDec(filelines[memindex]));
+		// Make sure it is a valid AEXE file
+		if (trim(filelines[0]) == "ASTRO-8 AEXE Executable file")
+			for (int memindex = 1; memindex < filelines.size(); memindex++)
+				memoryBytes.push_back(HexToDec(filelines[memindex]));
+		else
+		{
+			PrintColored("\nInvalid Executable file. Possibly it is out of date or corrupted, or may simply be missing the header:  \"ASTRO-8 AEXE Executable file\"", redFGColor, "");
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
+			exit(1);
+		}
 	}
 
-	// Generate ROM
-	cout << "Generating Character ROM...";
-	int pixnum = GenerateCharacterROM();
-	PrintColored("  " + to_string(pixnum) + "px  Done!\n\n", greenFGColor, "");
-
-	// Generate microcode
-	cout << "Generating microcode from instruction set...";
-	GenerateMicrocode();
-	PrintColored("  Done!\n\n", greenFGColor, "");
-
-
+	// Stop executing if successfully compiled/assembled
 	if (compileOnly || assembleOnly) {
 		PrintColored("\nFinished successfully", greenFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
 		exit(1);
 	}
 
 
 	// Start Emulation
 
-	cout << "\nStarting Emulation...\n";
+	cout << "\n\n";
+	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
+	cout << "\n\n";
 
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
@@ -548,7 +636,7 @@ int main(int argc, char** argv)
 		// Chrono is slow in any case, so it may be replaced later
 		// SDL_GetTick is probably not precise enough
 		const int numUpdates = 1000;
-		if (tickDiff > (numUpdates * 1000.0 / TARGET_CPU_FREQ)) {
+		if (tickDiff > (numUpdates * 1000.0 / target_cpu_freq)) {
 			lastTick = startTime;
 			for (int i = 0; i < numUpdates; ++i)
 				Update();
@@ -569,23 +657,37 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
+						// Keyboard only uses lowest 8 bits, so the upper ones stay
+						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort & 0b1111111100000000);
 
-						// Keyboard support
-						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+						PrintColored(to_string(expansionPort), greenFGColor, "");
 
-						cout << "\n	expansionPort: " << expansionPort << endl;
 					}
 					else if (event.type == SDL_KEYUP) {
 
-						// Keyboard support
 						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
 					}
 				}
 				// If using the mouse in the expansion port
 				else if (!usingKeyboard)
-					if (event.type == SDL_MOUSEMOTION)
-						// Mouse support
-						expansionPort = (event.motion.x << 8) + event.motion.y;
+					if (event.type == SDL_MOUSEMOTION) {
+						// Get mouse location
+						cout << event.motion.x << endl;
+						expansionPort = ((event.motion.x << 6) + event.motion.y) + (expansionPort & 0b1111000000000000);
+					}
+					else if (event.type == SDL_MOUSEBUTTONDOWN) {
+						if (event.button.button == 1)      // Left Mouse Button Down
+							expansionPort = 4096 | expansionPort;
+						else if (event.button.button == 3) // Right Mouse Button Down
+							expansionPort = 8192 | expansionPort;
+					}
+					else if (event.type == SDL_MOUSEBUTTONUP) {
+						if (event.button.button == 1 && (expansionPort & 4096) == 4096)      // Left Mouse Button Up
+							expansionPort = 4096 ^ expansionPort;
+						else if (event.button.button == 3 && (expansionPort & 8192) == 8192) // Right Mouse Button Up
+							expansionPort = 8192 ^ expansionPort;
+					}
 			}
 		}
 	}
@@ -808,7 +910,26 @@ void Update()
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
-			PrintColored("\nProgram expansion port output: "+to_string(expansionPort)+"\n", brightBlueFGColor, "");
+			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
+			PrintColored(to_string(expansionPort), greenFGColor, "");
+			cout << "\n";
+
+
+			// Use upper 8 bits to play audio
+			if (Mix_Playing(0) == false && (expansionPort & 0b100000000) == 0b100000000)
+				Mix_PlayChannel(0, gLow, -1);
+			else if (Mix_Playing(0) == true && (expansionPort & 0b100000000) == 0)
+				Mix_FadeOutChannel(0, 100);
+
+			if (Mix_Playing(1) == false && (expansionPort & 0b1000000000) == 0b1000000000)
+				Mix_PlayChannel(1, gMedium, -1);
+			else if (Mix_Playing(1) == true && (expansionPort & 0b1000000000) == 0)
+				Mix_FadeOutChannel(1, 100);
+
+			if (Mix_Playing(2) == false && (expansionPort & 0b10000000000) == 0b10000000000)
+				Mix_PlayChannel(2, gHigh, -1);
+			else if (Mix_Playing(2) == true && (expansionPort & 0b10000000000) == 0)
+				Mix_FadeOutChannel(2, 100);
 			break;
 		}
 
@@ -827,7 +948,7 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = memoryBytes[characterRamIndex + 16382];
+	int characterRamValue = memoryBytes[characterRamIndex + 61294];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
 	int pixelVal = memoryBytes[pixelRamIndex];
@@ -923,7 +1044,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	int PIXEL_SCALE = pixelScale;
 
 	// Initialize SDL components
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
 	gWindow = SDL_CreateWindow(windowTitle.c_str(), 40, 40, WINDOW_WIDTH * PIXEL_SCALE, WINDOW_HEIGHT * PIXEL_SCALE, SDL_WINDOW_SHOWN | SDL_RENDERER_ACCELERATED);
 	gRenderer = SDL_CreateRenderer(gWindow, -1, 0);
@@ -939,6 +1060,21 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 
 	//Get window surface
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
+
+	//Initialize SDL_mixer
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 4, 512) < 0)
+		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+
+	// Load waves
+	gHigh = Mix_LoadWAV((executableDirectory+"/high.wav").c_str());
+	if (gHigh == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	gMedium = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
+	if (gMedium == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	gLow = Mix_LoadWAV((executableDirectory + "/low.wav").c_str());
+	if (gLow == NULL)
+		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
 
 	return 0;
 }
@@ -1018,10 +1154,10 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 16382 || addr > 16527)
+			if (addr <= 61294 || addr > 61438)
 				outputBytes[addr] = hVal;
 			else
-				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
+				charRam[clamp(addr - 61295, 0, 143)] = stoi(splitBySpace[2]);
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -1033,13 +1169,11 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = memaddr;
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
-			if (addr <= 16382 || addr > 16527)
-				outputBytes[addr] = hVal;
-			else
-				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[1]);
+			outputBytes[addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
+			memaddr += 1;
 			continue;
 		}
 
@@ -1053,7 +1187,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 
 		// Find index of instruction
-		for (int f = 0; f < sizeof(instructions) / sizeof(instructions[0]); f++)
+		for (int f = 0; f < instructions.size(); f++)
 		{
 			if (instructions[f] == splitBySpace[0])
 			{
@@ -1061,7 +1195,7 @@ vector<std::string> parseCode(const std::string& input)
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
-			}
+		}
 		}
 
 		// Check if any args are after the command
@@ -1084,7 +1218,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1098,19 +1232,19 @@ vector<std::string> parseCode(const std::string& input)
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
-		}
+	}
 		processedOutput += outputBytes[outindex] + " ";
 
 		std::string ttmp = outputBytes[outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 	}
 #if DEV_MODE
-	cout << processedOutput << endl << endl;
+	cout << processedOutput << "\n\n";
 #endif
 
-	// Save the data to ./program_machine_code
+	// Save the data to logisim_pmc.hex
 	fstream myStream;
-	myStream.open("./program_machine_code", ios::out);
+	myStream.open(projectDirectory + "logisim_pmc.hex", ios::out);
 	myStream << processedOutput;
 
 	return outputBytes;
@@ -1187,34 +1321,11 @@ void GenerateMicrocode()
 		}
 		transform(newStr.begin(), newStr.end(), newStr.begin(), ::toupper);
 #if DEV_MODE
-		cout << (newStr) << " ." << endl;
+		cout << (newStr) << " .\n";
 #endif
 		instructioncodes[cl] = newStr;
-	}
-
-	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
-	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
-	vector<std::string> seenNames;
-	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
-	{
-		std::string instName = explode(instructioncodes[cl], '(')[0];
-		bool foundInList = false;
-		for (int clc = 0; clc < seenNames.size(); clc++)
-		{
-			if (instName == seenNames[clc])
-			{
-				instIndexes[cl] = clc;
-				foundInList = true;
-				break;
-			}
-		}
-		if (!foundInList)
-		{
-			seenNames.push_back(instName);
-			instIndexes[cl] = seenNames.size() - 1;
-		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -1222,9 +1333,7 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
-		int correctedIndex = ins;
-
-		std::string startaddress = DecToBinFilled(correctedIndex, 5);
+		std::string startaddress = DecToBinFilled(ins, 5);
 
 		vector<std::string> instSteps = explode(instructioncodes[0], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1266,7 +1375,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-				}
+			}
 				if (doesntmatch)
 					continue;
 
@@ -1277,7 +1386,7 @@ void GenerateMicrocode()
 			}
 		}
 
-	}
+		}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1285,15 +1394,13 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
 	{
-		int correctedIndex = instIndexes[ins];
-
 #if DEV_MODE
-		cout << (instructioncodes[correctedIndex] + "\n");
+		cout << (instructioncodes[ins] + "\n");
 #endif
 
-		std::string startaddress = DecToBinFilled(correctedIndex, 5);
+		std::string startaddress = DecToBinFilled(ins, 5);
 
-		vector<std::string> instSteps = explode(instructioncodes[correctedIndex], '&');
+		vector<std::string> instSteps = explode(instructioncodes[ins], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
 		{
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
@@ -1341,7 +1448,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-				}
+			}
 				if (doesntmatch)
 					continue;
 
@@ -1350,8 +1457,8 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
 		}
+	}
 	}
 
 	// Print the output
@@ -1379,11 +1486,11 @@ void GenerateMicrocode()
 	}
 
 
-	// Save the data to ./microinstructions_cpu_v1
+	// Save the data to logisim_mic.hex
 	fstream myStream;
-	myStream.open("./microinstructions_cpu", ios::out);
+	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-}
+	}
 
 vector<string> vars;
 vector<string> labels;
@@ -1749,11 +1856,11 @@ int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 		if (id == vars[i])
-			return i + 16528;
+			return i + 16382;
 
 	// Not found, add to list and return size-1
 	vars.push_back(id);
-	return 16528 + vars.size() - 1;
+	return 16382 + vars.size() - 1;
 }
 
 int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
@@ -1891,13 +1998,13 @@ int GetLineNumber() {
 // Compile Armstrong into assembly
 string CompileCode(const string& inputcode) {
 
+	cout << "   -  Preprocessing Armstrong...";
+
 	vector<string> codelines = PreProcess(inputcode);
 
-	cout << endl;
 	// Remove comments from end of lines and trim whitespace
 	for (int i = 0; i < codelines.size(); i++) {
 		codelines[i] = trim(split(codelines[i], "//")[0]);
-		PrintColored(codelines[i] + "\n", brightBlackFGColor, "");
 	}
 
 	// Replace 'if' statements with 'gotoif' alternatives,
@@ -1948,7 +2055,7 @@ string CompileCode(const string& inputcode) {
 
 	// Begin actual parsing and compilation
 
-	cout << "\nParsing started...\n";
+	cout << "   -  Compiling Armstrong...\n";
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		string command = trim(split(codelines[i], " ")[0]);
@@ -1960,11 +2067,13 @@ string CompileCode(const string& inputcode) {
 			int labelLineVal = GetLineNumber();
 			labels.push_back(command);
 			labelLineValues.push_back(labelLineVal);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "label:      ";
-			PrintColored("'" + command + "'", brightBlueFGColor, "");
-			PrintColored(" line: ", brightBlackFGColor, "");
-			PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "label:      ";
+				PrintColored("'" + command + "'", brightBlueFGColor, "");
+				PrintColored(" line: ", brightBlackFGColor, "");
+				PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, == " + command + " ==");
 
@@ -1998,11 +2107,13 @@ string CompileCode(const string& inputcode) {
 		{
 			string addrPre = split(trim(split(split(codelines[i], "define ")[1], "=")[0]), " ")[0];
 			string valuePre = split(trim(split(split(codelines[i], "define ")[1], "=")[1]), " ")[0];
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "define:     ";
-			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
-			PrintColored(" as ", brightBlackFGColor, "");
-			PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "define:     ";
+				PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
+				PrintColored(" as ", brightBlackFGColor, "");
+				PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			}
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
@@ -2017,11 +2128,13 @@ string CompileCode(const string& inputcode) {
 		{
 			string addrPre = trim(split(split(codelines[i], "change ")[1], "=")[0]);
 			string valuePre = trim(split(split(codelines[i], "change ")[1], "=")[1]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "change:     ";
-			PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
-			PrintColored(" to ", brightBlackFGColor, "");
-			PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "change:     ";
+				PrintColored("'" + addrPre + "'", brightBlueFGColor, "");
+				PrintColored(" to ", brightBlackFGColor, "");
+				PrintColored("'" + valuePre + "'\n", brightBlueFGColor, "");
+			}
 
 			int addr = ParseValue(addrPre);
 			int value = ParseValue(valuePre);
@@ -2158,20 +2271,23 @@ string CompileCode(const string& inputcode) {
 			continue;
 		}
 
-		// arithmetic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
-		else if (command == "add" || command == "sub" || command == "mult" || command == "div")
+		// arithmetic/logic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
+		else if (command == "add" || command == "sub" || command == "mult" || command == "div" ||
+			command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr")
 		{
 			string valAPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			string valBPre = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[0]);
 			string outLoc = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[1]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "arithmetic: ";
-			PrintColored("'" + command + "'  ", brightBlueFGColor, "");
-			PrintColored("'" + valAPre + "' ", brightBlueFGColor, "");
-			PrintColored("with ", brightBlackFGColor, "");
-			PrintColored("'" + valBPre + "' ", brightBlueFGColor, "");
-			PrintColored("-> ", brightBlackFGColor, "");
-			PrintColored("'" + outLoc + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "arithmetic: ";
+				PrintColored("'" + command + "'  ", brightBlueFGColor, "");
+				PrintColored("'" + valAPre + "' ", brightBlueFGColor, "");
+				PrintColored("with ", brightBlackFGColor, "");
+				PrintColored("'" + valBPre + "' ", brightBlueFGColor, "");
+				PrintColored("-> ", brightBlackFGColor, "");
+				PrintColored("'" + outLoc + "'\n", brightBlueFGColor, "");
+			}
 
 			int valAProcessed = ParseValue(valAPre);
 			int valBProcessed = ParseValue(valBPre);
@@ -2200,6 +2316,10 @@ string CompileCode(const string& inputcode) {
 			else if (IsDec(valBPre)) {
 				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 			}
+			// If second argument is a pointer
+			else if (IsPointer(valBPre)) {
+				LoadPointer(valBPre);
+			}
 
 
 			// If first argument is an address
@@ -2219,6 +2339,10 @@ string CompileCode(const string& inputcode) {
 			// If first argument is a new decimal value
 			else if (IsDec(valAPre)) {
 				compiledLines.at(compiledLines.size() - 1) += "ldia " + to_string(valAProcessed) + "\n";
+			}
+			// If first argument is a pointer
+			else if (IsPointer(valAPre)) {
+				LoadPointer(valAPre);
 			}
 
 
@@ -2247,9 +2371,11 @@ string CompileCode(const string& inputcode) {
 		else if (command == "goto")
 		{
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "goto:       ";
-			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "goto:       ";
+				PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			}
 
 			string addrProcessed = to_string(ParseValue(addrPre));
 
@@ -2275,11 +2401,13 @@ string CompileCode(const string& inputcode) {
 			string valBPre = trim(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0]);
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[1]);
 			string comparer = trim(split(split(split(codelines[i], command + " ")[1], valAPre)[1], valBPre)[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "gotoif:     ";
-			PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'", brightBlueFGColor, "");
-			PrintColored(" -> ", brightBlackFGColor, "");
-			PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "gotoif:     ";
+				PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'", brightBlueFGColor, "");
+				PrintColored(" -> ", brightBlackFGColor, "");
+				PrintColored("'" + addrPre + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, " + string("gotoif:   '") + valAPre + " " + comparer + " " + valBPre + "' -> '" + addrPre + "'\n");
 			CompareValues(valAPre, comparer, valBPre, vars);
@@ -2346,9 +2474,11 @@ string CompileCode(const string& inputcode) {
 			string valAPre = trim(splitByComparator(split(codelines[i], command + " ")[1])[0]);
 			string valBPre = trim(split(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0], ":")[0]);
 			string comparer = trim(split(split(split(codelines[i], command + " ")[1], valAPre)[1], valBPre)[0]);
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "if:         ";
-			PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'\n", brightBlueFGColor, "");
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "if:         ";
+				PrintColored("'" + valAPre + " " + comparer + " " + valBPre + "'\n", brightBlueFGColor, "");
+			}
 
 			compiledLines.push_back(",\n, " + string("if:   '") + valAPre + " " + comparer + " " + valBPre + "'");
 			compiledLines.push_back(codelines[i]);
@@ -2358,8 +2488,10 @@ string CompileCode(const string& inputcode) {
 		// 'endif' statement
 		else if (command == "endif")
 		{
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "endif:\n";
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "endif:\n";
+			}
 
 			compiledLines.push_back(",\n, " + string("endif"));
 			compiledLines.push_back(codelines[i]);
@@ -2369,8 +2501,10 @@ string CompileCode(const string& inputcode) {
 		// 'asm' inline assembly
 		else if (trim(split(codelines[i], "\"")[0]) == "asm")
 		{
-			PrintColored("ok.	", greenFGColor, "");
-			cout << "asm:\n";
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "asm:\n";
+			}
 
 			compiledLines.push_back(",\n, " + string("inline assembly"));
 
@@ -2399,10 +2533,9 @@ string CompileCode(const string& inputcode) {
 		formattedstr += trim(compiledLines[l]) + "\n";
 	}
 	compiledLines = split(formattedstr, "\n");
-	cout << compiledLines.size() << endl;
 
 
-	cout << "Parsing ";
+	cout << "* Compiling Armstrong  ";
 	if (issues == 0) {
 		PrintColored("Done!\n\n", greenFGColor, "");
 
