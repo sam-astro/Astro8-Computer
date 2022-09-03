@@ -4,7 +4,7 @@
 // Variables //
 ///////////////
 define $pixOffset = 61439 // Beginning of video memory
-define $charOffset = 16382 // Beginning of character memory
+define $charOffset = 61294 // Beginning of character memory
 
 define $CursorMoveSpeed = 15000
 define $cursorCount = 0
@@ -27,12 +27,12 @@ define $bufferBLoc = 24096
 
 #Start
 // Set default UI
-change 16382 = 'd'
-change 16383 = 'r'
-change 16384 = 'a'
-change 16385 = 'w'
-change 16386 = 0
-change 16387 = 7
+change 61294 = 'd'
+change 61295 = 'r'
+change 61296 = 'a'
+change 61297 = 'w'
+change 61298 = 0
+change 61299 = 7
 
 
 #MainLoop
@@ -226,18 +226,18 @@ if $CursorMoveSpeed==$cursorCount:
                 change $drawType = 0
             endif
             if $drawType==0:
-                change 16382 = 'n'
-                change 16383 = 'o'
-                change 16384 = 'n'
-                change 16385 = 'e'
-                change 16386 = 0
+                change 61294 = 'n'
+                change 61295 = 'o'
+                change 61296 = 'n'
+                change 61297 = 'e'
+                change 61298 = 0
             endif
             if $drawType==1:
-                change 16382 = 'd'
-                change 16383 = 'r'
-                change 16384 = 'a'
-                change 16385 = 'w'
-                change 16386 = 0
+                change 61294 = 'd'
+                change 61295 = 'r'
+                change 61296 = 'a'
+                change 61297 = 'w'
+                change 61298 = 0
             endif
         endif
     endif
@@ -245,12 +245,12 @@ if $CursorMoveSpeed==$cursorCount:
     if $keypress==0:
         if $keypress!=$lastKey:
             if $paused==0:
-                change 16387 = 7
+                change 61299 = 7
                 change $paused = 1
                 goto #ExitIf
             endif
             if $paused==1:
-                change 16387 = 10
+                change 61299 = 10
                 change $paused = 0
                 goto #ExitIf
             endif

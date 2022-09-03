@@ -2,11 +2,11 @@
 
 // You can use single ' quotes to write a single character. 
 
-change 16382 = 'h'
-change 16383 = 'e'
-change 16384 = 'l'
-change 16385 = 'l'
-change 16386 = 'o'
+change 61294 = 'h'
+change 61295 = 'e'
+change 61296 = 'l'
+change 61297 = 'l'
+change 61298 = 'o'
 
 #loop
 goto #loop

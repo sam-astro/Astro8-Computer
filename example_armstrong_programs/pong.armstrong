@@ -14,7 +14,7 @@ change $WIDTH = 64
 change $HEIGHT = 64
 
 change $pixOffset = 61439 // Beginning of video memory
-change $charOffset = 16382 // Beginning of character memory
+change $charOffset = 61294 // Beginning of character memory
 
 change $slowBallSpeed = 0
 change $slowPaddleSpeed = 0
@@ -22,8 +22,8 @@ change $slowPaddleSpeed = 0
 change @EX = 168   // Zero out expansion port
 change $key = 168
 
-change $LEFTSCOREPOS = 16394
-change $RIGHTSCOREPOS = 16400
+change $LEFTSCOREPOS = 61306
+change $RIGHTSCOREPOS = 61312
 
 change $PADDLECHAR = 11
 change $NETCHAR = 65

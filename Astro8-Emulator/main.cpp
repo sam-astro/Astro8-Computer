@@ -948,7 +948,7 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = memoryBytes[characterRamIndex + 16382];
+	int characterRamValue = memoryBytes[characterRamIndex + 61294];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
 	int pixelVal = memoryBytes[pixelRamIndex];
@@ -1154,10 +1154,10 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 16382 || addr > 16527)
+			if (addr <= 61294 || addr > 61438)
 				outputBytes[addr] = hVal;
 			else
-				charRam[clamp(addr - 16383, 0, 143)] = stoi(splitBySpace[2]);
+				charRam[clamp(addr - 61295, 0, 143)] = stoi(splitBySpace[2]);
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -1856,11 +1856,11 @@ int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 		if (id == vars[i])
-			return i + 16528;
+			return i + 16382;
 
 	// Not found, add to list and return size-1
 	vars.push_back(id);
-	return 16528 + vars.size() - 1;
+	return 16382 + vars.size() - 1;
 }
 
 int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {

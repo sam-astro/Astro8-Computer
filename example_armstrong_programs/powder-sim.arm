@@ -4,7 +4,7 @@
 // Variables //
 ///////////////
 define $pixOffset = 61439 // Beginning of video memory
-define $charOffset = 16382 // Beginning of character memory
+define $charOffset = 61294 // Beginning of character memory
 
 define $CursorMoveSpeed = 15000
 define $cursorCount = 0
@@ -27,11 +27,11 @@ define $bufferBLoc = 24096
 
 #Start
 // Set default UI
-change 16382 = 's'
-change 16383 = 'a'
-change 16384 = 'n'
-change 16385 = 'd'
-change 16386 = 0
+change 61294 = 's'
+change 61295 = 'a'
+change 61296 = 'n'
+change 61297 = 'd'
+change 61298 = 0
 
 
 #MainLoop
@@ -266,25 +266,25 @@ if $CursorMoveSpeed==$cursorCount:
                 change $drawType = 0
             endif
             if $drawType==0:
-                change 16382 = 'n'
-                change 16383 = 'o'
-                change 16384 = 'n'
-                change 16385 = 'e'
-                change 16386 = 0
+                change 61294 = 'n'
+                change 61295 = 'o'
+                change 61296 = 'n'
+                change 61297 = 'e'
+                change 61298 = 0
             endif
             if $drawType==1:
-                change 16382 = 's'
-                change 16383 = 'a'
-                change 16384 = 'n'
-                change 16385 = 'd'
-                change 16386 = 0
+                change 61294 = 's'
+                change 61295 = 'a'
+                change 61296 = 'n'
+                change 61297 = 'd'
+                change 61298 = 0
             endif
             if $drawType==2:
-                change 16382 = 'w'
-                change 16383 = 'a'
-                change 16384 = 't'
-                change 16385 = 'e'
-                change 16386 = 'r'
+                change 61294 = 'w'
+                change 61295 = 'a'
+                change 61296 = 't'
+                change 61297 = 'e'
+                change 61298 = 'r'
             endif
         endif
     endif

@@ -1,6 +1,6 @@
 #AS
 
-define $_STACK_POINTER = 61438  // End of general purpose memory
+define $_STACK_POINTER = 61293  // End of general purpose memory
 define $_STACK_LAST = 0
 define $_STACK_VAL = 0
 // change $_STACK_PROGRAM_COUNTER = 0
