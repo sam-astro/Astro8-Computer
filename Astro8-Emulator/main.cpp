@@ -63,7 +63,7 @@ int pixelRamIndex = 0xefff;
 
 
 // 10000000 = 10.0MHz
-#define TARGET_CPU_FREQ 10000000
+int target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
 vector<int> memoryBytes;
@@ -208,8 +208,12 @@ Options:
                            start emulator.
   -r, --run                Run an already assembled program in AstroEXE format
                            (program.AEXE)
-  -nk, --nokeyboard        Use the mouse mode for the emulator (disables keyboard input)
+  -nk, --nokeyboard        Use the mouse mode for the emulator (disables
+                           keyboard input)
   -v, --verbose            Write extra data to console for better debugging
+  -f, --freq <value>       Override the default CPU target frequency with your
+                           own.      Default = 10    higher = faster
+                           High frequencies may be too hard to reach for some cpus
 )V0G0N";
 
 
@@ -317,31 +321,26 @@ int GenerateCharacterROM() {
 int main(int argc, char** argv)
 {
 	std::string code = "";
+	std::string filePath = "";
 	std::string programName = "program";
 
-	// If no arguments are provided
+	// If no arguments are provided, ask for a path
 	if (argc == 1)
 	{
-		// Gather user inputted code
-		cout << ("v Emu. Code input v\n");
+		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
+		cout << endl << helpDialog << endl;
+		cout << ("OR, enter path to file >  ");
 		std::string line;
 		while (true) {
 			getline(cin, line);
 			if (line.empty()) {
+				continue;
+			}
+			else {
+				filePath = line;
 				break;
 			}
-			code += line + "\n";
 		}
-	}
-	else
-		code = argv[1];
-
-	// Make sure path/code isn't empty
-	if (code.empty()) {
-		PrintColored("Error: No path provided\n", redFGColor, "");
-		cout << "\n\nPress Enter to Exit...";
-		cin.ignore();
-		exit(1);
 	}
 
 	// Search for options in arguments
@@ -363,37 +362,29 @@ int main(int argc, char** argv)
 			usingKeyboard = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
 			verbose = true;
+		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
+			try
+			{
+				target_cpu_freq = stoi(argv[i + 1])*1000000;
+			}
+			catch (const std::exception&)
+			{
+				PrintColored("\nError: specify a valid integer frequency after -f/--freq option ", redFGColor, "");
+				cout << "\n\nPress Enter to Exit...";
+				cin.ignore();
+				exit(1);
+			}
+		}
 		else // If not an option, then it should be a path
-			code = argval;
+			filePath = argval;
 	}
 
 
-	// Print `building` message if applicable
-	if (!runAstroExecutable)
-		PrintColored("Building:\n\n", blackFGColor, whiteBGColor);
-
-
-	// Generate required resources if the code is to be executed
-	if ((!compileOnly && !assembleOnly) || runAstroExecutable) {
-		cout<<"* Generating emulation resources:"<<endl;
-
-		// Generate ROM
-		cout << "   -  Generating Character ROM..." << endl;
-		int pixnum = GenerateCharacterROM();
-
-		// Generate microcode
-		cout << "   -  Generating microcode from instruction set..." << endl << endl;
-		GenerateMicrocode();
-	}
-
-
-
-	// If the input is a path to a file
-	if (split(code, "\n")[0].find('/') != std::string::npos || split(code, "\n")[0].find('\\') != std::string::npos) {
-		std::string path = trim(split(code, "\n")[0]);
+	// Open and read the file from the path
+	if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
+		std::string path = trim(split(filePath, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		code = "";
 		programName = path.substr(path.find_last_of("/\\"), path.size());
 
 		// Open and read file
@@ -415,6 +406,8 @@ int main(int argc, char** argv)
 		}
 
 		projectDirectory = path.substr(0, path.find_last_of("/\\"));
+		projectDirectory = std::filesystem::canonical(projectDirectory).string();
+
 	}
 	else if (argc != 1) {
 		PrintColored("\nError: could not open file ", redFGColor, "");
@@ -423,6 +416,33 @@ int main(int argc, char** argv)
 		cin.ignore();
 		exit(1);
 	}
+
+
+	// Determine if the file is an AstroExecutable AEXE
+	if (trim(split(code, "\n")[0]) == "ASTRO-8 AEXE Executable file")
+		runAstroExecutable = true;
+
+
+	// Print `building` message if applicable
+	if (!runAstroExecutable) {
+		PrintColored("Building:", blackFGColor, whiteBGColor);
+		cout << "\n\n";
+	}
+
+
+	// Generate required resources if the code is to be executed
+	if ((!compileOnly && !assembleOnly) || runAstroExecutable) {
+		cout << "* Generating emulation resources:" << endl;
+
+		// Generate ROM
+		cout << "   -  Generating Character ROM..." << endl;
+		int pixnum = GenerateCharacterROM();
+
+		// Generate microcode
+		cout << "   -  Generating microcode from instruction set..." << endl << endl;
+		GenerateMicrocode();
+	}
+
 
 	// If the code inputted is marked as written in armstrong with #AS,
 	// or the user has used the "--compile" option
@@ -514,7 +534,8 @@ int main(int argc, char** argv)
 				memoryBytes.push_back(HexToDec(mbytes[memindex]));
 
 			// Store memory into an .AEXE file
-			std::ofstream f("./" + programName + ".aexe");
+			std::ofstream f(projectDirectory + programName + ".aexe");
+			f << "ASTRO-8 AEXE Executable file" << '\n';
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
@@ -534,8 +555,17 @@ int main(int argc, char** argv)
 	if (runAstroExecutable) {
 		vector<std::string> filelines = split(code, "\n");
 
-		for (int memindex = 0; memindex < filelines.size(); memindex++)
-			memoryBytes.push_back(HexToDec(filelines[memindex]));
+		// Make sure it is a valid AEXE file
+		if (trim(filelines[0]) == "ASTRO-8 AEXE Executable file")
+			for (int memindex = 1; memindex < filelines.size(); memindex++)
+				memoryBytes.push_back(HexToDec(filelines[memindex]));
+		else
+		{
+			PrintColored("\nInvalid Executable file. Possibly it is out of date or corrupted, or may simply be missing the header:  \"ASTRO-8 AEXE Executable file\"", redFGColor, "");
+			cout << "\n\nPress Enter to Exit...";
+			cin.ignore();
+			exit(1);
+		}
 	}
 
 	// Stop executing if successfully compiled/assembled
@@ -547,7 +577,9 @@ int main(int argc, char** argv)
 
 	// Start Emulation
 
-	PrintColored("\n\nStarting Emulation...\n\n", blackFGColor, whiteBGColor);
+	cout << "\n\n";
+	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
+	cout << "\n\n";
 
 	InitGraphics("Astro-8 Emulator", 64, 64, 9);
 
@@ -586,7 +618,7 @@ int main(int argc, char** argv)
 		// Chrono is slow in any case, so it may be replaced later
 		// SDL_GetTick is probably not precise enough
 		const int numUpdates = 1000;
-		if (tickDiff > (numUpdates * 1000.0 / TARGET_CPU_FREQ)) {
+		if (tickDiff > (numUpdates * 1000.0 / target_cpu_freq)) {
 			lastTick = startTime;
 			for (int i = 0; i < numUpdates; ++i)
 				Update();
@@ -611,7 +643,8 @@ int main(int argc, char** argv)
 						// Keyboard support
 						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-						cout << "\n	expansionPort: " << expansionPort << endl;
+						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+						PrintColored(to_string(expansionPort), greenFGColor, "");
 					}
 					else if (event.type == SDL_KEYUP) {
 
@@ -846,10 +879,9 @@ void Update()
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
-			PrintColored("\nProgram expansion port output: ", brightBlueFGColor, "");
+			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
 			PrintColored(to_string(expansionPort), greenFGColor, "");
-			PrintColored(" or ", brightBlueFGColor, "");
-			PrintColored("0b" + DecToBinFilled(expansionPort, 16) + "\n\n", greenFGColor, "");
+			cout << "\n";
 			break;
 		}
 
@@ -1147,9 +1179,9 @@ vector<std::string> parseCode(const std::string& input)
 	cout << processedOutput << endl << endl;
 #endif
 
-	// Save the data to ./program_machine_code
+	// Save the data to logisim_pmc.hex
 	fstream myStream;
-	myStream.open("./logisim_pmc.hex", ios::out);
+	myStream.open(projectDirectory + "logisim_pmc.hex", ios::out);
 	myStream << processedOutput;
 
 	return outputBytes;
@@ -1418,9 +1450,9 @@ void GenerateMicrocode()
 	}
 
 
-	// Save the data to ./microinstructions_cpu_v1
+	// Save the data to logisim_mic.hex
 	fstream myStream;
-	myStream.open("./logisim_mic.hex", ios::out);
+	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
 }
 

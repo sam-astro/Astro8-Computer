@@ -7,23 +7,21 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
-
 static inline void ltrim(std::string& s);
 static inline void rtrim(std::string& s);
 static inline std::string trim(std::string s);
-static vector<std::string> PreProcess(std::string unProcessed);
-static vector<std::string> split(std::string str, std::string token);
+static std::vector<std::string> PreProcess(std::string unProcessed);
+static std::vector<std::string> split(std::string str, std::string token);
 static std::string IndentText(std::string text);
-static std::string JoinRange(vector<std::string> strs, int start, int max);
-static vector<std::string> splitByComparator(std::string str);
+static std::string JoinRange(std::vector<std::string> strs, int start, int max);
+static std::vector<std::string> splitByComparator(std::string str);
 static std::string InvertExpression(const std::string& expression);
 
 
-vector<std::string> PreProcess(std::string unProcessed) {
+std::vector<std::string> PreProcess(std::string unProcessed) {
 	// Pre-process lines of code
 
-	vector<std::string> codelines = split(unProcessed, "\n");
+	std::vector<std::string> codelines = split(unProcessed, "\n");
 	codelines.erase(codelines.begin() + 0); // Remove the first line (the one containing the '#AS' indicator)
 
 	// Remove line if it is blank or is just a comment
@@ -64,8 +62,8 @@ static inline std::string trim(std::string s) {
 	return ss;
 }
 
-vector<std::string> split(std::string str, std::string token) {
-	vector<std::string>result;
+std::vector<std::string> split(std::string str, std::string token) {
+	std::vector<std::string>result;
 	while (str.size()) {
 		int index = str.find(token);
 		if (index != std::string::npos) {
@@ -82,7 +80,7 @@ vector<std::string> split(std::string str, std::string token) {
 }
 
 std::string IndentText(std::string text) {
-	vector<std::string> nstr = split(text, "\n");
+	std::vector<std::string> nstr = split(text, "\n");
 	std::string outStr = "";
 	for (size_t i = 0; i < nstr.size(); i++)
 	{
@@ -92,7 +90,7 @@ std::string IndentText(std::string text) {
 	return outStr;
 }
 
-std::string JoinRange(vector<std::string> strs, int start, int max) {
+std::string JoinRange(std::vector<std::string> strs, int start, int max) {
 	std::string outStr = "";
 	for (size_t i = start; i < strs.size() && i <= max; i++)
 	{
@@ -125,8 +123,8 @@ std::string InvertExpression(const std::string& expression) {
 }
 
 
-static vector<std::string> splitByComparator(std::string str) {
-	vector<std::string>result;
+static std::vector<std::string> splitByComparator(std::string str) {
+	std::vector<std::string>result;
 	while (str.size()) {
 		int charSizes[] = { 2, 2, 2, 2, 1, 1 };
 		int indexes[6];

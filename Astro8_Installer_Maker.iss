@@ -7,10 +7,7 @@
 #define MyAppURL "https://github.com/sam-astro/Astro8-Computer"
 #define MyAppExeName "astro8.exe"
 #define MyAppAssocName MyAppName + " File"
-#define MyAppAssocExt ".asm"
 #define MyAppAssocExt ".aexe"
-#define MyAppAssocExt ".arm"
-#define MyAppAssocExt ".armstrong"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
 [Setup]
@@ -84,9 +81,9 @@ Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 
 [Files]
-Source: ".\Astro8-Emulator\x64\Release\{#MyAppExeName}"; DestDir: "{app}";
+Source: ".\Astro8-Emulator\x64\Release\{#MyAppExeName}"; DestDir: "{app}";  Flags: ignoreversion
 Source: ".\Astro8-Emulator\x64\Release\char_set_memtape"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}";             Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
