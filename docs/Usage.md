@@ -50,8 +50,9 @@ List of options:
   -v, --verbose            Write extra data to console for better debugging
 ```
 ```
-  -f, --freq <value>       Override the default CPU target frequency with your own. Default = 10, higher = faster. 
-                           High frequencies may be too hard to reach for some cpus
+  -f, --freq <value>       Override the default CPU target frequency with your own.
+                           Default = 10, higher = faster. High frequencies may be too
+                           hard to reach for some cpus
 ```
 
 
