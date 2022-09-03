@@ -673,7 +673,7 @@ int main(int argc, char** argv)
 				else if (!usingKeyboard)
 					if (event.type == SDL_MOUSEMOTION) {
 						// Get mouse location
-						cout << event.motion.x << endl;
+						//cout << event.motion.x << endl;
 						expansionPort = ((event.motion.x << 6) + event.motion.y) + (expansionPort & 0b1111000000000000);
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
