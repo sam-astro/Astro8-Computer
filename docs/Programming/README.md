@@ -32,22 +32,22 @@ You can use the `change` command in Armstrong like so:
 change <location> = <value>
 ```
 Now we want to change the location in memory that corresponds to character locations.
-Character memory starts at `16382`, which is the top left of the screen, and moves from left to right for the rest of the locations.
+Character memory starts at `61294`, which is the top left of the screen, and moves from left to right for the rest of the locations.
 Now to write the text "Hello World" we will do this:
 ```
 // Hello
-change 16382 = 'h'
-change 16383 = 'e'
-change 16384 = 'l'
-change 16385 = 'l'
-change 16386 = 'o'
+change 61294 = 'h'
+change 61295 = 'e'
+change 61296 = 'l'
+change 61297 = 'l'
+change 61298 = 'o'
 
 // World
-change 16392 = 'w'
-change 16393 = 'o'
-change 16394 = 'r'
-change 16395 = 'l'
-change 16396 = 'd'
+change 61304 = 'w'
+change 61305 = 'o'
+change 61306 = 'r'
+change 61307 = 'l'
+change 61308 = 'd'
 ```
 
 <br>
