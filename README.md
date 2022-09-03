@@ -13,8 +13,9 @@ I created a video about the creation of this and how it works, which you can vie
 ## Demos
 There are some demos for the Astro-8, such as the pong game and a typing program. You can locate those in the folder `/example_armstrong_programs/`.
 
-![image](https://github.com/sam-astro/Astro8-Computer/blob/main/images/pong.gif)
+[Go here for the documentation and more previews for some other demos](https://sam-astro.github.io/Astro8-Computer/docs/Demos.html)
 
+![image](https://github.com/sam-astro/Astro8-Computer/blob/main/images/pong.gif)
 
 ## Programming
 The two most supported ways to program for the computer is using the [assembly language](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html) or [Armstrong](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html).
