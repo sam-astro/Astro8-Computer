@@ -1261,29 +1261,6 @@ void GenerateMicrocode()
 		cout << (newStr) << " .\n";
 #endif
 		instructioncodes[cl] = newStr;
-	}
-
-	// Create indexes for instructions, which allows for duplicates to execute differently for different parameters
-	int instIndexes[sizeof(instructioncodes) / sizeof(instructioncodes[0])];
-	vector<std::string> seenNames;
-	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
-	{
-		std::string instName = explode(instructioncodes[cl], '(')[0];
-		bool foundInList = false;
-		for (int clc = 0; clc < seenNames.size(); clc++)
-		{
-			if (instName == seenNames[clc])
-			{
-				instIndexes[cl] = clc;
-				foundInList = true;
-				break;
-			}
-		}
-		if (!foundInList)
-		{
-			seenNames.push_back(instName);
-			instIndexes[cl] = seenNames.size() - 1;
-		}
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
 	}
 
@@ -1293,9 +1270,7 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
-		int correctedIndex = ins;
-
-		std::string startaddress = DecToBinFilled(correctedIndex, 5);
+		std::string startaddress = DecToBinFilled(ins, 5);
 
 		vector<std::string> instSteps = explode(instructioncodes[0], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1356,15 +1331,13 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
 	{
-		int correctedIndex = instIndexes[ins];
-
 #if DEV_MODE
-		cout << (instructioncodes[correctedIndex] + "\n");
+		cout << (instructioncodes[ins] + "\n");
 #endif
 
-		std::string startaddress = DecToBinFilled(correctedIndex, 5);
+		std::string startaddress = DecToBinFilled(ins, 5);
 
-		vector<std::string> instSteps = explode(instructioncodes[correctedIndex], '&');
+		vector<std::string> instSteps = explode(instructioncodes[ins], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
 		{
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
