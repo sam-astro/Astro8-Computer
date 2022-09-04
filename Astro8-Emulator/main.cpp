@@ -288,18 +288,18 @@ int clamp(int x, int min, int max) {
 }
 
 int freq_chunks[4] = { 44100, 44100, 44100, 44100 };
-bool channelsPlaying[4] = { false, false, false, false };
+SDL_AudioCVT cvt;
 int Change_Frequency(Mix_Chunk* chunk, int freq, int channel) {
 
-	/*chunk->abuf = wave_original->abuf;
+	chunk->abuf = wave_original->abuf;
 	chunk->alen = wave_original->alen;
-	chunk = wave_original;*/
+	chunk->allocated = wave_original->allocated;
+	//chunk = wave_original;
 
 	Uint16 format;
 	int channels;
 	Mix_QuerySpec(NULL, &format, &channels);
 
-	SDL_AudioCVT cvt;
 
 	SDL_BuildAudioCVT(&cvt, MIX_DEFAULT_FORMAT, channels, freq, MIX_DEFAULT_FORMAT, channels, freq_chunks[channel]);
 	freq_chunks[channel] = freq;
@@ -307,12 +307,12 @@ int Change_Frequency(Mix_Chunk* chunk, int freq, int channel) {
 	if (cvt.needed) { //If need to convert
 
 		//Set converter length and buffer
-		cvt.len = chunk->alen;
+		cvt.len = wave_original->alen;
+		cout << "length: " << cvt.len;
 		cvt.buf = (Uint8*)SDL_malloc(cvt.len * cvt.len_mult);
-		if (cvt.buf == NULL) return -1;
 
 		//Copy the Mix_Chunk data to the new chunk and make the conversion
-		SDL_memcpy(cvt.buf, chunk->abuf, chunk->alen);
+		SDL_memcpy(cvt.buf, wave_original->abuf, wave_original->alen);
 		if (SDL_ConvertAudio(&cvt) < 0) {
 			SDL_free(cvt.buf);
 			return -1;
@@ -985,29 +985,24 @@ void Update()
 			cout << targetChannel<<" : " << targetFrequency << endl;
 
 			// Use upper 8 bits to play audio
-			switch (targetChannel)
+			if (targetChannel==1)
 			{
-			case 1:
 				if (Mix_Playing(0) == false && targetFrequency > 0) {
-					//SDL_memcpy(wave_use->abuf, wave_original->abuf, wave_original->alen);
+					wave_use = wave_original;
 					Change_Frequency(wave_use, targetFrequency, 0);
 					Mix_PlayChannel(0, wave_use, -1);
-					//cout << "Play & Frequency change" << endl;
-					channelsPlaying[0] = true;
+					cout << "Play & Frequency change" << endl;
 				}
 				if (Mix_Playing(0) == true && targetFrequency > 0 && targetFrequency != freq_chunks[0]) {
-					//SDL_memcpy(wave_use->abuf, wave_original->abuf, wave_original->alen);
+					wave_use = wave_original;
 					Change_Frequency(wave_use, targetFrequency, 0);
 					cout << "Frequency change" << endl;
 				}
 				else if (Mix_Playing(0) == true && targetFrequency == 0) {
 					Mix_FadeOutChannel(0, 100);
-					channelsPlaying[0] = false;
 					/*Mix_Volume(0, 0);
 					Mix_HaltChannel(0);*/
 				}
-
-				break;
 			/*case 2:
 				Change_Frequency(gMedium, targetFrequency, 0);
 				if (Mix_Playing(1) == false && targetFrequency > 0)
@@ -1024,8 +1019,6 @@ void Update()
 					Mix_PlayChannel(2, gHigh, 0);
 
 				break;*/
-			default:
-				break;
 			}
 
 
@@ -1163,7 +1156,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
 
 	//Initialize SDL_mixer
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 0) < 0)
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048*2) < 0)
 		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 
 	// Load waves
