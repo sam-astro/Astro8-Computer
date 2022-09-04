@@ -554,6 +554,7 @@ int main(int argc, char** argv)
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
 			f << "ASTRO-8 AEXE Executable file" << '\n';
+			f << (usingKeyboard==true?"1":"0") << '\n';
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
@@ -574,9 +575,18 @@ int main(int argc, char** argv)
 		vector<std::string> filelines = split(code, "\n");
 
 		// Make sure it is a valid AEXE file
-		if (trim(filelines[0]) == "ASTRO-8 AEXE Executable file")
-			for (int memindex = 1; memindex < filelines.size(); memindex++)
+		if (trim(filelines[0]) == "ASTRO-8 AEXE Executable file") {
+			// Use values on the second line as static options
+			// This lets people distribute AEXE files wihtout having to describe
+			// the exact options to get it working
+			if (trim(filelines[1]).size() >= 1) {
+				usingKeyboard = trim(filelines[1])[0] == '1';
+			}
+
+			// Skip two lines to begin reading AEXE data
+			for (int memindex = 2; memindex < filelines.size(); memindex++)
 				memoryBytes.push_back(HexToDec(filelines[memindex]));
+		}
 		else
 		{
 			PrintColored("\nInvalid Executable file. Possibly it is out of date or corrupted, or may simply be missing the header:  \"ASTRO-8 AEXE Executable file\"", redFGColor, "");

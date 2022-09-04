@@ -27,22 +27,11 @@ change $newX = $expVal
 change $newY = $expVal
 
 // Bit shift X and remove unused bits
-change @A = $newX
-asm"
-    ldib 6
-    bsr
-    ldib 63
-    and
-"
-change $newX = @A
+bsr $newX,6 ->$newX
+and $newX,63 ->$newX
 
 // Bit shift Y and remove unused bits
-change @A = $newY
-asm"
-    ldib 63
-    and
-"
-change $newY = @A
+and $newY,63 -> $newY
 
 // Redraw only if at a new location from last time
 change $diff = 0
@@ -55,13 +44,7 @@ endif
 
 
 // Bit shift Left Mouse Button and remove unused bits
-change @A = $expVal
-asm"
-    ldib 12
-    bsr
-"
-change $isPressingMouseButton = @A
-
+bsr $expVal,12 ->$isPressingMouseButton
 
 
 if $isPressingMouseButton!=$lastMouseButton:
