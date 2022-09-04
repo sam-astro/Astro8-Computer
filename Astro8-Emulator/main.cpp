@@ -47,7 +47,7 @@ bool usingKeyboard = true;
 int AReg = 0;
 int BReg = 0;
 int CReg = 0;
-int expansionPort = 0;
+uint16_t expansionPort = 0;
 int InstructionReg = 0;
 int flags[3] = { 0, 0, 0 };
 int bus = 0;
@@ -157,8 +157,8 @@ SDL_Texture* texture;
 std::vector< unsigned char > pixels(64 * 64 * 4, 0);
 
 
-Mix_Chunk* gHigh = NULL;
-Mix_Chunk* gMedium = NULL;
+Mix_Chunk* wave_original = NULL;
+Mix_Chunk* wave_use = NULL;
 Mix_Chunk* gLow = NULL;
 
 
@@ -265,10 +265,10 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
-	Mix_FreeChunk(gHigh);
-	gHigh = NULL;
-	Mix_FreeChunk(gMedium);
-	gMedium = NULL;
+	Mix_FreeChunk(wave_original);
+	wave_original = NULL;
+	Mix_FreeChunk(wave_use);
+	wave_use = NULL;
 	Mix_FreeChunk(gLow);
 	gLow = NULL;
 
@@ -285,6 +285,47 @@ int clamp(int x, int min, int max) {
 		return max;
 
 	return x;
+}
+
+int freq_chunks[4] = { 44100, 44100, 44100, 44100 };
+bool channelsPlaying[4] = { false, false, false, false };
+int Change_Frequency(Mix_Chunk* chunk, int freq, int channel) {
+
+	/*chunk->abuf = wave_original->abuf;
+	chunk->alen = wave_original->alen;
+	chunk = wave_original;*/
+
+	Uint16 format;
+	int channels;
+	Mix_QuerySpec(NULL, &format, &channels);
+
+	SDL_AudioCVT cvt;
+
+	SDL_BuildAudioCVT(&cvt, MIX_DEFAULT_FORMAT, channels, freq, MIX_DEFAULT_FORMAT, channels, freq_chunks[channel]);
+	freq_chunks[channel] = freq;
+
+	if (cvt.needed) { //If need to convert
+
+		//Set converter length and buffer
+		cvt.len = chunk->alen;
+		cvt.buf = (Uint8*)SDL_malloc(cvt.len * cvt.len_mult);
+		if (cvt.buf == NULL) return -1;
+
+		//Copy the Mix_Chunk data to the new chunk and make the conversion
+		SDL_memcpy(cvt.buf, chunk->abuf, chunk->alen);
+		if (SDL_ConvertAudio(&cvt) < 0) {
+			SDL_free(cvt.buf);
+			return -1;
+		}
+
+		//If it was sucessfull put it on the original Mix_Chunk
+		chunk->abuf = cvt.buf;
+		chunk->alen = cvt.len_cvt;
+
+		return channel;
+
+	}
+	else return -1;
 }
 
 
@@ -307,7 +348,7 @@ int GenerateCharacterROM() {
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
 
-	const std::string charsetFilename = executableDirectory+"/char_set_memtape";
+	const std::string charsetFilename = executableDirectory + "/char_set_memtape";
 	ifstream charset(charsetFilename);
 
 	if (charset.is_open())
@@ -402,7 +443,7 @@ int main(int argc, char** argv)
 		std::string path = trim(split(filePath, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		programName = path.substr(path.find_last_of("/\\")+1, path.size());
+		programName = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 		// Open and read file
 		std::string li;
@@ -554,6 +595,7 @@ int main(int argc, char** argv)
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
 			f << "ASTRO-8 AEXE Executable file" << '\n';
+			f << (usingKeyboard == true ? "1" : "0") << '\n';
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
@@ -698,9 +740,16 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-
 void Update()
 {
+	//for (int audioChannels = 0; audioChannels < 4; audioChannels++)
+	//{
+	//	if (channelsPlaying[audioChannels]) {
+	//		if (Mix_Playing(audioChannels) == false) // Continue looping if clip has finished
+	//			Mix_PlayChannel(audioChannels, wave_use, 0);
+
+	//	}
+	//}
 
 	for (int step = 0; step < 16; step++)
 	{
@@ -913,23 +962,75 @@ void Update()
 			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
 			PrintColored(to_string(expansionPort), greenFGColor, "");
 			cout << "\n";
+			PrintColored(DecToBinFilled(expansionPort, 16), greenFGColor, "");
+			cout << "\n";
 
+			////////////
+			// Audio: //
+			////////////
+
+			//		Format:     FFFFFCCC XXXXXXXX
+			//		You can only toggle one channel at a time per expansion port write.
+			//		CCC is converted to the index of the channel that is toggled
+			//		Then the frequency for that channel is defined as an int value stored in FFFFF
+			//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+			//		is changed and the channel is turned ON if it isn't already
+			//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+
+			//testFreqInt += 1000;
+
+			// Calculate target frequency from beginning 5-bits
+			int targetFrequency = ((((expansionPort & 0b1111100000000000) >> 11) - 15) * 1000 + 44100);
+			int targetChannel = (expansionPort & 0b11100000000) >> 8;
+			cout << targetChannel<<" : " << targetFrequency << endl;
 
 			// Use upper 8 bits to play audio
-			if (Mix_Playing(0) == false && (expansionPort & 0b100000000) == 0b100000000)
-				Mix_PlayChannel(0, gLow, -1);
-			else if (Mix_Playing(0) == true && (expansionPort & 0b100000000) == 0)
-				Mix_FadeOutChannel(0, 100);
+			switch (targetChannel)
+			{
+			case 1:
+				if (Mix_Playing(0) == false && targetFrequency > 0) {
+					//SDL_memcpy(wave_use->abuf, wave_original->abuf, wave_original->alen);
+					Change_Frequency(wave_use, targetFrequency, 0);
+					Mix_PlayChannel(0, wave_use, -1);
+					//cout << "Play & Frequency change" << endl;
+					channelsPlaying[0] = true;
+				}
+				if (Mix_Playing(0) == true && targetFrequency > 0 && targetFrequency != freq_chunks[0]) {
+					//SDL_memcpy(wave_use->abuf, wave_original->abuf, wave_original->alen);
+					Change_Frequency(wave_use, targetFrequency, 0);
+					cout << "Frequency change" << endl;
+				}
+				else if (Mix_Playing(0) == true && targetFrequency == 0) {
+					Mix_FadeOutChannel(0, 100);
+					channelsPlaying[0] = false;
+					/*Mix_Volume(0, 0);
+					Mix_HaltChannel(0);*/
+				}
 
-			if (Mix_Playing(1) == false && (expansionPort & 0b1000000000) == 0b1000000000)
-				Mix_PlayChannel(1, gMedium, -1);
-			else if (Mix_Playing(1) == true && (expansionPort & 0b1000000000) == 0)
-				Mix_FadeOutChannel(1, 100);
+				break;
+			/*case 2:
+				Change_Frequency(gMedium, targetFrequency, 0);
+				if (Mix_Playing(1) == false && targetFrequency > 0)
+					Mix_PlayChannel(1, gMedium, -1);
+				else if (Mix_Playing(1) == true && targetFrequency == 0)
+					Mix_PlayChannel(1, gMedium, 0);
 
-			if (Mix_Playing(2) == false && (expansionPort & 0b10000000000) == 0b10000000000)
-				Mix_PlayChannel(2, gHigh, -1);
-			else if (Mix_Playing(2) == true && (expansionPort & 0b10000000000) == 0)
-				Mix_FadeOutChannel(2, 100);
+				break;
+			case 3:
+				Change_Frequency(gHigh, targetFrequency, 0);
+				if (Mix_Playing(2) == false && targetFrequency > 0)
+					Mix_PlayChannel(2, gHigh, -1);
+				else if (Mix_Playing(2) == true && targetFrequency == 0)
+					Mix_PlayChannel(2, gHigh, 0);
+
+				break;*/
+			default:
+				break;
+			}
+
+
+
+
 			break;
 		}
 
@@ -1062,19 +1163,19 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
 
 	//Initialize SDL_mixer
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 4, 512) < 0)
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 0) < 0)
 		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 
 	// Load waves
-	gHigh = Mix_LoadWAV((executableDirectory+"/high.wav").c_str());
-	if (gHigh == NULL)
+	wave_original = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
+	if (wave_original == NULL)
 		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
-	gMedium = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
-	if (gMedium == NULL)
+	wave_use = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
+	if (wave_use == NULL)
 		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
-	gLow = Mix_LoadWAV((executableDirectory + "/low.wav").c_str());
-	if (gLow == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	//gLow = Mix_LoadWAV((executableDirectory + "/low.wav").c_str());
+	//if (gLow == NULL)
+	//	printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
 
 	return 0;
 }
@@ -1105,12 +1206,12 @@ vector<std::string> explode(const std::string& str, const char& ch) {
 				result.push_back(next);
 				next.clear();
 			}
-		}
+	}
 		else {
 			// Accumulate the next character into the sequence
 			next += *it;
 		}
-	}
+}
 	if (!next.empty())
 		result.push_back(next);
 	return result;
@@ -1162,7 +1263,7 @@ vector<std::string> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			continue;
-		}
+	}
 
 		// Set the current location in memory equal to a value: here <value>
 		if (splitBySpace[0] == "HERE")
@@ -1180,7 +1281,7 @@ vector<std::string> parseCode(const std::string& input)
 		// Memory address is already used, skip.
 		if (outputBytes[memaddr] != "0000") {
 			memaddr += 1;
-		}
+}
 
 #if DEV_MODE
 		cout << (to_string(memaddr) + " " + splitcode[i] + "   \t  =>  ");
@@ -1195,7 +1296,7 @@ vector<std::string> parseCode(const std::string& input)
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
-		}
+			}
 		}
 
 		// Check if any args are after the command
@@ -1218,7 +1319,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -1232,7 +1333,7 @@ vector<std::string> parseCode(const std::string& input)
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
-	}
+		}
 		processedOutput += outputBytes[outindex] + " ";
 
 		std::string ttmp = outputBytes[outindex];
@@ -1295,8 +1396,8 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 				stepComputedInstruction[13] = binaryval[1];
 				stepComputedInstruction[14] = binaryval[2];
 				stepComputedInstruction[15] = binaryval[3];
-			}
 		}
+	}
 
 	}
 }
@@ -1325,7 +1426,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-		}
+	}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -1361,8 +1462,8 @@ void GenerateMicrocode()
 						{
 							if (inststepFlags[flag] == flagtypes[checkflag])
 								endaddress[checkflag] = '1';
-						}
 					}
+				}
 				}
 				std::string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
@@ -1375,7 +1476,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-			}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -1383,10 +1484,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
 		}
+	}
 
-		}
+}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1434,8 +1535,8 @@ void GenerateMicrocode()
 								stepLocked[checkflag] = 1;
 							}
 						}
-					}
 				}
+			}
 				std::string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
@@ -1448,7 +1549,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-			}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -1490,7 +1591,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-	}
+}
 
 vector<string> vars;
 vector<string> labels;
