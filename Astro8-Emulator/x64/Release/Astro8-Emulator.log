@@ -6,24 +6,56 @@ D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(133,30): warning C4267: '='
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(134,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(135,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(136,29): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(373,24): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(669,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(778,24): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(796,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(808,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(939,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(997,27): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1002,32): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1033,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1147,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1147,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1747,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1750,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1753,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1958,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(480,24): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(776,24): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(878,24): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(896,10): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(908,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1039,5): warning C5051: attribute 'likely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1100,48): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1107,48): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1121,32): warning C5051: attribute 'unlikely' requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1235,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1235,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1841,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1844,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1847,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2052,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(341,31): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(333): message : while compiling class template member function 'void PlaybackSpeedEffectHandler<float>::modifyStreamPlaybackSpeed(int,void *,int)'
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(404): message : see reference to function template instantiation 'void PlaybackSpeedEffectHandler<float>::modifyStreamPlaybackSpeed(int,void *,int)' being compiled
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(433): message : see reference to class template instantiation 'PlaybackSpeedEffectHandler<float>' being compiled
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(341,22): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(354,25): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(354,18): warning C4244: 'initializing': conversion from 'float' to 'const int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(370,27): warning C4244: '=': conversion from 'float' to 'AudioFormatType', possible loss of data
+          with
+          [
+              AudioFormatType=Sint32
+          ]
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(370,27): warning C4244: '=': conversion from 'float' to 'AudioFormatType', possible loss of data
+          with
+          [
+              AudioFormatType=Sint16
+          ]
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(370,27): warning C4244: '=': conversion from 'float' to 'AudioFormatType', possible loss of data
+          with
+          [
+              AudioFormatType=Uint16
+          ]
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(370,27): warning C4244: '=': conversion from 'float' to 'AudioFormatType', possible loss of data
+          with
+          [
+              AudioFormatType=Sint8
+          ]
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(370,27): warning C4244: '=': conversion from 'float' to 'AudioFormatType', possible loss of data
+          with
+          [
+              AudioFormatType=Uint8
+          ]
   Generating code
-  2 of 1505 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+  15 of 1537 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\astro8.exe
