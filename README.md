@@ -46,6 +46,7 @@ The two most supported ways to program for the computer is using the [assembly l
 > These projects are not always compatable with the main branch of the official Astro8-Computer repository. Please read the instructions in their project's repo before using.
 * https://github.com/LucasJG1994/Astro8-VM  -  Astro8-VM BY [@LucasJG1994](https://github.com/LucasJG1994)
 * https://github.com/GerardSmit/Astro8-Emulator  -  Astro8 C# and Web emulator BY [@GerardSmit](https://github.com/GerardSmit)
+* https://github.com/GerardSmit/Astro8-Emulator  -  Yabal, a high-level C-like language BY [@GerardSmit](https://github.com/GerardSmit)
 
 <br>
 
