@@ -1263,16 +1263,16 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	// Load waves
 	waveforms[0] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
 	if (waveforms[0] == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 	waveforms[1] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
 	if (waveforms[1] == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 	waveforms[2] = Mix_LoadWAV((executableDirectory + "/triangle.wav").c_str());
 	if (waveforms[2] == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+		cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 	waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
 	if (waveforms[3] == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+		cout<<("Failed to load sound:"+ executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() +"\n");
 
 	return 0;
 }
@@ -1333,7 +1333,7 @@ vector<std::string> parseCode(const std::string& input)
 	int memaddr = 0;
 	for (int i = 0; i < splitcode.size(); i++)
 	{
-		splitcode[i] = trim(splitcode[i]);
+		splitcode[i] = trim(split(splitcode[i], ",")[0]);
 		if (splitcode[i] == "")
 			continue;
 
