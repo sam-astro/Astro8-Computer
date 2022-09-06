@@ -47,6 +47,7 @@ bool usingKeyboard = true;
 int AReg = 0;
 int BReg = 0;
 int CReg = 0;
+int BankReg = 0;
 uint16_t expansionPort = 0;
 int InstructionReg = 0;
 int flags[3] = { 0, 0, 0 };
@@ -60,16 +61,14 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
-int pixelRamIndex = 0xefff;
+int pixelRamIndex = 53871;
 
 
 // 10000000 = 10.0MHz
 int target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
-vector<int> memoryBytes;
-vector<int> charRam;
-
+vector<vector<int>> memoryBytes;
 
 std::string projectDirectory;
 std::string executableDirectory;
@@ -108,15 +107,16 @@ enum ReadInstruction : MicroInstruction {
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA = 0b0000000010000000,
-	WRITE_WB = 0b0000000100000000,
-	WRITE_WC = 0b0000000110000000,
-	WRITE_IW = 0b0000001000000000,
-	WRITE_DW = 0b0000001010000000,
-	WRITE_WM = 0b0000001100000000,
-	WRITE_J = 0b0000001110000000,
-	WRITE_AW = 0b0000010000000000,
-	WRITE_WE = 0b0000010010000000,
+	WRITE_WA =   0b0000000010000000,
+	WRITE_WB =   0b0000000100000000,
+	WRITE_WC =   0b0000000110000000,
+	WRITE_IW =   0b0000001000000000,
+	WRITE_DW =   0b0000001010000000,
+	WRITE_WM =   0b0000001100000000,
+	WRITE_J =    0b0000001110000000,
+	WRITE_AW =   0b0000010000000000,
+	WRITE_WE =   0b0000010010000000,
+	WRITE_BNK =  0b0000010100000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -154,7 +154,7 @@ std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
 
 SDL_Texture* texture;
-std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+std::vector< unsigned char > pixels(108 * 108 * 4, 0);
 
 
 Mix_Chunk* waveforms[4];
@@ -162,10 +162,10 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK"};
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK"};
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -180,7 +180,6 @@ std::string instructioncodes[] = {
 		"rdexp( 2=wa,re & 3=ei", // Read from expansion port to register A
 		"wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
 		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-		"stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
 		"add( 2=wa,eo,fl & 3=ei", // Add
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
@@ -202,6 +201,7 @@ std::string instructioncodes[] = {
 		"and( 2=and,wa,eo,fl & 3=ei", // Logical AND operation on register A and register B, with result put back into register A
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
+		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
 };
 
 std::string helpDialog = R"V0G0N(
@@ -213,7 +213,7 @@ Options:
                            start emulator.
   -a, --assemble           Only assemble assembly code into AEXE. Will not
                            start emulator.
-  -r, --run                Run an already assembled program in AstroEXE format
+  -r, --run                Run an already assembled program in AstroEXE fBankRegormat
                            (program.AEXE)
   -nk, --nokeyboard        Use the mouse mode for the emulator (disables
                            keyboard input)
@@ -483,6 +483,14 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
+	memoryBytes.push_back(vector<int>());
+	memoryBytes.push_back(vector<int>());
+
+	// Fill the memory
+	for (int memindex = 0; memindex < 65535; memindex++)
+		memoryBytes[1].push_back(0);
+
+
 	// Get the executable's installed directory
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
 
@@ -698,7 +706,7 @@ int main(int argc, char** argv)
 			// Generate memory from code and convert from hex to decimal
 			vector<std::string> mbytes = parseCode(code);
 			for (int memindex = 0; memindex < mbytes.size(); memindex++)
-				memoryBytes.push_back(HexToDec(mbytes[memindex]));
+				memoryBytes[0].push_back(HexToDec(mbytes[memindex]));
 
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
@@ -734,7 +742,7 @@ int main(int argc, char** argv)
 
 			// Skip two lines to begin reading AEXE data
 			for (int memindex = 2; memindex < filelines.size(); memindex++)
-				memoryBytes.push_back(HexToDec(filelines[memindex]));
+				memoryBytes[0].push_back(HexToDec(filelines[memindex]));
 		}
 		else
 		{
@@ -758,7 +766,7 @@ int main(int argc, char** argv)
 	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
 	cout << "\n\n";
 
-	InitGraphics("Astro-8 Emulator", 64, 64, 9);
+	InitGraphics("Astro-8 Emulator", 108, 108, 5);
 
 
 	bool keyPress = false;
@@ -871,7 +879,7 @@ void Update()
 			// AW
 			// RM
 			// IW
-			InstructionReg = memoryBytes[programCounter];
+			InstructionReg = memoryBytes[0][programCounter];
 			// CE
 			programCounter += 1;
 			step = 2;
@@ -896,10 +904,10 @@ void Update()
 			bus = CReg;
 			break;
 		case READ_RM:
-			bus = memoryBytes[memoryIndex];
+			bus = memoryBytes[BankReg][memoryIndex];
 			break;
 		case READ_IR:
-			bus = InstructionReg & ((1 << 11) - 1);
+			bus = InstructionReg & 0b11111111111;
 			break;
 		case READ_CR:
 			bus = programCounter;
@@ -1059,13 +1067,18 @@ void Update()
 			InstructionReg = bus;
 			break;
 		case WRITE_WM:
-			memoryBytes[memoryIndex] = bus;
+			memoryBytes[BankReg][memoryIndex] = bus;
+			//cout <<endl<< to_string(BankReg )<< " , " << to_string(memoryIndex )<< " = " << bus << endl;
 			break;
 		case WRITE_J:
 			programCounter = bus;
 			break;
 		case WRITE_AW:
 			memoryIndex = bus;
+			break;
+		case WRITE_BNK:
+			//PrintColored("\nChange from: " + to_string(BankReg) + " to " + to_string(bus) + "\n", whiteFGColor, "");
+			BankReg = bus&1;
 			break;
 		case WRITE_WE:
 			expansionPort = bus;
@@ -1140,13 +1153,13 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = memoryBytes[characterRamIndex + 61294];
+	int characterRamValue = memoryBytes[1][characterRamIndex + 53546];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	int pixelVal = memoryBytes[pixelRamIndex];
+	int pixelVal = memoryBytes[1][pixelRamIndex];
 	int r, g, b;
 
-	if (charPixRomVal == true && imgX < 60) {
+	if (charPixRomVal == true) {
 		r = 255;
 		g = 255;
 		b = 255;
@@ -1157,7 +1170,7 @@ void DrawNextPixel() {
 		b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
 	}
 
-	set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
+	set_pixel(&pixels, imgX, imgY, 108, r, g, b, 255);
 
 
 	imgX++;
@@ -1168,7 +1181,7 @@ void DrawNextPixel() {
 	}
 
 	// If x-coord is max, reset and increment y-coord
-	if (imgX >= 64)
+	if (imgX >= 108)
 	{
 		imgY++;
 		charPixY++;
@@ -1176,7 +1189,7 @@ void DrawNextPixel() {
 		imgX = 0;
 
 		if (charPixY < 6)
-			characterRamIndex -= 10;
+			characterRamIndex -= 18;
 	}
 
 	if (charPixY >= 6) {
@@ -1184,7 +1197,7 @@ void DrawNextPixel() {
 	}
 
 
-	if (imgY >= 64) // The final layer is done, reset counter and render image
+	if (imgY >= 108) // The final layer is done, reset counter and render image
 	{
 		imgY = 0;
 
@@ -1192,7 +1205,7 @@ void DrawNextPixel() {
 		charPixY = 0;
 		charPixX = 0;
 
-		apply_pixels(pixels, texture, 64);
+		apply_pixels(pixels, texture, 108);
 		DisplayTexture(gRenderer, texture);
 	}
 
@@ -1203,7 +1216,7 @@ void Draw() {
 	while (true) {
 		DrawNextPixel();
 		if (pixelRamIndex >= 65535) {
-			pixelRamIndex = 61439;
+			pixelRamIndex = 53871;
 			break;
 		}
 	}
@@ -1352,10 +1365,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 61294 || addr > 61438)
-				outputBytes[addr] = hVal;
-			else
-				charRam[clamp(addr - 61295, 0, 143)] = stoi(splitBySpace[2]);
+			outputBytes[addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif

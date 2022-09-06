@@ -3,8 +3,8 @@
 ///////////////
 // Variables //
 ///////////////
-define $pixOffset = 61439 // Beginning of video memory
-define $charOffset = 61294 // Beginning of character memory
+define $pixOffset = 53871 // Beginning of video memory
+define $charOffset = 53546 // Beginning of character memory
 
 define $CursorMoveSpeed = 15000
 define $cursorCount = 0
@@ -27,11 +27,17 @@ define $bufferBLoc = 24096
 
 #Start
 // Set default UI
+asm"
+bnk 1
+"
 change 61294 = 's'
 change 61295 = 'a'
 change 61296 = 'n'
 change 61297 = 'd'
 change 61298 = 0
+asm"
+bnk 0
+"
 
 
 #MainLoop
@@ -44,8 +50,12 @@ if $drawCount==$drawSpeed:
     add $bufferALoc,$copyOffset -> $loc1
     add $bufferBLoc,$copyOffset -> $loc2
 
-
-    change $currentPixel = *$loc1
+    change @A = $loc1
+    asm"
+    bnk 1
+    ldain
+    "
+    change $currentPixel = @A
     if $currentPixel==0: // Only process pixels with something in them
         add 1,$copyOffset -> $copyOffset
         goto #Processor
@@ -58,7 +68,12 @@ if $drawCount==$drawSpeed:
     if $currentPixel==$sandColor:
         // Calculate next position
         add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
+        change @A = $loc1
+        asm"
+        bnk 1
+        ldain
+        "
+        change $pixelVal1 = @A
         if $pixelVal1==0: // If the pixel below this one is empty
             change *$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
@@ -96,7 +111,12 @@ if $drawCount==$drawSpeed:
     if $currentPixel==$waterColor:
         // Calculate next position
         add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
+        change @A = $loc1
+        asm"
+        bnk 1
+        ldain
+        "
+        change $pixelVal1 = @A
         if $pixelVal1==0: // If the pixel below this one is empty
             change *$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
@@ -266,25 +286,43 @@ if $CursorMoveSpeed==$cursorCount:
                 change $drawType = 0
             endif
             if $drawType==0:
+                asm"
+                bnk 1
+                "
                 change 61294 = 'n'
                 change 61295 = 'o'
                 change 61296 = 'n'
                 change 61297 = 'e'
                 change 61298 = 0
+                asm"
+                bnk 0
+                "
             endif
             if $drawType==1:
+                asm"
+                bnk 1
+                "
                 change 61294 = 's'
                 change 61295 = 'a'
                 change 61296 = 'n'
                 change 61297 = 'd'
                 change 61298 = 0
+                asm"
+                bnk 0
+                "
             endif
             if $drawType==2:
+                asm"
+                bnk 1
+                "
                 change 61294 = 'w'
                 change 61295 = 'a'
                 change 61296 = 't'
                 change 61297 = 'e'
                 change 61298 = 'r'
+                asm"
+                bnk 0
+                "
             endif
         endif
     endif
