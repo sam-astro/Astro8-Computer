@@ -10,8 +10,8 @@
 ///////////////////////
 
 
-change $WIDTH = 64
-change $HEIGHT = 64
+change $WIDTH = 108
+change $HEIGHT = 108
 
 change $pixOffset = 53871 // Beginning of video memory
 change $charOffset = 53546 // Beginning of character memory
@@ -22,8 +22,8 @@ change $slowPaddleSpeed = 0
 change @EX = 168   // Zero out expansion port
 change $key = 168
 
-change $LEFTSCOREPOS = 53547
-change $RIGHTSCOREPOS = 53549
+change $LEFTSCOREPOS = 53568
+change $RIGHTSCOREPOS = 53578
 
 change $PADDLECHAR = 11
 change $NETCHAR = 65
@@ -52,9 +52,9 @@ change $ballVelX = 1  //   0->Left  1->Right
 change $leftScore = 0
 change $rightScore = 0
 
-change $lPaddleY = 5
+change $lPaddleY = 9
 //change *$lcharPosition = 0
-change $rPaddleY = 5
+change $rPaddleY = 9
 //change *$rcharPosition = 0
 
 
@@ -70,7 +70,7 @@ staout
 bnk 0
 "
 add $temp,1 -> $temp
-gotoif $temp<11, #netDrawLoop
+gotoif $temp<18, #netDrawLoop
 
 
 #update
@@ -102,7 +102,7 @@ if $slowPaddleSpeed==14000:
         endif
     endif
     if $key==$S: // Down
-        if $lPaddleY<10:
+        if $lPaddleY<17:
             add $lPaddleY,1 -> $lPaddleY
             change @B = 0
             change @A = $lcharPosition
@@ -130,7 +130,7 @@ if $slowPaddleSpeed==14000:
         endif
     endif
     if $key==$DOWN: // Down
-        if $rPaddleY<10:
+        if $rPaddleY<17:
             add $rPaddleY,1 -> $rPaddleY
             change @B = 0
             change @A = $rcharPosition
@@ -149,7 +149,7 @@ if $slowPaddleSpeed==14000:
     //////////////////////////////////////
 
     // Left paddle
-    mult $lPaddleY,10 -> $temp
+    mult $lPaddleY,18 -> $temp
     add $charOffset,$temp -> $lcharPosition
     change @B = $PADDLECHAR
     change @A = $lcharPosition
@@ -161,8 +161,8 @@ if $slowPaddleSpeed==14000:
     // change *$lcharPosition = $PADDLECHAR
 
     // Right paddle
-    mult $rPaddleY,10 -> $temp
-    add 9,$temp -> $temp
+    mult $rPaddleY,18 -> $temp
+    add 17,$temp -> $temp
     add $charOffset,$temp -> $rcharPosition
     change @B = $PADDLECHAR
     change @A = $rcharPosition
@@ -183,7 +183,7 @@ endif
 //////////
 
 // Slow the speed of calculating the ball
-if $slowBallSpeed==20000:
+if $slowBallSpeed==10000:
 
     change $slowBallSpeed = 0
 
@@ -246,14 +246,12 @@ if $slowBallSpeed==20000:
             endif
         endif
     endif
-    if $ballPosX>55: // If in range of right paddle
-        if $ballPosX<59: // There is extra space on the right side, make sure ball is not in this space.
-            mult $rPaddleY,6 -> $temp // Get relative position in pixel scale
-            add $temp,6 -> $tempB
-            if $ballPosY<$tempB:
-                if $ballPosY>$temp:
-                    change $ballVelX = 0
-                endif
+    if $ballPosX>98: // If in range of right paddle
+        mult $rPaddleY,6 -> $temp // Get relative position in pixel scale
+        add $temp,6 -> $tempB
+        if $ballPosY<$tempB:
+            if $ballPosY>$temp:
+                change $ballVelX = 0
             endif
         endif
     endif
@@ -271,7 +269,7 @@ if $slowBallSpeed==20000:
     mult $ballPosY,$WIDTH -> $temp
     add $temp,$ballPosX -> $temp
     add $temp,$pixOffset -> $pixelPosition
-    change @B = 65543
+    change @B = 65535
     change @A = $pixelPosition
     asm"
     bnk 1
@@ -285,9 +283,23 @@ endif
 
 // Draw scores
 add $leftScore,39 -> $temp  // Left score
-change *$LEFTSCOREPOS = $temp
+change @B = $temp
+change @A = $LEFTSCOREPOS
+asm"
+bnk 1
+staout
+bnk 0
+"
+// change *$LEFTSCOREPOS = $temp
 add $rightScore,39 -> $temp  // Right score
-change *$RIGHTSCOREPOS = $temp
+change @B = $temp
+change @A = $RIGHTSCOREPOS
+asm"
+bnk 1
+staout
+bnk 0
+"
+// change *$RIGHTSCOREPOS = $temp
 
 
 // Increment counters
