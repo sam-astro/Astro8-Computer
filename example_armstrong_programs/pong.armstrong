@@ -19,7 +19,7 @@ change $charOffset = 53546 // Beginning of character memory
 change $slowBallSpeed = 0
 change $slowPaddleSpeed = 0
 
-change @EX = 168   // Zero out expansion port
+change @EX[0] = 168   // Zero out expansion port
 change $key = 168
 
 change $LEFTSCOREPOS = 53568
@@ -83,7 +83,7 @@ gotoif $temp<18, #netDrawLoop
  // Slow the speed of calculating the paddles
 if $slowPaddleSpeed==14000:
     // Get keypress
-    change $key = @EX
+    change $key = @EX[0]
 
     change $slowPaddleSpeed = 0
 

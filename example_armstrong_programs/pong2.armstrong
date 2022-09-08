@@ -1,0 +1,313 @@
+#AS
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// This program is a full pong game. You can move the left paddles with W/S keys and the //
+// right paddle with Up/Down arrows. When your score reaches 10, it will reset.          //
+///////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////
+// General Variables //
+///////////////////////
+
+
+change $WIDTH = 108
+change $HEIGHT = 108
+
+change $pixOffset = 53871 // Beginning of video memory
+change $charOffset = 53546 // Beginning of character memory
+
+change $slowBallSpeed = 0
+change $slowPaddleSpeed = 0
+
+change @EX[0] = 168   // Zero out expansion port
+change $key = 168
+
+change $LEFTSCOREPOS = 53568
+change $RIGHTSCOREPOS = 53578
+
+change $PADDLECHAR = 11
+change $NETCHAR = 65
+
+// Keys
+change $W = 35
+change $S = 31
+change $UP = 71
+change $DOWN = 72
+
+// Temp vars
+change $pixelPosition = 0
+change $lcharPosition = 0
+change $rcharPosition = 0
+change $temp = 0
+change $tempB = 0
+
+
+#start
+
+change $ballPosX = 54
+change $ballPosY = 54
+change $ballVelY = 1  //   0->Up    1->Down
+change $ballVelX = 1  //   0->Left  1->Right
+
+change $leftScore = 0
+change $rightScore = 0
+
+change $lPaddleY = 9
+//change *$lcharPosition = 0
+change $rPaddleY = 9
+//change *$rcharPosition = 0
+
+
+#netDrawLoop
+mult $temp,18 -> $tempB
+add 9,$tempB -> $tempB
+add $tempB,$charOffset -> $tempB
+
+change *$tempB = $NETCHAR
+
+// change @B = $NETCHAR
+// change @A = $tempB
+// asm"
+// bnk 1
+// staout
+// bnk 0
+// "
+
+add $temp,1 -> $temp
+gotoif $temp<18, #netDrawLoop
+
+
+#update
+
+
+/////////////
+// Paddles //
+/////////////
+
+ // Slow the speed of calculating the paddles
+if $slowPaddleSpeed==14000:
+    // Get keypress
+    change $key = @EX[0]
+
+    change $slowPaddleSpeed = 0
+
+    // Left paddle movement
+    if $key==$W: // Up
+        if $lPaddleY>0:
+            sub $lPaddleY,1 -> $lPaddleY
+            change @B = 0
+            change @A = $lcharPosition
+            asm"
+            bnk 1
+            staout
+            bnk 0
+            "
+            // change *$lcharPosition = 0
+        endif
+    endif
+    if $key==$S: // Down
+        if $lPaddleY<17:
+            add $lPaddleY,1 -> $lPaddleY
+            change @B = 0
+            change @A = $lcharPosition
+            asm"
+            bnk 1
+            staout
+            bnk 0
+            "
+            //change *$lcharPosition = 0
+        endif
+    endif
+
+    // Right paddle movement
+    if $key==$UP: // Up
+        if $rPaddleY>0:
+            sub $rPaddleY,1 -> $rPaddleY
+            change @B = 0
+            change @A = $rcharPosition
+            asm"
+            bnk 1
+            staout
+            bnk 0
+            "
+            // change *$rcharPosition = 0
+        endif
+    endif
+    if $key==$DOWN: // Down
+        if $rPaddleY<17:
+            add $rPaddleY,1 -> $rPaddleY
+            change @B = 0
+            change @A = $rcharPosition
+            asm"
+            bnk 1
+            staout
+            bnk 0
+            "
+            // change *$rcharPosition = 0
+        endif
+    endif
+
+
+    //////////////////////////////////////
+    // Calculate and render the paddles //
+    //////////////////////////////////////
+
+    // Left paddle
+    mult $lPaddleY,18 -> $temp
+    add $charOffset,$temp -> $lcharPosition
+    change @B = $PADDLECHAR
+    change @A = $lcharPosition
+    asm"
+    bnk 1
+    staout
+    bnk 0
+    "
+    // change *$lcharPosition = $PADDLECHAR
+
+    // Right paddle
+    mult $rPaddleY,18 -> $temp
+    add 17,$temp -> $temp
+    add $charOffset,$temp -> $rcharPosition
+    change @B = $PADDLECHAR
+    change @A = $rcharPosition
+    asm"
+    bnk 1
+    staout
+    bnk 0
+    "
+    // change *$rcharPosition = $PADDLECHAR
+
+endif
+#skipPaddles
+
+
+
+//////////
+// Ball //
+//////////
+
+// Slow the speed of calculating the ball
+if $slowBallSpeed==10000:
+
+    change $slowBallSpeed = 0
+
+    // Move ball L/R
+    if $ballVelX==0:
+        sub $ballPosX,1 -> $ballPosX
+    endif
+    if $ballVelX==1:
+        add $ballPosX,1 -> $ballPosX
+    endif
+
+    // Move ball U/D
+    if $ballVelY==0:
+        sub $ballPosY,1 -> $ballPosY
+    endif
+    if $ballVelY==1:
+        add $ballPosY,1 -> $ballPosY
+    endif
+
+
+    // Check if in L/R goals
+    if $ballPosX==0: // Left goal
+        change $ballPosX = 54
+        change $ballPosY = 54
+        change $ballVelX = 1
+        add $rightScore,1 -> $rightScore
+        // Restart game if player reaches 10 points
+        if $rightScore==10:
+            goto #start
+        endif
+    endif
+    if $ballPosX==107: // Right goal
+        change $ballPosX = 54
+        change $ballPosY = 54
+        change $ballVelX = 0
+        add $leftScore,1 -> $leftScore
+        // Restart game if player reaches 10 points
+        if $leftScore==10:
+            goto #start
+        endif
+    endif
+
+
+    // Check if in Top/Bottom walls
+    if $ballPosY==0: // Top wall
+        change $ballVelY = 1
+    endif
+    if $ballPosY==107: // Bottom wall
+        change $ballVelY = 0
+    endif
+
+
+    // Ball/Paddle collision
+    if $ballPosX<5: // If in range of left paddle
+        mult $lPaddleY,6 -> $temp // Get relative position in pixel scale
+        add $temp,6 -> $tempB
+        if $ballPosY<$tempB:
+            if $ballPosY>$temp:
+                change $ballVelX = 1
+            endif
+        endif
+    endif
+    if $ballPosX>98: // If in range of right paddle
+        mult $rPaddleY,6 -> $temp // Get relative position in pixel scale
+        add $temp,6 -> $tempB
+        if $ballPosY<$tempB:
+            if $ballPosY>$temp:
+                change $ballVelX = 0
+            endif
+        endif
+    endif
+
+
+    // Calculate and draw ball
+    change @B = 0
+    change @A = $pixelPosition
+    asm"
+    bnk 1
+    staout
+    bnk 0
+    "
+    //change *$pixelPosition = 0 // Clear last position
+    mult $ballPosY,$WIDTH -> $temp
+    add $temp,$ballPosX -> $temp
+    add $temp,$pixOffset -> $pixelPosition
+    change @B = 65535
+    change @A = $pixelPosition
+    asm"
+    bnk 1
+    staout
+    bnk 0
+    "
+    //change *$pixelPosition = 65534 // Set current position to white
+
+endif
+
+
+// Draw scores
+add $leftScore,39 -> $temp  // Left score
+change @B = $temp
+change @A = $LEFTSCOREPOS
+asm"
+bnk 1
+staout
+bnk 0
+"
+// change *$LEFTSCOREPOS = $temp
+add $rightScore,39 -> $temp  // Right score
+change @B = $temp
+change @A = $RIGHTSCOREPOS
+asm"
+bnk 1
+staout
+bnk 0
+"
+// change *$RIGHTSCOREPOS = $temp
+
+
+// Increment counters
+add $slowBallSpeed,1 -> $slowBallSpeed
+add $slowPaddleSpeed,1 -> $slowPaddleSpeed
+goto #update
+

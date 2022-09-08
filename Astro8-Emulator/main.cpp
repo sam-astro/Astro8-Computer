@@ -48,7 +48,8 @@ int AReg = 0;
 int BReg = 0;
 int CReg = 0;
 int BankReg = 0;
-uint16_t expansionPort = 0;
+int ExpReg = 0;
+uint16_t expansionPort[4];
 int InstructionReg = 0;
 int flags[3] = { 0, 0, 0 };
 int bus = 0;
@@ -107,16 +108,17 @@ enum ReadInstruction : MicroInstruction {
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA =   0b0000000010000000,
-	WRITE_WB =   0b0000000100000000,
-	WRITE_WC =   0b0000000110000000,
-	WRITE_IW =   0b0000001000000000,
-	WRITE_DW =   0b0000001010000000,
-	WRITE_WM =   0b0000001100000000,
-	WRITE_J =    0b0000001110000000,
-	WRITE_AW =   0b0000010000000000,
-	WRITE_WE =   0b0000010010000000,
-	WRITE_BNK =  0b0000010100000000,
+	WRITE_WA = 0b0000000010000000,
+	WRITE_WB = 0b0000000100000000,
+	WRITE_WC = 0b0000000110000000,
+	WRITE_IW = 0b0000001000000000,
+	WRITE_DW = 0b0000001010000000,
+	WRITE_WM = 0b0000001100000000,
+	WRITE_J = 0b0000001110000000,
+	WRITE_AW = 0b0000010000000000,
+	WRITE_WE = 0b0000010010000000,
+	WRITE_BNK = 0b0000010100000000,
+	WRITE_EXI = 0b0000010110000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -162,10 +164,10 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK"};
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK"};
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK", "EXI"};
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -177,8 +179,8 @@ std::string instructioncodes[] = {
 		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
 		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
 		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
-		"rdexp( 2=wa,re & 3=ei", // Read from expansion port to register A
-		"wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
+		"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
+		"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
 		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
 		"add( 2=wa,eo,fl & 3=ei", // Add
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
@@ -825,15 +827,15 @@ int main(int argc, char** argv)
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
 						// Keyboard only uses lowest 8 bits, so the upper ones stay
-						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort & 0b1111111100000000);
+						expansionPort[0] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort[0] & 0b1111111100000000);
 
 						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-						PrintColored(to_string(expansionPort), greenFGColor, "");
+						PrintColored(to_string(expansionPort[0]), greenFGColor, "");
 
 					}
 					else if (event.type == SDL_KEYUP) {
 
-						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+						expansionPort[0] = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
 					}
 				}
 				// If using the mouse in the expansion port
@@ -841,19 +843,19 @@ int main(int argc, char** argv)
 					if (event.type == SDL_MOUSEMOTION) {
 						// Get mouse location
 						//cout << event.motion.x << endl;
-						expansionPort = ((event.motion.x << 6) + event.motion.y) + (expansionPort & 0b1111000000000000);
+						expansionPort[1] = ((event.motion.x << 6) + event.motion.y) + (expansionPort[1] & 0b1111000000000000);
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
 						if (event.button.button == 1)      // Left Mouse Button Down
-							expansionPort = 4096 | expansionPort;
+							expansionPort[1] = 4096 | expansionPort[1];
 						else if (event.button.button == 3) // Right Mouse Button Down
-							expansionPort = 8192 | expansionPort;
+							expansionPort[1] = 8192 | expansionPort[1];
 					}
 					else if (event.type == SDL_MOUSEBUTTONUP) {
-						if (event.button.button == 1 && (expansionPort & 4096) == 4096)      // Left Mouse Button Up
-							expansionPort = 4096 ^ expansionPort;
-						else if (event.button.button == 3 && (expansionPort & 8192) == 8192) // Right Mouse Button Up
-							expansionPort = 8192 ^ expansionPort;
+						if (event.button.button == 1 && (expansionPort[1] & 4096) == 4096)      // Left Mouse Button Up
+							expansionPort[1] = 4096 ^ expansionPort[1];
+						else if (event.button.button == 3 && (expansionPort[1] & 8192) == 8192) // Right Mouse Button Up
+							expansionPort[1] = 8192 ^ expansionPort[1];
 					}
 			}
 		}
@@ -913,7 +915,7 @@ void Update()
 			bus = programCounter;
 			break;
 		case READ_RE:
-			bus = expansionPort;
+			bus = expansionPort[ExpReg];
 			break;
 		}
 
@@ -1078,16 +1080,16 @@ void Update()
 			break;
 		case WRITE_BNK:
 			//PrintColored("\nChange from: " + to_string(BankReg) + " to " + to_string(bus) + "\n", whiteFGColor, "");
-			BankReg = bus&1;
+			BankReg = bus & 1;
 			break;
 		case WRITE_WE:
-			expansionPort = bus;
+			expansionPort[ExpReg] = bus;
 			if (verbose) {
-			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
-			PrintColored(to_string(expansionPort), greenFGColor, "");
-			cout << "\n";
-			//PrintColored(DecToBinFilled(expansionPort, 16), greenFGColor, "");
-			//cout << "\n";
+				PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
+				PrintColored(to_string(expansionPort[ExpReg]), greenFGColor, "");
+				cout << "\n";
+				//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
+				//cout << "\n";
 			}
 
 			////////////
@@ -1106,8 +1108,8 @@ void Update()
 
 			// Calculate target frequency from beginning 5-bits
 			float offset = 0.0f;
-			float targetSpeed = (((expansionPort & 0b1111100000000000) >> 11) / 15.0f) + offset;
-			int targetChannel = (expansionPort & 0b11100000000) >> 8;
+			float targetSpeed = (((expansionPort[ExpReg] & 0b1111100000000000) >> 11) / 15.0f) + offset;
+			int targetChannel = (expansionPort[ExpReg] & 0b11100000000) >> 8;
 			//cout << targetChannel << " : " << targetSpeed << endl;
 
 			// Use upper 8 bits to play audio
@@ -1285,7 +1287,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 		cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 	waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
 	if (waveforms[3] == NULL)
-		cout<<("Failed to load sound:"+ executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() +"\n");
+		cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 
 	return 0;
 }
@@ -1927,14 +1929,14 @@ void LoadAddress(const string& reg, const string& address) {
 		addrInWord = "bin ";
 	else if (reg == "@C")
 		addrInWord = "cin ";
-	else if (reg == "@EX")
+	else if (split(reg, "[")[0] == "@EX")
 		addrInWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
 	if (actualVal <= 2047) {
 		compiledLines.push_back(addrInWord + to_string(actualVal));
-		if (reg == "@EX")
-			compiledLines.push_back("wrexp");
+		if (split(reg, "[")[0] == "@EX")
+			compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
 	}
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
 	else if (actualVal > 2047) {
@@ -1976,9 +1978,9 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			compiledLines.push_back("ldia " + to_string(actualValue));
 			compiledLines.push_back("swpc");
 		}
-		else if (in == "@EX") {
+		else if (split(in, "[")[0] == "@EX") {
 			compiledLines.push_back("ldia " + to_string(actualValue));
-			compiledLines.push_back("wrexp");
+			compiledLines.push_back("wrexp "+split(split(in, "[")[1], "]")[0]);
 		}
 	}
 	else {
@@ -1996,10 +1998,10 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			PutSetOnCurrentLine(followingValue);
 			compiledLines.push_back("swpc");
 		}
-		else if (in == "@EX") {
+		else if (split(in, "[")[0] == "@EX") {
 			compiledLines.push_back("ldw");
 			PutSetOnCurrentLine(followingValue);
-			compiledLines.push_back("wrexp");
+			compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
 		}
 	}
 }
@@ -2012,29 +2014,29 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 		return "swp\n";
 	if (destination == "@A" && from == "@C")
 		return "swpc\n";
-	if (destination == "@A" && from == "@EX")
-		return "rdexp\n";
+	if (destination == "@A" && split(from, "[")[0] == "@EX")
+		return "rdexp " + split(split(from, "[")[1], "]")[0]+"\n";
 
 	if (destination == "@B" && from == "@A")
 		return "swp\n";
 	if (destination == "@B" && from == "@C")
 		return "swpc\nswp\n";
-	if (destination == "@B" && from == "@EX")
-		return "rdexp\nswp\n";
+	if (destination == "@B" && split(from, "[")[0] == "@EX")
+		return "rdexp " + split(split(from, "[")[1], "]")[0]+"\nswp\n";
 
 	if (destination == "@C" && from == "@A")
 		return "swpc\n";
 	if (destination == "@C" && from == "@B")
 		return "swp\nswpc\n";
-	if (destination == "@C" && from == "@EX")
-		return "rdexp\nswpc\n";
+	if (destination == "@C" && split(from, "[")[0] == "@EX")
+		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswpc\n";
 
-	if (destination == "@EX" && from == "@A")
-		return "wrexp\n";
-	if (destination == "@EX" && from == "@B")
-		return "swp\nwrexp\n";
-	if (destination == "@EX" && from == "@C")
-		return "swpc\nwrexp\n";
+	if (split(destination, "[")[0] == "@EX" && from == "@A")
+		return "wrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	if (split(destination, "[")[0] == "@EX" && from == "@B")
+		return "swp\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	if (split(destination, "[")[0] == "@EX" && from == "@C")
+		return "swpc\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
 
 	return "";
 }
@@ -2099,8 +2101,10 @@ int ParseValue(const string& input) {
 		return stoi(input);
 	if (IsLabel(input)) // If a label
 		return FindLabelLine(input, labels, labelLineValues);
-	if (IsPointer(input)) // If a pointer
-		return ParseValue(split(input, "*")[1]);
+	if (IsPointer(input)) { // If a pointer
+		std::string pval = split(input, "*")[1];
+		return ParseValue(pval.substr(pval.find_last_of("]") + 1, pval.size()));
+	}
 
 	return -1;
 }
