@@ -843,9 +843,13 @@ int main(int argc, char** argv)
 				// If using the mouse in the expansion port
 				if (usingMouse)
 					if (event.type == SDL_MOUSEMOTION) {
-						// Get mouse location
-						//cout << event.motion.x << endl;
-						expansionPort[1] = ((event.motion.xrel << 6) + event.motion.yrel) + (expansionPort[1] & 0b1111000000000000);
+						// Get mouse relative movement from last position
+						
+						// Automatically convert to twos compliment if the number is less than zero, otherwise pass as-is
+						uint16_t mXRel = event.motion.xrel < 0 ? (event.motion.xrel << 6) & 0b111111000000 : (((~event.motion.xrel)+1) << 6) & 0b111111000000;
+						uint16_t mYRel = event.motion.yrel < 0 ? event.motion.yrel & 0b111111 : ((~event.motion.yrel)+1) & 0b111111;
+						
+						expansionPort[1] = (mXRel + mYRel) + (expansionPort[1] & 0b1111000000000000);
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
 						if (event.button.button == 1)      // Left Mouse Button Down
