@@ -2111,14 +2111,18 @@ int ParseValue(const string& input) {
 
 // Reads from mem at the address stored in pointer, into REG A
 void LoadPointer(const string& str) {
-	LoadAddress("@A", split(str, "*")[1]);
+	compiledLines.push_back("bnk " + str.substr(str.find_last_of("[") + 1, path.size())[0]);
+	LoadAddress("@A", str.substr(str.find_last_of("]") + 1, path.size()));
 	compiledLines.push_back("ldain");
+	compiledLines.push_back("bnk 0");
 }
 
 // Writes from REG B to mem at the address stored in pointer
 void StoreIntoPointer(const string& str) {
+	compiledLines.push_back("bnk " + str.substr(str.find_last_of("[") + 1, path.size())[0]);
 	LoadAddress("@A", split(str, "*")[1]);
 	compiledLines.push_back("staout");
+	compiledLines.push_back("bnk 0");
 }
 
 void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
