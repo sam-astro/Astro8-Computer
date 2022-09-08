@@ -41,7 +41,7 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
-bool usingKeyboard = true;
+bool usingKeyboard, usingMouse = true;
 
 
 int AReg = 0;
@@ -217,8 +217,8 @@ Options:
                            start emulator.
   -r, --run                Run an already assembled program in AstroEXE fBankRegormat
                            (program.AEXE)
-  -nk, --nokeyboard        Use the mouse mode for the emulator (disables
-                           keyboard input)
+  -nk, --nokeyboard        Disable the keyboard input
+  -nm, --nomouse           Disable the mouse input
   -v, --verbose            Write extra data to console for better debugging
   -f, --freq <value>       Override the default CPU target frequency with your
                            own.      Default = 10    higher = faster
@@ -534,8 +534,10 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
-		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
+		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
+		else if (argval == "-nm" || argval == "--nomouse") // Disable the mouse input
+			usingMouse = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
 			verbose = true;
 		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
@@ -839,11 +841,11 @@ int main(int argc, char** argv)
 					}
 				}
 				// If using the mouse in the expansion port
-				else if (!usingKeyboard)
+				if (usingMouse)
 					if (event.type == SDL_MOUSEMOTION) {
 						// Get mouse location
 						//cout << event.motion.x << endl;
-						expansionPort[1] = ((event.motion.x << 6) + event.motion.y) + (expansionPort[1] & 0b1111000000000000);
+						expansionPort[1] = ((event.motion.xrel << 6) + event.motion.yrel) + (expansionPort[1] & 0b1111000000000000);
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
 						if (event.button.button == 1)      // Left Mouse Button Down
