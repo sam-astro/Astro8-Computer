@@ -51,7 +51,7 @@ int BankReg = 0;
 int ExpReg = 0;
 uint16_t expansionPort[4];
 int InstructionReg = 0;
-int flags[3] = { 0, 0, 0 };
+int flags[2] = { 0, 0 };
 int bus = 0;
 int outputReg = 0;
 uint16_t memoryIndex = 0;
@@ -505,7 +505,7 @@ int main(int argc, char** argv)
 	{
 		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
 		cout << "\n" << helpDialog << "\n";
-		cout << ("OR, enter path to file >  ");
+		cout << ("OR, enter path to file (No options allowed >:| ) >  ");
 		std::string line;
 		while (true) {
 			getline(cin, line);
@@ -544,6 +544,7 @@ int main(int argc, char** argv)
 			try
 			{
 				target_cpu_freq = stoi(argv[i + 1]) * 1000000;
+				i++;
 			}
 			catch (const std::exception&)
 			{
