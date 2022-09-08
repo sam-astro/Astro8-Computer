@@ -1098,7 +1098,9 @@ void Update()
 				//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
 				//cout << "\n";
 			}
-
+			
+			// Only play audio if writing to the dedicated audio expansion port
+			if(ExpReg == 2){
 			////////////
 			// Audio: //
 			////////////
@@ -1115,8 +1117,8 @@ void Update()
 
 			// Calculate target frequency from beginning 5-bits
 			float offset = 0.0f;
-			float targetSpeed = (((expansionPort[ExpReg] & 0b1111100000000000) >> 11) / 15.0f) + offset;
-			int targetChannel = (expansionPort[ExpReg] & 0b11100000000) >> 8;
+			float targetSpeed = (((expansionPort[2] & 0b1111100000000000) >> 11) / 15.0f) + offset;
+			int targetChannel = (expansionPort[2] & 0b11100000000) >> 8;
 			//cout << targetChannel << " : " << targetSpeed << endl;
 
 			// Use upper 8 bits to play audio
@@ -1141,7 +1143,7 @@ void Update()
 					//channelsPlaying[targetChannel - 1] = false;
 				}
 
-
+			}
 
 
 			break;
