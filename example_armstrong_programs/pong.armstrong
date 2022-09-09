@@ -62,13 +62,7 @@ change $rPaddleY = 9
 mult $temp,18 -> $tempB
 add 9,$tempB -> $tempB
 add $tempB,$charOffset -> $tempB
-change @B = $NETCHAR
-change @A = $tempB
-asm"
-bnk 1
-staout
-bnk 0
-"
+change *[1]$tempB = $NETCHAR
 add $temp,1 -> $temp
 gotoif $temp<18, #netDrawLoop
 
@@ -91,27 +85,13 @@ if $slowPaddleSpeed==14000:
     if $key==$W: // Up
         if $lPaddleY>0:
             sub $lPaddleY,1 -> $lPaddleY
-            change @B = 0
-            change @A = $lcharPosition
-            asm"
-            bnk 1
-            staout
-            bnk 0
-            "
-            // change *$lcharPosition = 0
+            change *[1]$lcharPosition = 0
         endif
     endif
     if $key==$S: // Down
         if $lPaddleY<17:
             add $lPaddleY,1 -> $lPaddleY
-            change @B = 0
-            change @A = $lcharPosition
-            asm"
-            bnk 1
-            staout
-            bnk 0
-            "
-            //change *$lcharPosition = 0
+            change *[1]$lcharPosition = 0
         endif
     endif
 
@@ -119,27 +99,13 @@ if $slowPaddleSpeed==14000:
     if $key==$UP: // Up
         if $rPaddleY>0:
             sub $rPaddleY,1 -> $rPaddleY
-            change @B = 0
-            change @A = $rcharPosition
-            asm"
-            bnk 1
-            staout
-            bnk 0
-            "
-            // change *$rcharPosition = 0
+            change *[1]$rcharPosition = 0
         endif
     endif
     if $key==$DOWN: // Down
         if $rPaddleY<17:
             add $rPaddleY,1 -> $rPaddleY
-            change @B = 0
-            change @A = $rcharPosition
-            asm"
-            bnk 1
-            staout
-            bnk 0
-            "
-            // change *$rcharPosition = 0
+            change *[1]$rcharPosition = 0
         endif
     endif
 
@@ -151,27 +117,13 @@ if $slowPaddleSpeed==14000:
     // Left paddle
     mult $lPaddleY,18 -> $temp
     add $charOffset,$temp -> $lcharPosition
-    change @B = $PADDLECHAR
-    change @A = $lcharPosition
-    asm"
-    bnk 1
-    staout
-    bnk 0
-    "
-    // change *$lcharPosition = $PADDLECHAR
+    change *[1]$lcharPosition = $PADDLECHAR
 
     // Right paddle
     mult $rPaddleY,18 -> $temp
     add 17,$temp -> $temp
     add $charOffset,$temp -> $rcharPosition
-    change @B = $PADDLECHAR
-    change @A = $rcharPosition
-    asm"
-    bnk 1
-    staout
-    bnk 0
-    "
-    // change *$rcharPosition = $PADDLECHAR
+    change *[1]$rcharPosition = $PADDLECHAR
 
 endif
 #skipPaddles
@@ -258,48 +210,20 @@ if $slowBallSpeed==10000:
 
 
     // Calculate and draw ball
-    change @B = 0
-    change @A = $pixelPosition
-    asm"
-    bnk 1
-    staout
-    bnk 0
-    "
-    //change *$pixelPosition = 0 // Clear last position
+    change *[1]$pixelPosition = 0 // Clear last position
     mult $ballPosY,$WIDTH -> $temp
     add $temp,$ballPosX -> $temp
     add $temp,$pixOffset -> $pixelPosition
-    change @B = 65535
-    change @A = $pixelPosition
-    asm"
-    bnk 1
-    staout
-    bnk 0
-    "
-    //change *$pixelPosition = 65534 // Set current position to white
+    change *[1]$pixelPosition = 65535 // Set current position to white
 
 endif
 
 
 // Draw scores
 add $leftScore,39 -> $temp  // Left score
-change @B = $temp
-change @A = $LEFTSCOREPOS
-asm"
-bnk 1
-staout
-bnk 0
-"
-// change *$LEFTSCOREPOS = $temp
+change *[1]$LEFTSCOREPOS = $temp
 add $rightScore,39 -> $temp  // Right score
-change @B = $temp
-change @A = $RIGHTSCOREPOS
-asm"
-bnk 1
-staout
-bnk 0
-"
-// change *$RIGHTSCOREPOS = $temp
+change *[1]$RIGHTSCOREPOS = $temp
 
 
 // Increment counters

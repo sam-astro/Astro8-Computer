@@ -63,7 +63,7 @@ mult $temp,18 -> $tempB
 add 9,$tempB -> $tempB
 add $tempB,$charOffset -> $tempB
 
-change *$tempB = $NETCHAR
+change *[1]$tempB = $NETCHAR
 
 // change @B = $NETCHAR
 // change @A = $tempB

@@ -207,7 +207,10 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 			else {
 				PrintColored(" !!", redFGColor, "");
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
-				PrintColored("\t" + nstr[i] + "\n", redFGColor, "");
+				PrintColored("\t" + instruction + "\n", redFGColor, "");
+				/*cout << "\n\nPress Enter to Exit...";
+				cin.ignore();
+				exit(1);*/
 			}
 
 			actualNum++;

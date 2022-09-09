@@ -41,7 +41,7 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
-bool usingKeyboard, usingMouse = true;
+bool usingKeyboard =true, usingMouse = true;
 
 
 int AReg = 0;
@@ -164,10 +164,10 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK", "EXI"};
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK", "EXI" };
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -204,6 +204,7 @@ std::string instructioncodes[] = {
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
+		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
 };
 
 std::string helpDialog = R"V0G0N(
@@ -215,7 +216,7 @@ Options:
                            start emulator.
   -a, --assemble           Only assemble assembly code into AEXE. Will not
                            start emulator.
-  -r, --run                Run an already assembled program in AstroEXE fBankRegormat
+  -r, --run                Run an already assembled program in AstroEXE format
                            (program.AEXE)
   -nk, --nokeyboard        Disable the keyboard input
   -nm, --nomouse           Disable the mouse input
@@ -829,8 +830,7 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
-						// Keyboard only uses lowest 8 bits, so the upper ones stay
-						expansionPort[0] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort[0] & 0b1111111100000000);
+						expansionPort[0] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
 						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 						PrintColored(to_string(expansionPort[0]), greenFGColor, "");
@@ -845,11 +845,11 @@ int main(int argc, char** argv)
 				if (usingMouse)
 					if (event.type == SDL_MOUSEMOTION) {
 						// Get mouse relative movement from last position
-						
+
 						// Automatically convert to twos compliment if the number is less than zero, otherwise pass as-is
-						uint16_t mXRel = event.motion.xrel < 0 ? (event.motion.xrel << 6) & 0b111111000000 : (((~event.motion.xrel)+1) << 6) & 0b111111000000;
-						uint16_t mYRel = event.motion.yrel < 0 ? event.motion.yrel & 0b111111 : ((~event.motion.yrel)+1) & 0b111111;
-						
+						uint16_t mXRel = event.motion.xrel < 0 ? (event.motion.xrel << 6) & 0b111111000000 : (((~event.motion.xrel) + 1) << 6) & 0b111111000000;
+						uint16_t mYRel = event.motion.yrel < 0 ? event.motion.yrel & 0b111111 : ((~event.motion.yrel) + 1) & 0b111111;
+
 						expansionPort[1] = (mXRel + mYRel) + (expansionPort[1] & 0b1111000000000000);
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
@@ -878,7 +878,7 @@ bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
 
-	for (int step = 0; step < 16; step++)
+	for (int step = 0; step < 8; step++)
 	{
 
 		// Execute fetch in single step
@@ -895,7 +895,7 @@ void Update()
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = ((InstructionReg >> 5) & 0b11111000000) + (step * 4) + (flags[0] * 2) + flags[1];
+		int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
@@ -927,7 +927,7 @@ void Update()
 		}
 
 
-			// Find ALU modifiers
+		// Find ALU modifiers
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
@@ -1058,7 +1058,7 @@ void Update()
 		}
 
 
-			// Check for any writes and execute if applicable
+		// Check for any writes and execute if applicable
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
@@ -1077,7 +1077,6 @@ void Update()
 			break;
 		case WRITE_WM:
 			memoryBytes[BankReg][memoryIndex] = bus;
-			//cout <<endl<< to_string(BankReg )<< " , " << to_string(memoryIndex )<< " = " << bus << endl;
 			break;
 		case WRITE_J:
 			programCounter = bus;
@@ -1086,7 +1085,6 @@ void Update()
 			memoryIndex = bus;
 			break;
 		case WRITE_BNK:
-			//PrintColored("\nChange from: " + to_string(BankReg) + " to " + to_string(bus) + "\n", whiteFGColor, "");
 			BankReg = bus & 1;
 			break;
 		case WRITE_WE:
@@ -1098,50 +1096,40 @@ void Update()
 				//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
 				//cout << "\n";
 			}
-			
+
 			// Only play audio if writing to the dedicated audio expansion port
-			if(ExpReg == 2){
-			////////////
-			// Audio: //
-			////////////
+			if (ExpReg == 2) {
+				////////////
+				// Audio: //
+				////////////
 
-			//		Format:     FFFFFCCC XXXXXXXX
-			//		You can only toggle one channel at a time per expansion port write.
-			//		CCC is converted to the index of the channel that is toggled
-			//		Then the frequency for that channel is defined as an int value stored in FFFFF
-			//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
-			//		is changed and the channel is turned ON if it isn't already
-			//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+				//		Format:     FFFFFCCC XXXXXXXX
+				//		You can only toggle one channel at a time per expansion port write.
+				//		CCC is converted to the index of the channel that is toggled
+				//		Then the frequency for that channel is defined as an int value stored in FFFFF
+				//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+				//		is changed and the channel is turned ON if it isn't already
+				//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
 
-			//testFreqInt += 1000;
 
-			// Calculate target frequency from beginning 5-bits
-			float offset = 0.0f;
-			float targetSpeed = (((expansionPort[2] & 0b1111100000000000) >> 11) / 15.0f) + offset;
-			int targetChannel = (expansionPort[2] & 0b11100000000) >> 8;
-			//cout << targetChannel << " : " << targetSpeed << endl;
+				// Calculate target frequency from beginning 5-bits
+				float offset = 0.0f;
+				float targetSpeed = (((expansionPort[2] & 0b1111100000000000) >> 11) / 15.0f) + offset;
+				int targetChannel = (expansionPort[2] & 0b11100000000) >> 8;
 
-			// Use upper 8 bits to play audio
-			if (targetChannel > 0 && targetChannel <= 4)
-				if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
-					speed_chunks[targetChannel - 1] = targetSpeed;
-					Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
-					setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
-					//cout << "Play & Frequency change" << endl;
-					//channelsPlaying[targetChannel - 1] = true;
-				}
-				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
-					//Mix_HaltChannel(targetChannel - 1);
-					speed_chunks[targetChannel - 1] = targetSpeed;
-					//Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
-					//setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
-					//cout << "Frequency change" << endl;
-				}
-				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
-					//Mix_FadeOutChannel(targetChannel - 1, 10);
-					Mix_HaltChannel(targetChannel - 1);
-					//channelsPlaying[targetChannel - 1] = false;
-				}
+				// Use upper 8 bits to play audio
+				if (targetChannel > 0 && targetChannel <= 4)
+					if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
+						speed_chunks[targetChannel - 1] = targetSpeed;
+						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
+						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
+					}
+					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
+						speed_chunks[targetChannel - 1] = targetSpeed;
+					}
+					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
+						Mix_HaltChannel(targetChannel - 1);
+					}
 
 			}
 
@@ -1552,7 +1540,7 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
-		std::string startaddress = DecToBinFilled(ins, 5);
+		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[0], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1560,7 +1548,7 @@ void GenerateMicrocode()
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
-			std::string midaddress = DecToBinFilled(actualStep, 4);
+			std::string midaddress = DecToBinFilled(actualStep, 3);
 
 			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
@@ -1617,7 +1605,7 @@ void GenerateMicrocode()
 		cout << (instructioncodes[ins] + "\n");
 #endif
 
-		std::string startaddress = DecToBinFilled(ins, 5);
+		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[ins], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1625,7 +1613,7 @@ void GenerateMicrocode()
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
-			std::string midaddress = DecToBinFilled(actualStep, 4);
+			std::string midaddress = DecToBinFilled(actualStep, 3);
 
 			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
@@ -1929,20 +1917,21 @@ void PutSetOnCurrentLine(const string& value) {
 // Loading of memory value into register, automatically allowing large addressing as needed
 void LoadAddress(const string& reg, const string& address) {
 	int actualVal = ParseValue(address);
-	string addrInWord = "ain ";
 	int actualLineNum = GetLineNumber();
 
-	if (reg == "@A")
-		addrInWord = "ain ";
-	else if (reg == "@B")
-		addrInWord = "bin ";
-	else if (reg == "@C")
-		addrInWord = "cin ";
-	else if (split(reg, "[")[0] == "@EX")
-		addrInWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
 	if (actualVal <= 2047) {
+		string addrInWord = "ain ";
+		if (reg == "@A")
+			addrInWord = "ain ";
+		else if (reg == "@B")
+			addrInWord = "bin ";
+		else if (reg == "@C")
+			addrInWord = "cin ";
+		else if (split(reg, "[")[0] == "@EX")
+			addrInWord = "ain ";
+
 		compiledLines.push_back(addrInWord + to_string(actualVal));
 		if (split(reg, "[")[0] == "@EX")
 			compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
@@ -1989,7 +1978,7 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 		}
 		else if (split(in, "[")[0] == "@EX") {
 			compiledLines.push_back("ldia " + to_string(actualValue));
-			compiledLines.push_back("wrexp "+split(split(in, "[")[1], "]")[0]);
+			compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
 		}
 	}
 	else {
@@ -2024,14 +2013,14 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 	if (destination == "@A" && from == "@C")
 		return "swpc\n";
 	if (destination == "@A" && split(from, "[")[0] == "@EX")
-		return "rdexp " + split(split(from, "[")[1], "]")[0]+"\n";
+		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\n";
 
 	if (destination == "@B" && from == "@A")
 		return "swp\n";
 	if (destination == "@B" && from == "@C")
 		return "swpc\nswp\n";
 	if (destination == "@B" && split(from, "[")[0] == "@EX")
-		return "rdexp " + split(split(from, "[")[1], "]")[0]+"\nswp\n";
+		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswp\n";
 
 	if (destination == "@C" && from == "@A")
 		return "swpc\n";
@@ -2120,16 +2109,16 @@ int ParseValue(const string& input) {
 
 // Reads from mem at the address stored in pointer, into REG A
 void LoadPointer(const string& str) {
-	compiledLines.push_back("bnk " + str.substr(str.find_last_of("[") + 1, path.size())[0]);
-	LoadAddress("@A", str.substr(str.find_last_of("]") + 1, path.size()));
+	LoadAddress("@A", split(str, "]")[1]);
+	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("ldain");
 	compiledLines.push_back("bnk 0");
 }
 
 // Writes from REG B to mem at the address stored in pointer
 void StoreIntoPointer(const string& str) {
-	compiledLines.push_back("bnk " + str.substr(str.find_last_of("[") + 1, path.size())[0]);
-	LoadAddress("@A", split(str, "*")[1]);
+	LoadAddress("@A", split(str, "]")[1]);
+	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("staout");
 	compiledLines.push_back("bnk 0");
 }
