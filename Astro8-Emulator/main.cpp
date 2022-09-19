@@ -933,9 +933,9 @@ void Update()
 		case READ_CR:
 			bus = programCounter;
 			break;
-		case READ_RE:
-			bus = expansionPort[ExpReg];
-			break;
+		//case READ_RE:
+		//	bus = expansionPort[ExpReg];
+		//	break;
 		}
 
 
@@ -1989,12 +1989,12 @@ void LoadAddress(const string& reg, const string& address) {
 			addrInWord = "bin ";
 		else if (reg == "@C")
 			addrInWord = "cin ";
-		else if (split(reg, "[")[0] == "@EX")
-			addrInWord = "ain ";
+		//else if (split(reg, "[")[0] == "@EX")
+		//	addrInWord = "ain ";
 
 		compiledLines.push_back(addrInWord + to_string(actualVal));
-		if (split(reg, "[")[0] == "@EX")
-			compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
+		//if (split(reg, "[")[0] == "@EX")
+		//	compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
 	}
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
 	else if (actualVal > 1023) {
@@ -2036,10 +2036,10 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			compiledLines.push_back("ldia " + to_string(actualValue));
 			compiledLines.push_back("swpc");
 		}
-		else if (split(in, "[")[0] == "@EX") {
-			compiledLines.push_back("ldia " + to_string(actualValue));
-			compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
-		}
+		//else if (split(in, "[")[0] == "@EX") {
+		//	compiledLines.push_back("ldia " + to_string(actualValue));
+		//	compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
+		//}
 	}
 	else {
 		if (in == "@A") {
@@ -2056,11 +2056,11 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			PutSetOnCurrentLine(followingValue);
 			compiledLines.push_back("swpc");
 		}
-		else if (split(in, "[")[0] == "@EX") {
-			compiledLines.push_back("ldw");
-			PutSetOnCurrentLine(followingValue);
-			compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
-		}
+		//else if (split(in, "[")[0] == "@EX") {
+		//	compiledLines.push_back("ldw");
+		//	PutSetOnCurrentLine(followingValue);
+		//	compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
+		//}
 	}
 }
 
@@ -2072,29 +2072,29 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 		return "swp\n";
 	if (destination == "@A" && from == "@C")
 		return "swpc\n";
-	if (destination == "@A" && split(from, "[")[0] == "@EX")
-		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\n";
+	//if (destination == "@A" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\n";
 
 	if (destination == "@B" && from == "@A")
 		return "swp\n";
 	if (destination == "@B" && from == "@C")
 		return "swpc\nswp\n";
-	if (destination == "@B" && split(from, "[")[0] == "@EX")
-		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswp\n";
+	//if (destination == "@B" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswp\n";
 
 	if (destination == "@C" && from == "@A")
 		return "swpc\n";
 	if (destination == "@C" && from == "@B")
 		return "swp\nswpc\n";
-	if (destination == "@C" && split(from, "[")[0] == "@EX")
-		return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswpc\n";
+	//if (destination == "@C" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswpc\n";
 
-	if (split(destination, "[")[0] == "@EX" && from == "@A")
-		return "wrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
-	if (split(destination, "[")[0] == "@EX" && from == "@B")
-		return "swp\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
-	if (split(destination, "[")[0] == "@EX" && from == "@C")
-		return "swpc\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@A")
+	//	return "wrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@B")
+	//	return "swp\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@C")
+	//	return "swpc\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
 
 	return "";
 }
