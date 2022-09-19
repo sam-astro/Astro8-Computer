@@ -48,8 +48,6 @@ int AReg = 0;
 int BReg = 0;
 int CReg = 0;
 int BankReg = 0;
-int ExpReg = 0;
-uint16_t expansionPort[4];
 int InstructionReg = 0;
 int flags[2] = { 0, 0 };
 int bus = 0;
@@ -103,7 +101,6 @@ enum ReadInstruction : MicroInstruction {
 	READ_RM = 0b0000000001000000,
 	READ_IR = 0b0000000001010000,
 	READ_CR = 0b0000000001100000,
-	READ_RE = 0b0000000001110000,
 	READ_MASK = 0b0000000001110000,
 };
 
@@ -116,9 +113,7 @@ enum WriteInstruction : MicroInstruction {
 	WRITE_WM = 0b0000001100000000,
 	WRITE_J = 0b0000001110000000,
 	WRITE_AW = 0b0000010000000000,
-	WRITE_WE = 0b0000010010000000,
 	WRITE_BNK = 0b0000010100000000,
-	WRITE_EXI = 0b0000010110000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -164,11 +159,11 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC", "LDWB" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC", "LDWB" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK", "EXI" };
-std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK" };
+std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
 
@@ -179,8 +174,8 @@ std::string instructioncodes[] = {
 		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
 		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
 		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
-		"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
-		"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
+		//"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
+		//"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
 		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
 		"add( 2=wa,eo,fl & 3=ei", // Add
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
