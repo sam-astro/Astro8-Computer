@@ -1,0 +1,5 @@
+ldia 15
+ldib 15
+wrexp 2
+jmp
+here 0

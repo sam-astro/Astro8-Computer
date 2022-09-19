@@ -41,7 +41,7 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
-bool usingKeyboard =true, usingMouse = true;
+bool usingKeyboard = true, usingMouse = true;
 
 
 int AReg = 0;
@@ -164,7 +164,7 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC", "LDWB" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
 std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE", "BNK", "EXI" };
@@ -205,6 +205,7 @@ std::string instructioncodes[] = {
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
 		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
+		"ldwb( 2=cr,aw & 3=ce,rm,wb & 4=ei", // Load value directly after counter into B, and advance counter by 2
 };
 
 std::string helpDialog = R"V0G0N(
@@ -364,16 +365,10 @@ struct PlaybackSpeedEffectHandler
 						if (k * audioChannelCount + audioChannelCount - 1 < chunkSize || loop)
 						{
 							AudioFormatType v0 = chunkData[(k * audioChannelCount + c) % chunkSize],
-								// v_ = chunkData[((k-1) * channelCount + c) % chunkSize],
-								// v2 = chunkData[((k+2) * channelCount + c) % chunkSize],
 								v1 = chunkData[((k + 1) * audioChannelCount + c) % chunkSize];
 
 							// put interpolated value on 'data'
-							// buffer[i + c] = (1 - prop) * v0 + prop * v1;  // linear interpolation
 							buffer[i + c] = v0 + prop * (v1 - v0);  // linear interpolation (single multiplication)
-							// buffer[i + c] = v0 + 0.5f * prop * ((prop - 3) * v0 - (prop - 2) * 2 * v1 + (prop - 1) * v2);  // quadratic interpolation
-							// buffer[i + c] = v0 + (prop / 6) * ((3 * prop - prop2 - 2) * v_ + (prop2 - 2 * prop - 1) * 3 * v0 + (prop - prop2 + 2) * 3 * v1 + (prop2 - 1) * v2);  // cubic interpolation
-							// buffer[i + c] = v0 + 0.5f * prop * ((2 * prop2 - 3 * prop - 1) * (v0 - v1) + (prop2 - 2 * prop + 1) * (v0 - v_) + (prop2 - prop) * (v2 - v2));  // cubic spline interpolation
 						}
 						else  // if k will be out of bounds (chunk bounds), it means we already finished; thus, we'll pass silence
 						{
@@ -778,6 +773,9 @@ int main(int argc, char** argv)
 	bool keyPress = false;
 	bool running = true;
 	SDL_Event event;
+	SDL_Event lastEvent = SDL_Event();
+	SDL_Event pendingEvent;
+	int eventUses = 0;
 
 	int updateCount = 0;
 	int frameCount = 0;
@@ -821,8 +819,16 @@ int main(int argc, char** argv)
 			lastFrame = startTime;
 			Draw();
 			++frameCount;
+			pendingEvent = SDL_Event();
+			bool keyboardDecided = false;
 			while (SDL_PollEvent(&event))
 			{
+				if (event.type == SDL_KEYDOWN)
+					if (event.key.keysym.scancode == SDLK_g)
+					{
+						SDL_SetRelativeMouseMode(SDL_FALSE);
+						SDL_ShowCursor(SDL_ENABLE);
+					}
 				if (event.type == SDL_QUIT)
 				{
 					running = false;
@@ -830,39 +836,50 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
-						expansionPort[0] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+						memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
 						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-						PrintColored(to_string(expansionPort[0]), greenFGColor, "");
-
+						PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+						keyboardDecided = true;
+						lastEvent = event;
 					}
+					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
+						eventUses++;
+					}*/
 					else if (event.type == SDL_KEYUP) {
-
-						expansionPort[0] = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+						memoryBytes[1][53500] = 168;
+						keyboardDecided = true;
+						lastEvent = event;
 					}
 				}
 				// If using the mouse in the expansion port
 				if (usingMouse)
 					if (event.type == SDL_MOUSEMOTION) {
-						// Get mouse relative movement from last position
+						//// Get mouse relative movement from last position
+						//int mXRel;
+						//int mYRel;
 
-						// Automatically convert to twos compliment if the number is less than zero, otherwise pass as-is
-						uint16_t mXRel = event.motion.xrel < 0 ? (event.motion.xrel << 6) & 0b111111000000 : (((~event.motion.xrel) + 1) << 6) & 0b111111000000;
-						uint16_t mYRel = event.motion.yrel < 0 ? event.motion.yrel & 0b111111 : ((~event.motion.yrel) + 1) & 0b111111;
+						//SDL_GetRelativeMouseState(&mXRel, &mYRel);
 
-						expansionPort[1] = (mXRel + mYRel) + (expansionPort[1] & 0b1111000000000000);
+						//// Automatically convert to twos compliment if the number is less than zero, otherwise pass as-is
+						//mXRel = mXRel < 0 ? ((mXRel /4) << 6) & 0b111111000000 : (((~mXRel/4) + 1) << 6) & 0b111111000000;
+						//mYRel = -mYRel < 0 ? (-mYRel /4) & 0b111111 : ((~-mYRel /4) + 1) & 0b111111;
+
+						memoryBytes[1][53501] = ((event.motion.x << 7) + event.motion.y) + (memoryBytes[1][53501] & 0b1100000000000000);
+
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
+						////SDL_SetRelativeMouseMode(SDL_TRUE);
 						if (event.button.button == 1)      // Left Mouse Button Down
-							expansionPort[1] = 4096 | expansionPort[1];
+							memoryBytes[1][53501] = 16384 | memoryBytes[1][53501];
 						else if (event.button.button == 3) // Right Mouse Button Down
-							expansionPort[1] = 8192 | expansionPort[1];
+							memoryBytes[1][53501] = 32768 | memoryBytes[1][53501];
 					}
 					else if (event.type == SDL_MOUSEBUTTONUP) {
-						if (event.button.button == 1 && (expansionPort[1] & 4096) == 4096)      // Left Mouse Button Up
-							expansionPort[1] = 4096 ^ expansionPort[1];
-						else if (event.button.button == 3 && (expansionPort[1] & 8192) == 8192) // Right Mouse Button Up
-							expansionPort[1] = 8192 ^ expansionPort[1];
+						if (event.button.button == 1 && (memoryBytes[1][53501] & 16384) == 16384)      // Left Mouse Button Up
+							memoryBytes[1][53501] = 16384 ^ memoryBytes[1][53501];
+						else if (event.button.button == 3 && (memoryBytes[1][53501] & 32768) == 32768) // Right Mouse Button Up
+							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
 		}
@@ -916,7 +933,7 @@ void Update()
 			bus = memoryBytes[BankReg][memoryIndex];
 			break;
 		case READ_IR:
-			bus = InstructionReg & 0b11111111111;
+			bus = InstructionReg & 0b1111111111;
 			break;
 		case READ_CR:
 			bus = programCounter;
@@ -927,7 +944,7 @@ void Update()
 		}
 
 
-		// Find ALU modifiers
+			// Find ALU modifiers
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
@@ -1058,7 +1075,7 @@ void Update()
 		}
 
 
-		// Check for any writes and execute if applicable
+			// Check for any writes and execute if applicable
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
@@ -1076,29 +1093,14 @@ void Update()
 			InstructionReg = bus;
 			break;
 		case WRITE_WM:
-			memoryBytes[BankReg][memoryIndex] = bus;
-			break;
-		case WRITE_J:
-			programCounter = bus;
-			break;
-		case WRITE_AW:
-			memoryIndex = bus;
-			break;
-		case WRITE_BNK:
-			BankReg = bus & 1;
-			break;
-		case WRITE_WE:
-			expansionPort[ExpReg] = bus;
-			if (verbose) {
-				PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
-				PrintColored(to_string(expansionPort[ExpReg]), greenFGColor, "");
-				cout << "\n";
-				//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
-				//cout << "\n";
-			}
-
 			// Only play audio if writing to the dedicated audio expansion port
-			if (ExpReg == 2) {
+			if (BankReg == 1 && memoryIndex == 53502) {
+				if (verbose) {
+					PrintColored("	-- cout >> ", brightBlackFGColor, "");
+					PrintColored(to_string(BankReg) + " ", blueFGColor, "");
+					PrintColored(to_string(bus) + " ", greenFGColor, "");
+					cout << "\n";
+				}
 				////////////
 				// Audio: //
 				////////////
@@ -1114,8 +1116,8 @@ void Update()
 
 				// Calculate target frequency from beginning 5-bits
 				float offset = 0.0f;
-				float targetSpeed = (((expansionPort[2] & 0b1111100000000000) >> 11) / 15.0f) + offset;
-				int targetChannel = (expansionPort[2] & 0b11100000000) >> 8;
+				float targetSpeed = (((bus & 0b1111100000000000) >> 11) / 15.0f) + offset;
+				int targetChannel = (bus & 0b11100000000) >> 8;
 
 				// Use upper 8 bits to play audio
 				if (targetChannel > 0 && targetChannel <= 4)
@@ -1132,6 +1134,67 @@ void Update()
 					}
 
 			}
+			else
+				memoryBytes[BankReg][memoryIndex] = bus;
+			break;
+		case WRITE_J:
+			programCounter = bus;
+			break;
+		case WRITE_AW:
+			memoryIndex = bus;
+			break;
+		case WRITE_BNK:
+			BankReg = bus & 1;
+			break;
+			//case WRITE_EXI:
+			//	ExpReg = bus & 3;
+			//	break;
+			//	case WRITE_WE:
+			//		expansionPort[ExpReg] = bus;
+			//		if (verbose) {
+			//			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
+			//			PrintColored(to_string(expansionPort[ExpReg]) + " ", greenFGColor, "");
+			//			PrintColored(to_string(ExpReg), blueFGColor, "");
+			//			cout << "\n";
+			//			//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
+			//			//cout << "\n";
+			//		}
+
+			//		// Only play audio if writing to the dedicated audio expansion port
+			//		if (ExpReg == 2) {
+			//			////////////
+			//			// Audio: //
+			//			////////////
+
+			//			//		Format:     FFFFFCCC XXXXXXXX
+			//			//		You can only toggle one channel at a time per expansion port write.
+			//			//		CCC is converted to the index of the channel that is toggled
+			//			//		Then the frequency for that channel is defined as an int value stored in FFFFF
+			//			//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+			//			//		is changed and the channel is turned ON if it isn't already
+			//			//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+
+
+			//			// Calculate target frequency from beginning 5-bits
+			//			float offset = 0.0f;
+			//			float targetSpeed = (((bus & 0b1111100000000000) >> 11) / 15.0f) + offset;
+			//			int targetChannel = (bus & 0b11100000000) >> 8;
+
+			//			// Use upper 8 bits to play audio
+			//			if (targetChannel > 0 && targetChannel <= 4)
+			//				if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
+			//					speed_chunks[targetChannel - 1] = targetSpeed;
+			//					Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
+			//					setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
+			//				}
+			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
+			//					speed_chunks[targetChannel - 1] = targetSpeed;
+			//				}
+			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
+			//					Mix_HaltChannel(targetChannel - 1);
+			//				}
+
+			//		}
 
 
 			break;
@@ -1727,6 +1790,8 @@ int ConvertAsciiToSdcii(int asciiCode) {
 	conversionTable[81] = 72;	// d-arr -> d-arr
 	conversionTable[49] = 11;	// | -> vertical line |
 	conversionTable[66] = 12;	// f9 -> horizontal line --
+	conversionTable[54] = 54;	// , -> ,
+	conversionTable[55] = 55;	// . -> .
 
 	// Letters
 	conversionTable[4] = 13;	// a -> a
@@ -1921,7 +1986,7 @@ void LoadAddress(const string& reg, const string& address) {
 
 
 	// Value is small enough to be accessible through normal r/w instructions
-	if (actualVal <= 2047) {
+	if (actualVal <= 1023) {
 		string addrInWord = "ain ";
 		if (reg == "@A")
 			addrInWord = "ain ";
@@ -1937,7 +2002,7 @@ void LoadAddress(const string& reg, const string& address) {
 			compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
 	}
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
-	else if (actualVal > 2047) {
+	else if (actualVal > 1023) {
 		compiledLines.push_back("ldlge");
 		PutSetOnCurrentLine(to_string(actualVal));
 		compiledLines.push_back(MoveFromRegToReg("@A", reg));
@@ -1952,10 +2017,10 @@ void StoreAddress(const string& reg, const string& address) {
 	string addrOutWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
-	if (actualVal <= 2047)
+	if (actualVal <= 1023)
 		compiledLines.push_back(MoveFromRegToReg(reg, "@A") + "sta " + to_string(actualVal));
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
-	else if (actualVal > 2047) {
+	else if (actualVal > 1023) {
 		compiledLines.push_back(MoveFromRegToReg(reg, "@A"));
 		compiledLines.push_back("stlge");
 		PutSetOnCurrentLine(to_string(actualVal));
@@ -1965,7 +2030,7 @@ void StoreAddress(const string& reg, const string& address) {
 void RegIdToLDI(const string& in, const string& followingValue) {
 	int actualValue = ParseValue(followingValue);
 
-	if (actualValue < 2047) {
+	if (actualValue < 1023) {
 		if (in == "@A") {
 			compiledLines.push_back("ldia " + to_string(actualValue));
 		}

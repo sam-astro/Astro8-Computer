@@ -95,6 +95,10 @@ if $slowPaddleSpeed==14000:
         endif
     endif
 
+
+    // Get keypress
+    change $key = @EX[0]
+    
     // Right paddle movement
     if $key==$UP: // Up
         if $rPaddleY>0:

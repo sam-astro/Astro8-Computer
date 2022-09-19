@@ -9,17 +9,19 @@
 ///////////////
 // Variables //
 ///////////////
-define $pixOffset = 61439 // Beginning of video memory
+define $pixOffset = 53871 // Beginning of video memory
 
-define $xPos = 32
-define $yPos = 32
+define $expansionPorts = 53501
 
-change @EX = 2080
+define $xPos = 54
+define $yPos = 54
+
+//change @EX[1] = 2080
 
 
 #Update
 
-change $expVal = @EX
+change $expVal = *[1]$expansionPorts
 
 change $isPressingMouseButton = 0
 
@@ -27,11 +29,11 @@ change $newX = $expVal
 change $newY = $expVal
 
 // Bit shift X and remove unused bits
-bsr $newX,6 ->$newX
-and $newX,63 ->$newX
+bsr $newX,7 ->$newX
+and $newX,0b1111111 ->$newX
 
 // Bit shift Y and remove unused bits
-and $newY,63 -> $newY
+and $newY,0b1111111 -> $newY
 
 // Redraw only if at a new location from last time
 change $diff = 0
@@ -44,7 +46,7 @@ endif
 
 
 // Bit shift Left Mouse Button and remove unused bits
-bsr $expVal,12 ->$isPressingMouseButton
+bsr $expVal,14 ->$isPressingMouseButton
 
 
 if $isPressingMouseButton!=$lastMouseButton:
@@ -55,26 +57,26 @@ change $lastMouseButton = $isPressingMouseButton
 
 
 if $diff!=0:
-    mult $yPos,64 -> $temp
+    mult $yPos,108 -> $temp
     add $xPos,$temp -> $temp
     add $pixOffset,$temp -> $temp
-    change *$temp = 0
+    change *[1]$temp = 0
 
     change $xPos = $newX
     change $yPos = $newY
 
-    mult $yPos,64 -> $temp
+    mult $yPos,108 -> $temp
     add $xPos,$temp -> $temp
     add $pixOffset,$temp -> $temp
 
     if $isPressingMouseButton==0:
-        change *$temp = 0b111110000000000
+        change *[1]$temp = 0b111110000000000
     endif
     if $isPressingMouseButton==1:
-        change *$temp = 0b000000000011111
+        change *[1]$temp = 0b000000000011111
     endif
     if $isPressingMouseButton==2:
-        change *$temp = 0b000001111100000
+        change *[1]$temp = 0b000001111100000
     endif
 endif
 
