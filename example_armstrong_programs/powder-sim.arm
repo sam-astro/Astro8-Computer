@@ -3,10 +3,14 @@
 ///////////////
 // Variables //
 ///////////////
+define $expLoc0 = 53500
+define $expLoc1 = 53501
+define $expLoc2 = 53502
+
 define $pixOffset = 53871 // Beginning of video memory
 define $charOffset = *[1]$0pos // Beginning of character memory
 
-define $CursorMoveSpeed = 15000
+define $CursorMoveSpeed = 10000
 define $cursorCount = 0
 define $cursorX = 54
 define $cursorY = 54
@@ -18,7 +22,7 @@ define $drawType = 1 // 0 = nothing, 1 = sand, 2 = water
 define $waterColor = 3484
 define $sandColor = 0b110111011101110
 
-change @EX[0] = 168
+change *[1]$expLoc0 = 168
 
 change $lastKey = 168
 
@@ -50,7 +54,7 @@ if $drawCount==$drawSpeed:
     add $bufferALoc,$copyOffset -> $loc1
     add $bufferBLoc,$copyOffset -> $loc2
 
-    change *[1]$currentPixel = $loc1
+    change $currentPixel = *[0]$loc1
     if $currentPixel==0: // Only process pixels with something in them
         add 1,$copyOffset -> $copyOffset
         goto #Processor
@@ -63,7 +67,7 @@ if $drawCount==$drawSpeed:
     if $currentPixel==$sandColor:
         // Calculate next position
         add $loc1,108 -> $loc1
-        change *[1]$pixelVal1 = $loc1
+        change $pixelVal1 = *[0]$loc1
         if $pixelVal1==0: // If the pixel below this one is empty
             change *[0]$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
@@ -101,7 +105,7 @@ if $drawCount==$drawSpeed:
     if $currentPixel==$waterColor:
         // Calculate next position
         add $loc1,108 -> $loc1
-        change *[1]$pixelVal1 = $loc1
+        change $pixelVal1 = *[0]$loc1
         if $pixelVal1==0: // If the pixel below this one is empty
             change *[0]$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
@@ -177,92 +181,89 @@ if $drawCount==$drawSpeed:
     
 
     
-    ///////////////////////
-    // Draw cursor color //
-    ///////////////////////
-    // Get center pixel
-    mult $cursorY,108 -> $temp
-    add $cursorX,$temp -> $temp
-    change $bufCoord = $temp
-    add $pixOffset,$temp -> $temp
-    // Left crosshair
-    sub $temp,2 -> $temp
-    change *[1]$temp = 65535
-    sub $temp,1 -> $temp
-    change *[1]$temp = 65535
-    // Right crosshair
-    add $temp,5 -> $temp
-    change *[1]$temp = 65535
-    add $temp,1 -> $temp
-    change *[1]$temp = 65535
-    // Top crosshair
-    sub $temp,3 -> $temp
-    sub $temp,216 -> $temp
-    change *[1]$temp = 65535
-    sub $temp,108 -> $temp
-    change *[1]$temp = 65535
-    // Bottom crosshair
-    add $temp,540 -> $temp
-    change *[1]$temp = 65535
-    add $temp,108 -> $temp
-    change *[1]$temp = 65535
+    // ///////////////////////
+    // // Draw cursor color //
+    // ///////////////////////
+    // // Get center pixel
+    // mult $cursorY,108 -> $temp
+    // add $cursorX,$temp -> $temp
+    // change $bufCoord = $temp
+    // add $pixOffset,$temp -> $temp
+    // // Left crosshair
+    // sub $temp,2 -> $temp
+    // change *[1]$temp = 65535
+    // sub $temp,1 -> $temp
+    // change *[1]$temp = 65535
+    // // Right crosshair
+    // add $temp,5 -> $temp
+    // change *[1]$temp = 65535
+    // add $temp,1 -> $temp
+    // change *[1]$temp = 65535
+    // // Top crosshair
+    // sub $temp,3 -> $temp
+    // sub $temp,216 -> $temp
+    // change *[1]$temp = 65535
+    // sub $temp,108 -> $temp
+    // change *[1]$temp = 65535
+    // // Bottom crosshair
+    // add $temp,540 -> $temp
+    // change *[1]$temp = 65535
+    // add $temp,108 -> $temp
+    // change *[1]$temp = 65535
 
     change $drawCount = 0
 endif
 
 if $CursorMoveSpeed==$cursorCount:
 
-    ////////////////////////
-    // Clear cursor color //
-    ////////////////////////
-    // Get center pixel
-    mult $cursorY,108 -> $temp
-    add $cursorX,$temp -> $temp
-    add $pixOffset,$temp -> $temp
-    // Left crosshair
-    sub $temp,2 -> $temp
-    change *[1]$temp = 0
-    sub $temp,1 -> $temp
-    change *[1]$temp = 0
-    // Right crosshair
-    add $temp,5 -> $temp
-    change *[1]$temp = 0
-    add $temp,1 -> $temp
-    change *[1]$temp = 0
-    // Top crosshair
-    sub $temp,3 -> $temp
-    sub $temp,216 -> $temp
-    change *[1]$temp = 0
-    sub $temp,108 -> $temp
-    change *[1]$temp = 0
-    // Bottom crosshair
-    add $temp,540 -> $temp
-    change *[1]$temp = 0
-    add $temp,108 -> $temp
-    change *[1]$temp = 0
+    // ////////////////////////
+    // // Clear cursor color //
+    // ////////////////////////
+    // // Get center pixel
+    // mult $cursorY,108 -> $temp
+    // add $cursorX,$temp -> $temp
+    // add $pixOffset,$temp -> $temp
+    // // Left crosshair
+    // sub $temp,2 -> $temp
+    // change *[1]$temp = 0
+    // sub $temp,1 -> $temp
+    // change *[1]$temp = 0
+    // // Right crosshair
+    // add $temp,5 -> $temp
+    // change *[1]$temp = 0
+    // add $temp,1 -> $temp
+    // change *[1]$temp = 0
+    // // Top crosshair
+    // sub $temp,3 -> $temp
+    // sub $temp,216 -> $temp
+    // change *[1]$temp = 0
+    // sub $temp,108 -> $temp
+    // change *[1]$temp = 0
+    // // Bottom crosshair
+    // add $temp,540 -> $temp
+    // change *[1]$temp = 0
+    // add $temp,108 -> $temp
+    // change *[1]$temp = 0
 
-    change $keypress = @EX[0]
+    change $keypress = *[1]$expLoc0
+    change $mousePos = *[1]$expLoc1
 
-    if $keypress=='w':
-        if $cursorY>3:
-            sub $cursorY,1 -> $cursorY
+    and $mousePos,0b1111111 -> $newYPos
+    bsr $mousePos,7 -> $newXPos
+    and $newXPos,0b1111111 -> $newXPos
+
+    if $newYPos>3:
+        if $newYPos<104:
+            change $cursorY = $newYPos
         endif
     endif
-    if $keypress=='s':
-        if $cursorY<104:
-            add $cursorY,1 -> $cursorY
+    
+    if $newXPos>3:
+        if $newXPos<104:
+            change $cursorX = $newXPos
         endif
     endif
-    if $keypress=='a':
-        if $cursorX>3:
-            sub $cursorX,1 -> $cursorX
-        endif
-    endif
-    if $keypress=='d':
-        if $cursorX<104:
-            add $cursorX,1 -> $cursorX
-        endif
-    endif
+    
 
     if $keypress=='o':
         if $keypress!=$lastKey:
@@ -307,15 +308,24 @@ if $CursorMoveSpeed==$cursorCount:
     add $cursorX,$temp -> $temp
     change $bufCoord = $temp
     add $pixOffset,$temp -> $temp
-    // Draw the correct particle
-    if $drawType==1:
-        add $bufferALoc,$bufCoord -> $bufCoord
-        change *[1]$bufCoord = $sandColor
+
+    // If the left mouse button is pressed down
+    if $mousePos>=16384:
+        // Draw the correct particle
+        if $drawType==0:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = 0
+        endif
+        if $drawType==1:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = $sandColor
+        endif
+        if $drawType==2:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = $waterColor
+        endif
     endif
-    if $drawType==2:
-        add $bufferALoc,$bufCoord -> $bufCoord
-        change *[1]$bufCoord = $waterColor
-    endif
+
     // Left crosshair
     sub $temp,2 -> $temp
     change *[1]$temp = 65535

@@ -1,8 +1,8 @@
 #AS
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// This program uses the screen coordinates to draw a rainbow square. Red = X, Green = Y, and Blue = (64-(X+Y))/3 //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This program uses the screen coordinates to draw a rainbow square. Red = X, Green = Y, and Blue = (108-(X+Y))/3 //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 change $memoryOffset = 53871
 
@@ -39,14 +39,14 @@ add $xActual,$actualAddress -> $actualAddress // Calculate X position
 add $memoryOffset,$actualAddress -> $actualAddress // Add offset
 
 // Store color
-change @B = $color
-change @A = $actualAddress
-asm"
-bnk 1
-staout
-bnk 0
-"
-// change *$actualAddress = $color
+// change @B = $color
+// change @A = $actualAddress
+// asm"
+// bnk 1
+// staout
+// bnk 0
+// "
+change *[1]$actualAddress = $color
 
 // Increment Coordinates
 add $xActual,1 -> $xActual
