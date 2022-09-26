@@ -18,35 +18,44 @@ nav_order : 3
 3. [CIN](#cin)
 4. [LDIA](#ldia)
 5. [LDIB](#ldib)
-6. [RDEXP](#rdexp)
-7. [WREXP](#wrexp)
-8. [STA](#sta)
-9. [STC](#stc)
-10. [ADD](#add)
-11. [SUB](#sub)
-12. [MULT](#mult)
-13. [DIV](#div)
-14. [JMP](#jmp)
-15. [JMPZ](#jmpz)
-16. [JMPC](#jmpc)
-17. [JREG](#jreg)
-18. [LDAIN](#ldain)
-19. [STAOUT](#staout)
-20. [LDLGE](#ldlge)
-21. [STLGE](#stlge)
-22. [LDW](#ldw)
-23. [SWP](#swp)
-24. [SWPC](#swpc)
+<br>    ~~[RDEXP](#rdexp)~~ *(Removed in v2.0.0-alpha)*
+<br>    ~~[WREXP](#wrexp)~~ *(Removed in v2.0.0-alpha)*
+6. [STA](#sta)
+<br>    ~~[STC](#stc)~~ *(Removed in v2.0.0-alpha)*
+7. [ADD](#add)
+8. [SUB](#sub)
+9. [MULT](#mult)
+10. [DIV](#div)
+11. [JMP](#jmp)
+12. [JMPZ](#jmpz)
+13. [JMPC](#jmpc)
+14. [JREG](#jreg)
+15. [LDAIN](#ldain)
+16. [STAOUT](#staout)
+17. [LDLGE](#ldlge)
+18. [STLGE](#stlge)
+19. [LDW](#ldw)
+20. [SWP](#swp)
+21. [SWPC](#swpc)
+22. [PCR](#pcr)
+23. [BSL](#bsl)
+24. [BSR](#bsr)
+25. [AND](#and)
+26. [OR](#or)
+27. [NOT](#not)
+28. [BNK](#bnk)
+29. [BNKC](#bnkc)
+30. [LDWB](#ldwb)
 
 <br>
 
 ## SET
 *Set the specified memory location to a value during assembly*
 
-### Syntax:
+#### Syntax:
 
 ```
-SET〈 Ａｄｄｒｅｓｓ 〉〈 Ｖａｌｕｅ 〉
+SET <Address> <Value>
 ```
 
 <br>
@@ -54,20 +63,20 @@ SET〈 Ａｄｄｒｅｓｓ 〉〈 Ｖａｌｕｅ 〉
 ## HERE
 *Set the location of the `HERE` in memory equal to a value during assembly*
 
-### Syntax:
+#### Syntax:
 
 ```
-HERE〈 Ｖａｌｕｅ 〉
+HERE <Value>
 ```
 
 <br>
 
 ## NOP
-ID: `0`, `0b00000`
+ID: `0`
 
 *No operation: acts as a fetch without an instruction.*
 
-### Syntax:
+#### Syntax:
 
 ```
 NOP
@@ -77,81 +86,82 @@ NOP
 
 ## AIN
 
-ID: `1`, `0b00001`
+ID: `1`
 
 *Load data from the given address into register* ***A***
 
-### Syntax
+#### Syntax
 
 ```
-AIN 〈 Ａｄｄｒｅｓｓ 〉
+AIN <Address>
 ```
 
 <br>
 
 ## BIN
 
-ID: `2`, `0b00010`
+ID: `2`
 
 *Load data from the given address into register* ***B***
 
-### Syntax
+#### Syntax
 
 ```
-BIN 〈 Ａｄｄｒｅｓｓ 〉
+BIN <Address>
 ```
 
 <br>
 
 ## CIN
 
-ID: `3`, `0b00011`
+ID: `3`
 
 *Load data from the given address into register* ***C***
 
-### Syntax
+#### Syntax
 
 ```
-CIN 〈 Ａｄｄｒｅｓｓ 〉
+CIN <Address>
 ```
 
 <br>
 
 ## LDIA
 
-ID: `4`, `0b00100`
+ID: `4`
 
 *Load immediate value into register* ***A***
 
-### Syntax
+#### Syntax
 
 ```
-LDIA 〈 Ｖａｌｕｅ 〉
+LDIA <Value>
 ```
 
 <br>
 
 ## LDIB
 
-ID: `5`, `0b00101`
+ID: `5`
 
 *Load immediate value into register* ***B***
 
-### Syntax
+#### Syntax
 
 ```
-LDIB 〈 Ｖａｌｕｅ 〉
+LDIB <Value>
 ```
 
 <br>
 
 ## RDEXP
+*(Removed in v2.0.0-alpha)*
 
-ID: `6`, `0b00110`
+~~ID: `6`, `0b00110`~~
 
 Read from the expansion port into register A.
 
-### Syntax
+#### Syntax
 
 ```
 RDEXP
@@ -160,12 +170,13 @@ RDEXP
 <br>
 
 ## WREXP
+*(Removed in v2.0.0-alpha)*
 
-ID: `7`, `0b00111`
+~~ID: `7`, `0b00111`~~
 
 Write from register A onto the expansion port.
 
-### Syntax
+#### Syntax
 
 ```
 WREXP
@@ -175,35 +186,36 @@ WREXP
 
 ## STA
 
-ID: `8`, `0b01000`
+ID: `6`
 
 Store register A into the given memory address.
 
-### Syntax
+#### Syntax
 
 ```
-STA 〈 Ａｄｄｒｅｓｓ 〉
+STA <Address>
 ```
 
 <br>
 
 ## STC
+*(Removed in v2.0.0-alpha)*
 
-ID: `9`, `0b01001`
+~~ID: `9`, `0b01001`~~
 
 Store register C into the given memory address.
 
-### Syntax
+#### Syntax
 
 ```
-STC 〈 Ａｄｄｒｅｓｓ 〉
+STC <Address>
 ```
 
 <br>
 
 ## Math
 
-10, `0b01010`   11, `0b01011`   12, `0b01100`   13, `0b01101`
+IDs: 7    8    9    10
 
 Execute the mathematic operation on <br>
 register A & B and save the result in A.
@@ -243,7 +255,7 @@ DIV
 
 ## Jump
 
-14, `0b01110`   15, `0b01111`   16, `0b10000`   17, `0b10001`
+IDs: 11    12    13    14
 
 Jumps to the given instruction position, <br>
 done by setting the program counter. <br>
@@ -255,21 +267,21 @@ directly after this instruction in memory
 #### JMP
 ```
 JMP
-HERE〈 Ａｄｄｒｅｓｓ 〉
+HERE <Address>
 ```
 
 #### JMPZ
 Jump if register **A** is zero
 ```
 JMPZ
-HERE〈 Ａｄｄｒｅｓｓ 〉
+HERE <Address>
 ```
 
 #### JMPC
 Jump if the carry bit is set
 ```
 JMPC
-HERE〈 Ａｄｄｒｅｓｓ 〉
+HERE <Address>
 ```
 
 #### JREG
@@ -282,12 +294,12 @@ JREG
 
 ## LDAIN
 
-ID: 18, `0b10010`
+ID: 15
 
 Use register **A**s value as memory address <br>
 to load a value from RAM into register **A**
 
-### Syntax
+#### Syntax
 **Memory  🠖  A**
 ```
 LDAIN
@@ -297,19 +309,14 @@ LDAIN
 
 ## STAOUT
 
-ID: 19, `0b10011`
+ID: 16
 
 Use register **A**s value as memory address to then <br>
 store the value inside of register **B** into RAM
 
 <br>
 
-### Syntax
-**Memory  🠖  A**
-```
-LDAIN
-```
-
+#### Syntax
 **B  🠖  Memory**
 ```
 STAOUT
@@ -319,60 +326,60 @@ STAOUT
 
 ## LDLGE
 
-ID: 20, `0b10100`
+ID: 17
 
 Use value directly after instruction as <br>
 address to read from memory into register **A**
 
-### Syntax
+#### Syntax
 
 ```
 LDLGE
-HERE 〈 Ａｄｄｒｅｓｓ 〉
+HERE <Address>
 ```
 
 <br>
 
 ## STLGE
 
-ID: 21, `0b10101`
+ID: 18
 
 Use value directly after counter as <br>
 address to write from register **A** into memory
 
-### Syntax
+#### Syntax
 
 ```
 STLGE
-HERE 〈 Ａｄｄｒｅｓｓ 〉
+HERE <Address>
 ```
 
 <br>
 
 ## LDW
 
-ID: 22, `0b10110`
+ID: 19
 
 Load value directly after this into <br>
 register **A**
 
-### Syntax
+#### Syntax
 
 ```
 LDW
-HERE 〈 Ｖａｌｕｅ 〉
+HERE <Value>
 ```
 
 <br>
 
 ## Swap
 
-23, `10111`   24, `11000`
+IDs: 20    21
 
 Swaps two registers with each other <br>
 & as a side-effect overwrites the third.
 
-### Syntax
+#### Syntax
 #### SWP
 **A  ⟷  B   Overwrites C**
 ```
@@ -387,4 +394,148 @@ SWPC
 
 <br>
 
+
+## PCR
+
+ID: 22
+
+Get the current program counter value <br>
+and put it into register **A**
+
+#### Syntax
+
+```
+PCR
+```
+
+<br>
+
+## BSL
+
+ID: 23
+
+Bit shift left register **A**, the number<br>
+of bits to shift determined by the value<br>
+in register B
+
+#### Syntax
+
+```
+LDIA 10
+LDIB 2
+BSL     , Shift value of 10 to the left by 2
+```
+
+<br>
+
+## BSR
+
+ID: 24
+
+Bit shift right register **A**, the number<br>
+of bits to shift determined by the value<br>
+in register B
+
+#### Syntax
+
+```
+LDIA 10
+LDIB 2
+BSR     , Shift value of 10 to the right by 2
+```
+
+<br>
+
+## AND
+
+ID: 25
+
+Bitwise And operation on register **A**<br>
+and register **B**
+
+#### Syntax
+
+```
+LDIA 15
+LDIB 1
+AND     , Bitwise And operation on 0b1111 and 0b0001
+```
+
+<br>
+
+## OR
+
+ID: 26
+
+Bitwise Or operation on register **A**<br>
+and register **B**
+
+#### Syntax
+
+```
+LDIA 15
+LDIB 1
+OR     , Bitwise Or operation on 0b1111 and 0b0001
+```
+
+<br>
+
+## NOT
+
+ID: 27
+
+Bitwise Not operation on register **A**
+
+#### Syntax
+
+```
+LDIA 15
+NOT     , Bitwise Not operation on 0b1111
+```
+
+<br>
+
+## BNK
+
+ID: 28
+
+Change the memory bank register to the value specified
+
+#### Syntax
+
+```
+BNK 1
+```
+
+<br>
+
+## BNKC
+
+ID: 29
+
+Change the memory bank register to the value<br>
+in register **C**
+
+#### Syntax
+
+```
+BNK 1
+```
+
+<br>
+
+## LDWB
+
+ID: 30
+
+Load value directly after counter into <br>
+register **B** and advance program counter by 2
+
+#### Syntax
+
+```
+BNK 1
+```
+
+<br>
 
