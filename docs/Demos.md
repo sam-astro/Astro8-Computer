@@ -32,7 +32,7 @@ Contributed by @sam-astro
 [Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/powder-sim.arm)
 
 ### Controls:
-You can use the `W`,`S`,`A`,`D` keys for moving the crosshair. You can also use the `O` key to cycle which material you are using, either `water`, `sand`, or `none`.
+You can use the mouse for moving the crosshair, and spawn your selected material with the Left Mouse Button. You can also use the `O` key to cycle which material you are using, either `water`, `sand`, or `none`.
 
 <img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/sand.gif"/>
 
