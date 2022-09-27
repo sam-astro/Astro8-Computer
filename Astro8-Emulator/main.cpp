@@ -1100,19 +1100,20 @@ void Update()
 				// Audio: //
 				////////////
 
-				//		Format:     FFFFFCCC XXXXXXXX
+				//		Format (old):     FFFFFCCC XXXXXXXX
+				//		Format:     XXXXX FFFFFFFFCCC
 				//		You can only toggle one channel at a time per expansion port write.
 				//		CCC is converted to the index of the channel that is toggled
-				//		Then the frequency for that channel is defined as an int value stored in FFFFF
-				//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+				//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+				//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
 				//		is changed and the channel is turned ON if it isn't already
-				//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+				//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output
 
 
 				// Calculate target frequency from beginning 5-bits
 				float offset = 0.0f;
-				float targetSpeed = (((bus & 0b1111100000000000) >> 11) / 15.0f) + offset;
-				int targetChannel = (bus & 0b11100000000) >> 8;
+				float targetSpeed = ((bus & 0b11111111000) >> 3) + offset;
+				int targetChannel = bus & 0b111;
 
 				// Use upper 8 bits to play audio
 				if (targetChannel > 0 && targetChannel <= 4)
