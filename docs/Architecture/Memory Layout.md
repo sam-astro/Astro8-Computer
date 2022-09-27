@@ -9,7 +9,7 @@ nav_order : 1
 
 # Memory Layout v2.0.0-alpha +
 
-> This new memory layout came with the introduction of multiple banks, and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
+> This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
 
 <br>
 
@@ -39,7 +39,7 @@ Area reserved for program instructions (can be used like general purpose, though
 
 <br>
 
-## Variable and General Purpose Memory
+## Variable and General Purpose Memory 0
 
 Bank: `0`<br>
 Percent: `25-100%` <br>
@@ -52,16 +52,28 @@ can use for other general purposes.
 
 <br>
 
-## General Purpose Memory
+## General Purpose Memory 1
 
 Bank: `1`<br>
 Percent: `0-81%` <br>
-Range: `0 - 65535` <br>
-Words: `53546`
+Range: `0 - 53500` <br>
+Words: `53500`
 
 Memory that the compiler automatically <br>
 allocates as needed for variables, or you <br>
 can use for other general purposes.
+
+<br>
+
+## Expansion Ports
+
+Bank: `1`<br>
+Percent: `81-81%` <br>
+Range: `53500 - 53546` <br>
+Words: `46`
+
+Dedicated memory locations mapped to the<br>
+expansion ports
 
 <br>
 
@@ -72,8 +84,8 @@ Percent: `81-82%` <br>
 Range: `53546 - 53871` <br>
 Words: `325`
 
-Contains the indexes of the characters to <br>
-be displayed at the corresponding location.
+Contains the character codes to be<br>
+displayed at the corresponding location.
 
 <br>
 
@@ -151,7 +163,7 @@ displayed at the corresponding location.
 <br>
 
 
-# Memory Layout v0.3.2-alpha -
+# Memory Layout v0.0.0-alpha to v0.3.2-alpha
 
 <br>
 
