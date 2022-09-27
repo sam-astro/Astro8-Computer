@@ -1112,7 +1112,8 @@ void Update()
 
 				// Calculate target frequency from beginning 5-bits
 				float offset = 0.0f;
-				float targetSpeed = (float)((bus & 0b11111111000) >> 3)/15.0f + offset;
+				float targetSpeed = (float)((bus & 0b11111111000) >> 3) + offset;
+				targetSpeed = (105.282f * pow(2.71828f, 0.09616f * targetSpeed) - 99.91f) / 400.0f;
 				int targetChannel = bus & 0b111;
 
 				// Use upper 8 bits to play audio
