@@ -57,4 +57,8 @@ binary:  FFFFF CCC
 | **F**        | Target frequency integer |
 | **C**        | Index of channel to edit |
 
-The frequency is a value between 0 and 256. The channel is a value 0 through 4. To change the frequency of a channel, send a value to the expansion port like: `0b00000001001`, which would set the second channel (squarewave B) to play at a frequency of 1 (not in Hz, see conversion table). If a channel is not playing when you change it's frequency it will begin playing. To stop the playback of a channel, send a second value to the expansion port with a frequency of 0, like: `0b00000000001` which would turn off the second channel. Due to only 8 bits of precision, frequencies are approximated, and you can see the conversion table to compare values sent to the expansion port with their corresponding actual frequencies.
+The frequency is a value between 0 and 32. The channel is a value 0 through 4.
+
+To change the frequency of a channel, send a value to the expansion port like: `0b00001001`, which would set the second channel (squarewave B) to play at a frequency of 1 (not in Hz, see conversion table). If a channel is not playing when you change it's frequency, it will begin playing. To stop the playback of a channel, send a second value to the expansion port with a frequency of 0, like: `0b00000001` which would turn off the second channel.
+
+Due to only 5 bits of precision, frequencies are approximated, and you can see the conversion table to compare values sent to the expansion port with their corresponding actual frequencies.
