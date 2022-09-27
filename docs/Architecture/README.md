@@ -17,3 +17,4 @@ You can use this to better understand how to access the hardware from your progr
 [Micro Instructions]: Micro%20Instructions
 [Instruction Set]: Instruction%20Set
 [Memory Layout]: Memory%20Layout
+[Expansion Ports]: Expansion%20Ports
