@@ -19,15 +19,21 @@ Only constants can be used as Values.
 
 ### Syntax
 
-```
+```haskell
 define <Address> <Value>
+```
+
+As of v2.0.0-alpha you can also use an equals sign, `=` , between the Address and Value. This is *optional* and does not remove the previous functionality.
+
+```haskell
+define <Address> = <Value>
 ```
 
 ### Example
 
-```
+```haskell
 define 0xff2 33
-define $var 6
+define $var = 6
 ```
 
 <br>
@@ -39,13 +45,13 @@ Assigns the given address the supplied value.
 
 ### Syntax
 
-```
+```haskell
 change <Address> = <Value>
 ```
 
 ### Example
 
-```
+```haskell
 change 0xff2 = 19
 change $cursorChar = 8
 ```
@@ -61,13 +67,13 @@ The outout location is prefixed by an arrow, ` -> `
 
 ### Syntax
 
-```
-<Operator> <Value A>, <Value B> -> <Output location>
+```php
+<Operator> <Value A>, <Value B> -> <Output_location>
 ```
 
 ### Example
 
-```
+```php
 add $X , $Y -> $Z  //  Z = X + Y
 mult $X , $Y -> $Z //  Z = X * Y
 sub $X , $Y -> $Z  //  Z = X - Y
@@ -88,13 +94,13 @@ Jumps to the given address or label.
 
 ### Syntax
 
-```
+```haskell
 goto <Address>
 ```
 
 ### Example
 
-```
+```haskell
 goto #mainLoop
 ```
 
@@ -108,13 +114,13 @@ comparison of the two values return true.
 
 ### Syntax
 
-```
+```haskell
 gotoif <Value A> <Comparator> <Value B> , <Address>
 ```
 
 ### Example
 
-```
+```haskell
 gotoif $var < 4095 , #colorScreen
 gotoif $var == 4095 , #colorScreen
 ```
@@ -125,11 +131,12 @@ gotoif $var == 4095 , #colorScreen
 ## If
 
 Enters the logic block if the comparison <br>
-of the two given values returns true.
+of the two given values returns true.<br>
+The block must be ended with the `endif` command.
 
 ### Syntax
 
-```
+```php
 if <Value A> <Comparator> <Value B> :
 
     <Contents>
@@ -139,7 +146,7 @@ endif
 
 ### Example
 
-```
+```haskell
 if $ballPosY > 62:
     change $ballVelY = 1
 endif
