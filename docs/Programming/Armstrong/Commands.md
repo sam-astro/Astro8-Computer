@@ -14,18 +14,20 @@ title : Commands
 ## Define
 
 Macro that sets a memory address to the <br>
-given values before the program is executed.
+given values before the program is executed. <br>
+Only constants can be used as Values.
 
 ### Syntax
 
 ```
-define〈 Address 〉〈 Value 〉
+define <Address> <Value>
 ```
 
 ### Example
 
 ```
 define 0xff2 33
+define $var 6
 ```
 
 <br>
@@ -38,12 +40,13 @@ Assigns the given address the supplied value.
 ### Syntax
 
 ```
-change〈 Address 〉=〈 Value 〉
+change <Address> = <Value>
 ```
 
 ### Example
 
 ```
+change 0xff2 = 19
 change $cursorChar = 8
 ```
 
@@ -53,21 +56,27 @@ change $cursorChar = 8
 ## Add / Subtract / Multiply / Divide
 
 Combines the two given values depending on the <br>
-operator and saves the result at the given address.
+operator and saves the result at the given address.<br>
+The outout location is prefixed by an arrow, ` -> ` 
 
 ### Syntax
 
 ```
-〈 Operator 〉〈 Value A 〉,〈 Value B 〉->〈 Output location 〉
+<Operator> <Value A>, <Value B> -> <Output location>
 ```
 
 ### Example
 
 ```
 add $X , $Y -> $Z  //  Z = X + Y
-mul $X , $Y -> $Z  //  Z = X * Y
+mult $X , $Y -> $Z //  Z = X * Y
 sub $X , $Y -> $Z  //  Z = X - Y
 div $X , $Y -> $Z  //  Z = X / Y
+and $X , $Y -> $Z  //  Z = X & Y
+or $X , $Y -> $Z   //  Z = X | Y
+not $X -> $Z       //  Z = ~ X
+bsl $X , $Y -> $Z  //  Z = X << Y
+bsr $X , $Y -> $Z  //  Z = X >> Y
 ```
 
 <br>
@@ -80,7 +89,7 @@ Jumps to the given address or label.
 ### Syntax
 
 ```
-goto〈 Address 〉
+goto <Address>
 ```
 
 ### Example
@@ -100,7 +109,7 @@ comparison of the two values return true.
 ### Syntax
 
 ```
-gotoif 〈 Value A 〉〈 Comparator 〉〈 Value B 〉,〈 Address 〉
+gotoif <Value A> <Comparator> <Value B> , <Address>
 ```
 
 ### Example
@@ -121,9 +130,9 @@ of the two given values returns true.
 ### Syntax
 
 ```
-if 〈 Value A 〉〈 Comparator 〉〈 Value B 〉:
+if <Value A> <Comparator> <Value B> :
 
-    〈 Contents 〉
+    <Contents>
     
 endif
 ```
