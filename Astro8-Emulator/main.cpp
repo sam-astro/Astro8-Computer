@@ -2572,30 +2572,31 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
 			compiledLines.push_back("");
 
-
-
-			// If second argument is an address
-			if (IsHex(valBPre)) {
-				LoadAddress("@B", to_string(valBProcessed));
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a register
-			else if (IsReg(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
-			}
-			// If second argument is a variable
-			else if (IsVar(valBPre)) {
-				LoadAddress("@B", valBPre);
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a new decimal value
-			else if (IsDec(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
-			}
-			// If second argument is a pointer
-			else if (IsPointer(valBPre)) {
-				LoadPointer(valBPre);
-			}
+			
+			// "not" command only takes a single argument, so don't attempt to load it
+			if(command != "not")
+				// If second argument is an address
+				if (IsHex(valBPre)) {
+					LoadAddress("@B", to_string(valBProcessed));
+					compiledLines.at(compiledLines.size() - 1) += "\n";
+				}
+				// If second argument is a register
+				else if (IsReg(valBPre)) {
+					compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
+				}
+				// If second argument is a variable
+				else if (IsVar(valBPre)) {
+					LoadAddress("@B", valBPre);
+					compiledLines.at(compiledLines.size() - 1) += "\n";
+				}
+				// If second argument is a new decimal value
+				else if (IsDec(valBPre)) {
+					compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
+				}
+				// If second argument is a pointer
+				else if (IsPointer(valBPre)) {
+					LoadPointer(valBPre);
+				}
 
 
 			// If first argument is an address
