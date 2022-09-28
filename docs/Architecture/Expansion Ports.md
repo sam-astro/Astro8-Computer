@@ -61,4 +61,41 @@ The frequency is a value between 0 and 32. The channel is a value 0 through 4.
 
 To change the frequency of a channel, send a value to the expansion port like: `0b00001001`, which would set the second channel (squarewave B) to play at a frequency of 1 (not in Hz, see conversion table). If a channel is not playing when you change it's frequency, it will begin playing. To stop the playback of a channel, send a second value to the expansion port with a frequency of 0, like: `0b00000001` which would turn off the second channel.
 
-Due to only 5 bits of precision, frequencies are approximated, and you can see the conversion table to compare values sent to the expansion port with their corresponding actual frequencies.
+Due to only 5 bits of precision, frequencies are approximated, and you can [see the conversion table](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Expansion%20Ports.html#conversion-table) to compare values sent to the expansion port with their corresponding actual frequencies.
+
+#### Conversion table
+
+| **_Sound Card Input_** | **_Actual Frequency Output_** |
+|----|---|
+| 0 | 5|
+| 1 | 16|
+| 2 | 28|
+| 3 | 41|
+| 4 | 55|
+| 5 | 70|
+| 6 | 88|
+| 7 | 106|
+| 8 | 127|
+| 9 | 150|
+| 10 | 175|
+| 11 | 203|
+| 12 | 234|
+| 13 | 268|
+| 14 | 305|
+| 15 | 346|
+| 16 | 390|
+| 17 | 440|
+| 18 | 494|
+| 19 | 554|
+| 20 | 621|
+| 21 | 693|
+| 22 | 773|
+| 23 | 861|
+| 24 | 958|
+| 25 | 1065|
+| 26 | 1183|
+| 27 | 1312|
+| 28 | 1455|
+| 29 | 1612|
+| 30 | 1785|
+| 31 | 1975|
