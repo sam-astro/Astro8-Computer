@@ -144,15 +144,15 @@ address to get the actual value.
 
 ### Syntax
 `*` symbol prefix followed by brackets containing the bank to access from `[x]`
-```
-*[<bank>]<Variable or Address>
+```haskell
+*[<bank>]<Variable_or_Address>
 ```
 
 <br>
 
 ### Example
 
-```
+```haskell
 *[0]$var
 *[1]0xf
 ```
