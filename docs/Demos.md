@@ -12,7 +12,7 @@ There are many demos created for the Astro-8. This page shows previews and contr
 
 ## Pong
 
-Contributed by @sam-astro
+Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
 [Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/pong.armstrong)
@@ -26,7 +26,7 @@ You can use the `W` and `S` keys to move the left paddle, and the `Up` and `Down
 
 ## Powder game
 
-Contributed by @sam-astro
+Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
 [Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/powder-sim.arm)
@@ -40,7 +40,7 @@ You can use the mouse for moving the crosshair, and spawn your selected material
 
 ## The Game of Life
 
-Contributed by @sam-astro
+Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
 [Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/the-game-of-life.arm)
@@ -54,7 +54,7 @@ You can use the `W`,`S`,`A`,`D` keys for moving the crosshair. You can also use 
 
 ## Typing program
 
-Contributed by @sam-astro
+Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
 [Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/typing.armstrong)
@@ -68,7 +68,7 @@ The typing program supports all letters and some characters. Upon typing a chara
 
 ## Snake Game
 
-Contributed by Calion
+Contributed by Calion, ***supported in versions v1.0.1-alpha and older***
 
 ### Code
 [Source Code](https://github.com/ZakChrom/ArmStrong-Programs)
@@ -82,7 +82,7 @@ You can use the `W`,`S`,`A`,`D` keys for changing the snakes' direction, and the
 
 ## Platformer Game
 
-Contributed by Calion
+Contributed by Calion, ***supported in versions v1.0.1-alpha and older***
 
 ### Code
 [Source Code](https://github.com/ZakChrom/ArmStrong-Programs)
