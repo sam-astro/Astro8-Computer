@@ -49,7 +49,7 @@ Use decimal values for **Immediate Integers**.
 ### Syntax
 
 ```
-//〈 Comment 〉
+// <Comment>
 ```
 
 <br>
@@ -72,7 +72,7 @@ Use decimal values for **Immediate Integers**.
 ### Syntax
 
 ```
-@〈 Register Name 〉
+@<Register Name>
 ```
 
 <br>
@@ -82,7 +82,6 @@ Use decimal values for **Immediate Integers**.
 | Name | Example |
 |:----:|:-------:|
 | ***Register A - C*** | `@A`  `@B`  `@C`
-| ***Expansion Port*** | `@EX`
 
 <br>
 <br>
@@ -97,7 +96,7 @@ A label is a place in the program you can jump to. <br>
 ### Syntax
 
 ```
-#〈 Label Name 〉
+#<Label Name>
 ```
 
 <br>
@@ -121,7 +120,7 @@ Variable can contain an an integers only. <br>
 ### Syntax
 
 ```
-$〈 Variable Name 〉
+$<Variable Name>
 ```
 
 <br>
@@ -144,18 +143,18 @@ address to get the actual value.
 <br>
 
 ### Syntax
-`*` symbol prefix
-```
-* 〈 Variable or Address 〉
+`*` symbol prefix followed by brackets containing the bank to access from `[x]`
+```haskell
+*[<bank>]<Variable_or_Address>
 ```
 
 <br>
 
 ### Example
 
-```
-*$var
-*0xf
+```haskell
+*[0]$var
+*[1]0xf
 ```
 
 <br>

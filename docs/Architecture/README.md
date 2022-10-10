@@ -7,28 +7,14 @@ title : Architecture
 
 # Architecture
 
-*The design of the **CPU**.*
+This section is about the specifics and details about the design of the CPU and it's functionality.
+You can use this to better understand how to access the hardware from your programs or make mods for the base system.
 
 <br>
-<br>
-
-[![Button Instruction Set]][Instruction Set]   
-[![Button Micro Instructions]][Micro Instructions]   
-[![Button Memory Layout]][Memory Layout] 
-
-<br>
-<br>
-
 
 <!----------------------------------------------------------------------------->
 
 [Micro Instructions]: Micro%20Instructions
 [Instruction Set]: Instruction%20Set
 [Memory Layout]: Memory%20Layout
-
-
-<!---------------------------------[ Buttons ]--------------------------------->
-
-[Button Micro Instructions]: https://img.shields.io/badge/Micro_Instructions-004880?style=for-the-badge&logoColor=white&logo=Metabase
-[Button Instruction Set]: https://img.shields.io/badge/Instruction_Set-0790C0?style=for-the-badge&logoColor=white&logo=ONLYOFFICE
-[Button Memory Layout]: https://img.shields.io/badge/Memory_Layout-EE8208?style=for-the-badge&logoColor=white&logo=ElasticStack
+[Expansion Ports]: Expansion%20Ports

@@ -33,7 +33,7 @@ There are some demos for the Astro-8, such as the pong game and a typing program
 
 
 ## Programming
-The two most supported ways to program for the computer is using the [assembly language](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html) or [Armstrong](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html).
+The two most supported ways to program for the computer is using the [Astrisc instruction set](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html) or [Armstrong](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html). Those are both very low-level assembly languages, and may be difficult to learn. If you are looking for an alternative that's higher level, [Yabal](https://github.com/GerardSmit/Astro8) is an advanced and more modern language created by @GerardSmit.
 
 <br>
 
@@ -45,9 +45,23 @@ Windows, Mac, and Linux are supported. Go to the **[Installation Page]** to see 
 
 ## Features
 
-- Fully functional design in **[Logisim Evolution]**
+- Work in progress design in **[Logisim Evolution]**
 
 - Created an emulator for running programs at full speed.
+
+- Support for multiple languages
+
+- 4 channels of sound
+
+- Keyboard and mouse input
+
+- 108x108 pixel resolution
+
+- 32,768 different colors
+
+- Memory banking, currently supporting 2 banks of 64k
+
+- Support for 46 different hardware expansions
 
 <br>
 
