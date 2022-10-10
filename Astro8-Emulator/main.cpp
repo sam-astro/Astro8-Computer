@@ -41,15 +41,15 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose;
 
-bool usingKeyboard = true;
+bool usingKeyboard = true, usingMouse = true;
 
 
 int AReg = 0;
 int BReg = 0;
 int CReg = 0;
-int expansionPort = 0;
+int BankReg = 0;
 int InstructionReg = 0;
-int flags[3] = { 0, 0, 0 };
+int flags[2] = { 0, 0 };
 int bus = 0;
 int outputReg = 0;
 uint16_t memoryIndex = 0;
@@ -60,16 +60,14 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
-int pixelRamIndex = 0xefff;
+int pixelRamIndex = 53871;
 
 
 // 10000000 = 10.0MHz
 int target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
-vector<int> memoryBytes;
-vector<int> charRam;
-
+vector<vector<int>> memoryBytes;
 
 std::string projectDirectory;
 std::string executableDirectory;
@@ -85,38 +83,37 @@ static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU = 0b0000000000000001,
-	ALU_MU = 0b0000000000000010,
-	ALU_DI = 0b0000000000000011,
-	ALU_SL = 0b0000000000000100,
-	ALU_SR = 0b0000000000000101,
-	ALU_AND = 0b0000000000000110,
-	ALU_OR = 0b0000000000000111,
-	ALU_NOT = 0b0000000000001000,
+	ALU_SU =   0b0000000000000001,
+	ALU_MU =   0b0000000000000010,
+	ALU_DI =   0b0000000000000011,
+	ALU_SL =   0b0000000000000100,
+	ALU_SR =   0b0000000000000101,
+	ALU_AND =  0b0000000000000110,
+	ALU_OR =   0b0000000000000111,
+	ALU_NOT =  0b0000000000001000,
 	ALU_MASK = 0b0000000000001111,
 };
 
 enum ReadInstruction : MicroInstruction {
-	READ_RA = 0b0000000000010000,
-	READ_RB = 0b0000000000100000,
-	READ_RC = 0b0000000000110000,
-	READ_RM = 0b0000000001000000,
-	READ_IR = 0b0000000001010000,
-	READ_CR = 0b0000000001100000,
-	READ_RE = 0b0000000001110000,
+	READ_RA =   0b0000000000010000,
+	READ_RB =   0b0000000000100000,
+	READ_RC =   0b0000000000110000,
+	READ_RM =   0b0000000001000000,
+	READ_IR =   0b0000000001010000,
+	READ_CR =   0b0000000001100000,
 	READ_MASK = 0b0000000001110000,
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA = 0b0000000010000000,
-	WRITE_WB = 0b0000000100000000,
-	WRITE_WC = 0b0000000110000000,
-	WRITE_IW = 0b0000001000000000,
-	WRITE_DW = 0b0000001010000000,
-	WRITE_WM = 0b0000001100000000,
-	WRITE_J = 0b0000001110000000,
-	WRITE_AW = 0b0000010000000000,
-	WRITE_WE = 0b0000010010000000,
+	WRITE_WA =   0b0000000010000000,
+	WRITE_WB =   0b0000000100000000,
+	WRITE_WC =   0b0000000110000000,
+	WRITE_IW =   0b0000001000000000,
+	WRITE_DW =   0b0000001010000000,
+	WRITE_WM =   0b0000001100000000,
+	WRITE_J =    0b0000001110000000,
+	WRITE_AW =   0b0000010000000000,
+	WRITE_BNK =  0b0000010010000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -154,19 +151,19 @@ std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
 
 SDL_Texture* texture;
-std::vector< unsigned char > pixels(64 * 64 * 4, 0);
+std::vector< unsigned char > pixels(108 * 108 * 4, 0);
 
 
-Mix_Chunk* gHigh = NULL;
-Mix_Chunk* gMedium = NULL;
-Mix_Chunk* gLow = NULL;
+Mix_Chunk* waveforms[4];
+
+float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP", "STA", "STC", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC", "LDWB" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "WE" };
-std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR", "RE" };
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK" };
+std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
 
@@ -177,10 +174,9 @@ std::string instructioncodes[] = {
 		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
 		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
 		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
-		"rdexp( 2=wa,re & 3=ei", // Read from expansion port to register A
-		"wrexp( 2=ra,we & 3=ei", // Write from reg A to expansion port
+		//"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
+		//"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
 		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-		"stc( 2=aw,ir & 3=rc,wm & 4=ei", // Store C <addr>
 		"add( 2=wa,eo,fl & 3=ei", // Add
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
@@ -202,6 +198,9 @@ std::string instructioncodes[] = {
 		"and( 2=and,wa,eo,fl & 3=ei", // Logical AND operation on register A and register B, with result put back into register A
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
+		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
+		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
+		"ldwb( 2=cr,aw & 3=ce,rm,wb & 4=ei", // Load value directly after counter into B, and advance counter by 2
 };
 
 std::string helpDialog = R"V0G0N(
@@ -215,8 +214,8 @@ Options:
                            start emulator.
   -r, --run                Run an already assembled program in AstroEXE format
                            (program.AEXE)
-  -nk, --nokeyboard        Use the mouse mode for the emulator (disables
-                           keyboard input)
+  -nk, --nokeyboard        Disable the keyboard input
+  -nm, --nomouse           Disable the mouse input
   -v, --verbose            Write extra data to console for better debugging
   -f, --freq <value>       Override the default CPU target frequency with your
                            own.      Default = 10    higher = faster
@@ -265,17 +264,17 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
-	Mix_FreeChunk(gHigh);
-	gHigh = NULL;
-	Mix_FreeChunk(gMedium);
-	gMedium = NULL;
-	Mix_FreeChunk(gLow);
-	gLow = NULL;
+	for (int i = 0; i < sizeof(waveforms) / sizeof(waveforms[0]); i++)
+	{
+		Mix_FreeChunk(waveforms[i]);
+		waveforms[i] = NULL;
+	}
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+	Mix_Quit();
 }
 
 int clamp(int x, int min, int max) {
@@ -286,6 +285,149 @@ int clamp(int x, int min, int max) {
 
 	return x;
 }
+
+
+
+
+/* global vars */
+Uint16 audioFormat = MIX_DEFAULT_FORMAT;  // current audio format constant
+int audioFrequency,  // frequency rate of the current audio format
+audioChannelCount,  // number of channels of the current audio format
+audioAllocatedMixChannelsCount;  // number of mix channels allocated
+
+static inline Uint16 formatSampleSize(Uint16 format) { return (format & 0xFF) / 8; }
+
+// Get chunk time length (in ms) given its size and current audio format
+static int computeChunkLengthMillisec(int chunkSize)
+{
+	const Uint32 points = chunkSize / formatSampleSize(audioFormat);  // bytes / samplesize == sample points
+	const Uint32 frames = (points / audioChannelCount);  // sample points / channels == sample frames
+	return ((frames * 1000) / audioFrequency);  // (sample frames * 1000) / frequency == play length, in ms
+}
+
+// Custom handler object to control which part of the Mix_Chunk's audio data will be played, with which pitch-related modifications.
+// This needed to be a template because the actual Mix_Chunk's data format may vary (AUDIO_U8, AUDIO_S16, etc) and the data type varies with it (Uint8, Sint16, etc)
+// The AudioFormatType should be the data type that is compatible with the current SDL_mixer-initialized audio format.
+template<typename AudioFormatType>
+struct PlaybackSpeedEffectHandler
+{
+	const AudioFormatType* const chunkData;  // pointer to the chunk sample data (as array)
+	const float& speedFactor;  // the playback speed factor
+	float position;  // current position of the sound, in ms
+	const int duration;  // the duration of the sound, in ms
+	const int chunkSize;  // the size of the sound, as a number of indexes (or sample points). thinks of this as a array size when using the proper array type (instead of just Uint8*).
+	const bool loop;  // flags whether playback should stay looping
+	const bool attemptSelfHalting;  // flags whether playback should be halted by this callback when playback is finished
+	bool altered;  // true if this playback has been pitched by this handler
+
+	PlaybackSpeedEffectHandler(const Mix_Chunk& chunk, const float& speed, bool loop, bool trySelfHalt)
+		: chunkData(reinterpret_cast<AudioFormatType*>(chunk.abuf)), speedFactor(speed),
+		position(0), duration(computeChunkLengthMillisec(chunk.alen)),
+		chunkSize(chunk.alen / formatSampleSize(audioFormat)),
+		loop(loop), attemptSelfHalting(trySelfHalt), altered(false)
+	{}
+
+	// processing function to be able to change chunk speed/pitch.
+	void modifyStreamPlaybackSpeed(int mixChannel, void* stream, int length)
+	{
+		AudioFormatType* buffer = static_cast<AudioFormatType*>(stream);
+		const int bufferSize = length / sizeof(AudioFormatType);  // buffer size (as array)
+		const float speedFactor = this->speedFactor;  // take a "snapshot" of speed factor
+
+		// if there is still sound to be played
+		if (position < duration || loop)
+		{
+			const float delta = 1000.0 / audioFrequency,  // normal duration of each sample
+				vdelta = delta * speedFactor;  // virtual stretched duration, scaled by 'speedFactor'
+
+		// if playback is unaltered and pitch is required (for the first time)
+			if (!altered && speedFactor != 1.0f)
+				altered = true;  // flags playback modification and proceed to the pitch routine.
+
+			if (altered)  // if unaltered, this pitch routine is skipped
+			{
+				for (int i = 0; i < bufferSize; i += audioChannelCount)
+				{
+					const int j = i / audioChannelCount;  // j goes from 0 to size/channelCount, incremented 1 by 1
+					const float x = position + j * vdelta;  // get "virtual" index. its corresponding value will be interpolated.
+					const int k = floor(x / delta);  // get left index to interpolate from original chunk data (right index will be this plus 1)
+					const float prop = (x / delta) - k;  // get the proportion of the right value (left will be 1.0 minus this)
+
+					// usually just 2 channels: 0 (left) and 1 (right), but who knows...
+					for (int c = 0; c < audioChannelCount; c++)
+					{
+						// check if k will be within bounds
+						if (k * audioChannelCount + audioChannelCount - 1 < chunkSize || loop)
+						{
+							AudioFormatType v0 = chunkData[(k * audioChannelCount + c) % chunkSize],
+								v1 = chunkData[((k + 1) * audioChannelCount + c) % chunkSize];
+
+							// put interpolated value on 'data'
+							buffer[i + c] = v0 + prop * (v1 - v0);  // linear interpolation (single multiplication)
+						}
+						else  // if k will be out of bounds (chunk bounds), it means we already finished; thus, we'll pass silence
+						{
+							buffer[i + c] = 0;
+						}
+					}
+				}
+			}
+
+			// update position
+			position += (bufferSize / audioChannelCount) * vdelta;
+
+			// reset position if looping
+			if (loop) while (position > duration)
+				position -= duration;
+		}
+		else  // if we already played the whole sound but finished earlier than expected by SDL_mixer (due to faster playback speed)
+		{
+			// set silence on the buffer since Mix_HaltChannel() poops out some of it for a few ms.
+			for (int i = 0; i < bufferSize; i++)
+				buffer[i] = 0;
+
+			if (attemptSelfHalting)
+				Mix_HaltChannel(mixChannel);  // XXX unsafe call, since it locks audio; but no safer solution was found yet...
+		}
+	}
+
+	// Mix_EffectFunc_t callback that redirects to handler method (handler passed via userData)
+	static void mixEffectFuncCallback(int channel, void* stream, int length, void* userData)
+	{
+		static_cast<PlaybackSpeedEffectHandler*>(userData)->modifyStreamPlaybackSpeed(channel, stream, length);
+	}
+
+	// Mix_EffectDone_t callback that deletes the handler at the end of the effect usage  (handler passed via userData)
+	static void mixEffectDoneCallback(int, void* userData)
+	{
+		delete static_cast<PlaybackSpeedEffectHandler*>(userData);
+	}
+
+	// function to register a handler to this channel for the next playback.
+	static void registerEffect(int channel, const Mix_Chunk& chunk, const float& speed, bool loop, bool trySelfHalt)
+	{
+		Mix_RegisterEffect(channel, mixEffectFuncCallback, mixEffectDoneCallback, new PlaybackSpeedEffectHandler(chunk, speed, loop, trySelfHalt));
+	}
+};
+
+// Register playback speed effect handler according to the current audio format; effect valid for a single playback; if playback is looped, lasts until it's halted
+void setupPlaybackSpeedEffect(const Mix_Chunk* const chunk, const float& speed, int channel, bool loop = false, bool trySelfHalt = false)
+{
+	// select the register function for the current audio format and register the effect using the compatible handlers
+	// XXX is it correct to behave the same way to all S16 and U16 formats? Should we create case statements for AUDIO_S16SYS, AUDIO_S16LSB, AUDIO_S16MSB, etc, individually?
+	switch (audioFormat)
+	{
+	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	default:
+	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	}
+}
+
+
 
 
 // Convert vector of strings into single std::string separated by \n character
@@ -307,7 +449,7 @@ int GenerateCharacterROM() {
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
 
-	const std::string charsetFilename = executableDirectory+"/char_set_memtape";
+	const std::string charsetFilename = executableDirectory + "/char_set_memtape";
 	ifstream charset(charsetFilename);
 
 	if (charset.is_open())
@@ -334,6 +476,14 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
+	memoryBytes.push_back(vector<int>());
+	memoryBytes.push_back(vector<int>());
+
+	// Fill the memory
+	for (int memindex = 0; memindex < 65535; memindex++)
+		memoryBytes[1].push_back(0);
+
+
 	// Get the executable's installed directory
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
 
@@ -346,7 +496,7 @@ int main(int argc, char** argv)
 	{
 		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
 		cout << "\n" << helpDialog << "\n";
-		cout << ("OR, enter path to file >  ");
+		cout << ("OR, enter path to file (No options allowed >:| ) >  ");
 		std::string line;
 		while (true) {
 			getline(cin, line);
@@ -375,14 +525,17 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
-		else if (argval == "-nk" || argval == "--nokeyboard") // Use the mouse mode for the emulator (disables keyboard input)
+		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
+		else if (argval == "-nm" || argval == "--nomouse") // Disable the mouse input
+			usingMouse = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
 			verbose = true;
 		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
 			try
 			{
 				target_cpu_freq = stoi(argv[i + 1]) * 1000000;
+				i++;
 			}
 			catch (const std::exception&)
 			{
@@ -402,7 +555,7 @@ int main(int argc, char** argv)
 		std::string path = trim(split(filePath, "\n")[0]);
 		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
 		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		programName = path.substr(path.find_last_of("/\\")+1, path.size());
+		programName = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 		// Open and read file
 		std::string li;
@@ -549,12 +702,12 @@ int main(int argc, char** argv)
 			// Generate memory from code and convert from hex to decimal
 			vector<std::string> mbytes = parseCode(code);
 			for (int memindex = 0; memindex < mbytes.size(); memindex++)
-				memoryBytes.push_back(HexToDec(mbytes[memindex]));
+				memoryBytes[0].push_back(HexToDec(mbytes[memindex]));
 
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
 			f << "ASTRO-8 AEXE Executable file" << '\n';
-			f << (usingKeyboard==true?"1":"0") << '\n';
+			f << (usingKeyboard == true ? "1" : "0") << '\n';
 			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
 				f << *i << '\n';
 			}
@@ -585,7 +738,7 @@ int main(int argc, char** argv)
 
 			// Skip two lines to begin reading AEXE data
 			for (int memindex = 2; memindex < filelines.size(); memindex++)
-				memoryBytes.push_back(HexToDec(filelines[memindex]));
+				memoryBytes[0].push_back(HexToDec(filelines[memindex]));
 		}
 		else
 		{
@@ -609,12 +762,15 @@ int main(int argc, char** argv)
 	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
 	cout << "\n\n";
 
-	InitGraphics("Astro-8 Emulator", 64, 64, 9);
+	InitGraphics("Astro-8 Emulator", 108, 108, 5);
 
 
 	bool keyPress = false;
 	bool running = true;
 	SDL_Event event;
+	SDL_Event lastEvent = SDL_Event();
+	SDL_Event pendingEvent;
+	int eventUses = 0;
 
 	int updateCount = 0;
 	int frameCount = 0;
@@ -658,8 +814,16 @@ int main(int argc, char** argv)
 			lastFrame = startTime;
 			Draw();
 			++frameCount;
+			pendingEvent = SDL_Event();
+			bool keyboardDecided = false;
 			while (SDL_PollEvent(&event))
 			{
+				if (event.type == SDL_KEYDOWN)
+					if (event.key.keysym.scancode == SDLK_g)
+					{
+						SDL_SetRelativeMouseMode(SDL_FALSE);
+						SDL_ShowCursor(SDL_ENABLE);
+					}
 				if (event.type == SDL_QUIT)
 				{
 					running = false;
@@ -667,36 +831,50 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
-						// Keyboard only uses lowest 8 bits, so the upper ones stay
-						expansionPort = ConvertAsciiToSdcii((int)(event.key.keysym.scancode)) + (expansionPort & 0b1111111100000000);
+						memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
 						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-						PrintColored(to_string(expansionPort), greenFGColor, "");
-
+						PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+						keyboardDecided = true;
+						lastEvent = event;
 					}
+					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
+						eventUses++;
+					}*/
 					else if (event.type == SDL_KEYUP) {
-
-						expansionPort = 168; // Keyboard idle state is 168 (max value), since 0 is reserved for space
+						memoryBytes[1][53500] = 168;
+						keyboardDecided = true;
+						lastEvent = event;
 					}
 				}
 				// If using the mouse in the expansion port
-				else if (!usingKeyboard)
+				if (usingMouse)
 					if (event.type == SDL_MOUSEMOTION) {
-						// Get mouse location
-						//cout << event.motion.x << endl;
-						expansionPort = ((event.motion.x << 6) + event.motion.y) + (expansionPort & 0b1111000000000000);
+						//// Get mouse relative movement from last position
+						//int mXRel;
+						//int mYRel;
+
+						//SDL_GetRelativeMouseState(&mXRel, &mYRel);
+
+						//// Automatically convert to twos compliment if the number is less than zero, otherwise pass as-is
+						//mXRel = mXRel < 0 ? ((mXRel /4) << 6) & 0b111111000000 : (((~mXRel/4) + 1) << 6) & 0b111111000000;
+						//mYRel = -mYRel < 0 ? (-mYRel /4) & 0b111111 : ((~-mYRel /4) + 1) & 0b111111;
+
+						memoryBytes[1][53501] = ((event.motion.x << 7) + event.motion.y) + (memoryBytes[1][53501] & 0b1100000000000000);
+
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
+						////SDL_SetRelativeMouseMode(SDL_TRUE);
 						if (event.button.button == 1)      // Left Mouse Button Down
-							expansionPort = 4096 | expansionPort;
+							memoryBytes[1][53501] = 16384 | memoryBytes[1][53501];
 						else if (event.button.button == 3) // Right Mouse Button Down
-							expansionPort = 8192 | expansionPort;
+							memoryBytes[1][53501] = 32768 | memoryBytes[1][53501];
 					}
 					else if (event.type == SDL_MOUSEBUTTONUP) {
-						if (event.button.button == 1 && (expansionPort & 4096) == 4096)      // Left Mouse Button Up
-							expansionPort = 4096 ^ expansionPort;
-						else if (event.button.button == 3 && (expansionPort & 8192) == 8192) // Right Mouse Button Up
-							expansionPort = 8192 ^ expansionPort;
+						if (event.button.button == 1 && (memoryBytes[1][53501] & 16384) == 16384)      // Left Mouse Button Up
+							memoryBytes[1][53501] = 16384 ^ memoryBytes[1][53501];
+						else if (event.button.button == 3 && (memoryBytes[1][53501] & 32768) == 32768) // Right Mouse Button Up
+							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
 		}
@@ -708,11 +886,11 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-
+bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
 
-	for (int step = 0; step < 16; step++)
+	for (int step = 0; step < 8; step++)
 	{
 
 		// Execute fetch in single step
@@ -722,14 +900,14 @@ void Update()
 			// AW
 			// RM
 			// IW
-			InstructionReg = memoryBytes[programCounter];
+			InstructionReg = memoryBytes[0][programCounter];
 			// CE
 			programCounter += 1;
 			step = 2;
 		}
 
 		// Address in microcode ROM
-		int microcodeLocation = ((InstructionReg >> 5) & 0b11111000000) + (step * 4) + (flags[0] * 2) + flags[1];
+		int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
 
@@ -747,17 +925,17 @@ void Update()
 			bus = CReg;
 			break;
 		case READ_RM:
-			bus = memoryBytes[memoryIndex];
+			bus = memoryBytes[BankReg][memoryIndex];
 			break;
 		case READ_IR:
-			bus = InstructionReg & ((1 << 11) - 1);
+			bus = InstructionReg & 0b1111111111;
 			break;
 		case READ_CR:
 			bus = programCounter;
 			break;
-		case READ_RE:
-			bus = expansionPort;
-			break;
+		//case READ_RE:
+		//	bus = expansionPort[ExpReg];
+		//	break;
 		}
 
 
@@ -910,7 +1088,51 @@ void Update()
 			InstructionReg = bus;
 			break;
 		case WRITE_WM:
-			memoryBytes[memoryIndex] = bus;
+			// Only play audio if writing to the dedicated audio expansion port
+			if (BankReg == 1 && memoryIndex == 53502) {
+				if (verbose) {
+					PrintColored("	-- cout >> ", brightBlackFGColor, "");
+					PrintColored(to_string(BankReg) + " ", blueFGColor, "");
+					PrintColored(to_string(bus) + " ", greenFGColor, "");
+					cout << "\n";
+				}
+				////////////
+				// Audio: //
+				////////////
+
+				//		Format (old):     FFFFFCCC XXXXXXXX
+				//		Format:     XXXXX FFFFFFFFCCC
+				//		You can only toggle one channel at a time per expansion port write.
+				//		CCC is converted to the index of the channel that is toggled
+				//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+				//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+				//		is changed and the channel is turned ON if it isn't already
+				//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+
+
+				// Calculate target frequency from beginning 5-bits
+				float offset = 0.0f;
+				float targetSpeed = (float)((bus & 0b11111111000) >> 3) + offset;
+				targetSpeed = (105.282f * pow(2.71828f, 0.09616f * targetSpeed) - 99.91f) / 400.0f;
+				int targetChannel = bus & 0b111;
+
+				// Use upper 8 bits to play audio
+				if (targetChannel > 0 && targetChannel <= 4)
+					if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
+						speed_chunks[targetChannel - 1] = targetSpeed;
+						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
+						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
+					}
+					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
+						speed_chunks[targetChannel - 1] = targetSpeed;
+					}
+					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
+						Mix_HaltChannel(targetChannel - 1);
+					}
+
+			}
+			else
+				memoryBytes[BankReg][memoryIndex] = bus;
 			break;
 		case WRITE_J:
 			programCounter = bus;
@@ -918,28 +1140,60 @@ void Update()
 		case WRITE_AW:
 			memoryIndex = bus;
 			break;
-		case WRITE_WE:
-			expansionPort = bus;
-			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
-			PrintColored(to_string(expansionPort), greenFGColor, "");
-			cout << "\n";
+		case WRITE_BNK:
+			BankReg = bus & 1;
+			break;
+			//case WRITE_EXI:
+			//	ExpReg = bus & 3;
+			//	break;
+			//	case WRITE_WE:
+			//		expansionPort[ExpReg] = bus;
+			//		if (verbose) {
+			//			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
+			//			PrintColored(to_string(expansionPort[ExpReg]) + " ", greenFGColor, "");
+			//			PrintColored(to_string(ExpReg), blueFGColor, "");
+			//			cout << "\n";
+			//			//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
+			//			//cout << "\n";
+			//		}
+
+			//		// Only play audio if writing to the dedicated audio expansion port
+			//		if (ExpReg == 2) {
+			//			////////////
+			//			// Audio: //
+			//			////////////
+
+			//			//		Format:     FFFFFCCC XXXXXXXX
+			//			//		You can only toggle one channel at a time per expansion port write.
+			//			//		CCC is converted to the index of the channel that is toggled
+			//			//		Then the frequency for that channel is defined as an int value stored in FFFFF
+			//			//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+			//			//		is changed and the channel is turned ON if it isn't already
+			//			//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
 
 
-			// Use upper 8 bits to play audio
-			if (Mix_Playing(0) == false && (expansionPort & 0b100000000) == 0b100000000)
-				Mix_PlayChannel(0, gLow, -1);
-			else if (Mix_Playing(0) == true && (expansionPort & 0b100000000) == 0)
-				Mix_FadeOutChannel(0, 100);
+			//			// Calculate target frequency from beginning 5-bits
+			//			float offset = 0.0f;
+			//			float targetSpeed = (((bus & 0b1111100000000000) >> 11) / 15.0f) + offset;
+			//			int targetChannel = (bus & 0b11100000000) >> 8;
 
-			if (Mix_Playing(1) == false && (expansionPort & 0b1000000000) == 0b1000000000)
-				Mix_PlayChannel(1, gMedium, -1);
-			else if (Mix_Playing(1) == true && (expansionPort & 0b1000000000) == 0)
-				Mix_FadeOutChannel(1, 100);
+			//			// Use upper 8 bits to play audio
+			//			if (targetChannel > 0 && targetChannel <= 4)
+			//				if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
+			//					speed_chunks[targetChannel - 1] = targetSpeed;
+			//					Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
+			//					setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
+			//				}
+			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
+			//					speed_chunks[targetChannel - 1] = targetSpeed;
+			//				}
+			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
+			//					Mix_HaltChannel(targetChannel - 1);
+			//				}
 
-			if (Mix_Playing(2) == false && (expansionPort & 0b10000000000) == 0b10000000000)
-				Mix_PlayChannel(2, gHigh, -1);
-			else if (Mix_Playing(2) == true && (expansionPort & 0b10000000000) == 0)
-				Mix_FadeOutChannel(2, 100);
+			//		}
+
+
 			break;
 		}
 
@@ -958,13 +1212,13 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = memoryBytes[characterRamIndex + 61294];
+	int characterRamValue = memoryBytes[1][characterRamIndex + 53546];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	int pixelVal = memoryBytes[pixelRamIndex];
+	int pixelVal = memoryBytes[1][pixelRamIndex];
 	int r, g, b;
 
-	if (charPixRomVal == true && imgX < 60) {
+	if (charPixRomVal == true) {
 		r = 255;
 		g = 255;
 		b = 255;
@@ -975,7 +1229,7 @@ void DrawNextPixel() {
 		b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
 	}
 
-	set_pixel(&pixels, imgX, imgY, 64, r, g, b, 255);
+	set_pixel(&pixels, imgX, imgY, 108, r, g, b, 255);
 
 
 	imgX++;
@@ -986,7 +1240,7 @@ void DrawNextPixel() {
 	}
 
 	// If x-coord is max, reset and increment y-coord
-	if (imgX >= 64)
+	if (imgX >= 108)
 	{
 		imgY++;
 		charPixY++;
@@ -994,7 +1248,7 @@ void DrawNextPixel() {
 		imgX = 0;
 
 		if (charPixY < 6)
-			characterRamIndex -= 10;
+			characterRamIndex -= 18;
 	}
 
 	if (charPixY >= 6) {
@@ -1002,7 +1256,7 @@ void DrawNextPixel() {
 	}
 
 
-	if (imgY >= 64) // The final layer is done, reset counter and render image
+	if (imgY >= 108) // The final layer is done, reset counter and render image
 	{
 		imgY = 0;
 
@@ -1010,7 +1264,7 @@ void DrawNextPixel() {
 		charPixY = 0;
 		charPixX = 0;
 
-		apply_pixels(pixels, texture, 64);
+		apply_pixels(pixels, texture, 108);
 		DisplayTexture(gRenderer, texture);
 	}
 
@@ -1021,7 +1275,7 @@ void Draw() {
 	while (true) {
 		DrawNextPixel();
 		if (pixelRamIndex >= 65535) {
-			pixelRamIndex = 61439;
+			pixelRamIndex = 53871;
 			break;
 		}
 	}
@@ -1072,19 +1326,25 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
 
 	//Initialize SDL_mixer
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 4, 512) < 0)
+	if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096) < 0)
 		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 
+	Mix_QuerySpec(&audioFrequency, &audioFormat, &audioChannelCount);  // query specs
+	audioAllocatedMixChannelsCount = Mix_AllocateChannels(MIX_CHANNELS);
+
 	// Load waves
-	gHigh = Mix_LoadWAV((executableDirectory+"/high.wav").c_str());
-	if (gHigh == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
-	gMedium = Mix_LoadWAV((executableDirectory + "/medium.wav").c_str());
-	if (gMedium == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
-	gLow = Mix_LoadWAV((executableDirectory + "/low.wav").c_str());
-	if (gLow == NULL)
-		printf("Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
+	waveforms[0] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
+	if (waveforms[0] == NULL)
+		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	waveforms[1] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
+	if (waveforms[1] == NULL)
+		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	waveforms[2] = Mix_LoadWAV((executableDirectory + "/triangle.wav").c_str());
+	if (waveforms[2] == NULL)
+		cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
+	if (waveforms[3] == NULL)
+		cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
 
 	return 0;
 }
@@ -1145,7 +1405,7 @@ vector<std::string> parseCode(const std::string& input)
 	int memaddr = 0;
 	for (int i = 0; i < splitcode.size(); i++)
 	{
-		splitcode[i] = trim(splitcode[i]);
+		splitcode[i] = trim(split(splitcode[i], ",")[0]);
 		if (splitcode[i] == "")
 			continue;
 
@@ -1164,10 +1424,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			if (addr <= 61294 || addr > 61438)
-				outputBytes[addr] = hVal;
-			else
-				charRam[clamp(addr - 61295, 0, 143)] = stoi(splitBySpace[2]);
+			outputBytes[addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -1205,7 +1462,7 @@ vector<std::string> parseCode(const std::string& input)
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[memaddr] = DecToBinFilled(f, 5);
-		}
+			}
 		}
 
 		// Check if any args are after the command
@@ -1228,7 +1485,7 @@ vector<std::string> parseCode(const std::string& input)
 #endif
 		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -1242,7 +1499,7 @@ vector<std::string> parseCode(const std::string& input)
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
-	}
+		}
 		processedOutput += outputBytes[outindex] + " ";
 
 		std::string ttmp = outputBytes[outindex];
@@ -1335,7 +1592,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-		}
+	}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -1343,7 +1600,7 @@ void GenerateMicrocode()
 #endif
 	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
 	{
-		std::string startaddress = DecToBinFilled(ins, 5);
+		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[0], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1351,7 +1608,7 @@ void GenerateMicrocode()
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
-			std::string midaddress = DecToBinFilled(actualStep, 4);
+			std::string midaddress = DecToBinFilled(actualStep, 3);
 
 			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
@@ -1385,7 +1642,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
-			}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -1396,7 +1653,7 @@ void GenerateMicrocode()
 			}
 		}
 
-		}
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1408,7 +1665,7 @@ void GenerateMicrocode()
 		cout << (instructioncodes[ins] + "\n");
 #endif
 
-		std::string startaddress = DecToBinFilled(ins, 5);
+		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[ins], '&');
 		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
@@ -1416,7 +1673,7 @@ void GenerateMicrocode()
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
-			std::string midaddress = DecToBinFilled(actualStep, 4);
+			std::string midaddress = DecToBinFilled(actualStep, 3);
 
 			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
@@ -1458,7 +1715,7 @@ void GenerateMicrocode()
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
-			}
+				}
 				if (doesntmatch)
 					continue;
 
@@ -1467,8 +1724,8 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+			}
 		}
-	}
 	}
 
 	// Print the output
@@ -1500,7 +1757,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-	}
+}
 
 vector<string> vars;
 vector<string> labels;
@@ -1530,6 +1787,8 @@ int ConvertAsciiToSdcii(int asciiCode) {
 	conversionTable[81] = 72;	// d-arr -> d-arr
 	conversionTable[49] = 11;	// | -> vertical line |
 	conversionTable[66] = 12;	// f9 -> horizontal line --
+	conversionTable[54] = 54;	// , -> ,
+	conversionTable[55] = 55;	// . -> .
 
 	// Letters
 	conversionTable[4] = 13;	// a -> a
@@ -1720,26 +1979,27 @@ void PutSetOnCurrentLine(const string& value) {
 // Loading of memory value into register, automatically allowing large addressing as needed
 void LoadAddress(const string& reg, const string& address) {
 	int actualVal = ParseValue(address);
-	string addrInWord = "ain ";
 	int actualLineNum = GetLineNumber();
 
-	if (reg == "@A")
-		addrInWord = "ain ";
-	else if (reg == "@B")
-		addrInWord = "bin ";
-	else if (reg == "@C")
-		addrInWord = "cin ";
-	else if (reg == "@EX")
-		addrInWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
-	if (actualVal <= 2047) {
+	if (actualVal <= 1023) {
+		string addrInWord = "ain ";
+		if (reg == "@A")
+			addrInWord = "ain ";
+		else if (reg == "@B")
+			addrInWord = "bin ";
+		else if (reg == "@C")
+			addrInWord = "cin ";
+		//else if (split(reg, "[")[0] == "@EX")
+		//	addrInWord = "ain ";
+
 		compiledLines.push_back(addrInWord + to_string(actualVal));
-		if (reg == "@EX")
-			compiledLines.push_back("wrexp");
+		//if (split(reg, "[")[0] == "@EX")
+		//	compiledLines.push_back("wrexp " + split(split(reg, "[")[1], "]")[0]);
 	}
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
-	else if (actualVal > 2047) {
+	else if (actualVal > 1023) {
 		compiledLines.push_back("ldlge");
 		PutSetOnCurrentLine(to_string(actualVal));
 		compiledLines.push_back(MoveFromRegToReg("@A", reg));
@@ -1754,10 +2014,10 @@ void StoreAddress(const string& reg, const string& address) {
 	string addrOutWord = "ain ";
 
 	// Value is small enough to be accessible through normal r/w instructions
-	if (actualVal <= 2047)
+	if (actualVal <= 1023)
 		compiledLines.push_back(MoveFromRegToReg(reg, "@A") + "sta " + to_string(actualVal));
 	// Value is too large to be accessible through normal r/w instructions, use LGE style
-	else if (actualVal > 2047) {
+	else if (actualVal > 1023) {
 		compiledLines.push_back(MoveFromRegToReg(reg, "@A"));
 		compiledLines.push_back("stlge");
 		PutSetOnCurrentLine(to_string(actualVal));
@@ -1767,7 +2027,7 @@ void StoreAddress(const string& reg, const string& address) {
 void RegIdToLDI(const string& in, const string& followingValue) {
 	int actualValue = ParseValue(followingValue);
 
-	if (actualValue < 2047) {
+	if (actualValue < 1023) {
 		if (in == "@A") {
 			compiledLines.push_back("ldia " + to_string(actualValue));
 		}
@@ -1778,10 +2038,10 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			compiledLines.push_back("ldia " + to_string(actualValue));
 			compiledLines.push_back("swpc");
 		}
-		else if (in == "@EX") {
-			compiledLines.push_back("ldia " + to_string(actualValue));
-			compiledLines.push_back("wrexp");
-		}
+		//else if (split(in, "[")[0] == "@EX") {
+		//	compiledLines.push_back("ldia " + to_string(actualValue));
+		//	compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
+		//}
 	}
 	else {
 		if (in == "@A") {
@@ -1798,11 +2058,11 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 			PutSetOnCurrentLine(followingValue);
 			compiledLines.push_back("swpc");
 		}
-		else if (in == "@EX") {
-			compiledLines.push_back("ldw");
-			PutSetOnCurrentLine(followingValue);
-			compiledLines.push_back("wrexp");
-		}
+		//else if (split(in, "[")[0] == "@EX") {
+		//	compiledLines.push_back("ldw");
+		//	PutSetOnCurrentLine(followingValue);
+		//	compiledLines.push_back("wrexp " + split(split(in, "[")[1], "]")[0]);
+		//}
 	}
 }
 
@@ -1814,29 +2074,29 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 		return "swp\n";
 	if (destination == "@A" && from == "@C")
 		return "swpc\n";
-	if (destination == "@A" && from == "@EX")
-		return "rdexp\n";
+	//if (destination == "@A" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\n";
 
 	if (destination == "@B" && from == "@A")
 		return "swp\n";
 	if (destination == "@B" && from == "@C")
 		return "swpc\nswp\n";
-	if (destination == "@B" && from == "@EX")
-		return "rdexp\nswp\n";
+	//if (destination == "@B" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswp\n";
 
 	if (destination == "@C" && from == "@A")
 		return "swpc\n";
 	if (destination == "@C" && from == "@B")
 		return "swp\nswpc\n";
-	if (destination == "@C" && from == "@EX")
-		return "rdexp\nswpc\n";
+	//if (destination == "@C" && split(from, "[")[0] == "@EX")
+	//	return "rdexp " + split(split(from, "[")[1], "]")[0] + "\nswpc\n";
 
-	if (destination == "@EX" && from == "@A")
-		return "wrexp\n";
-	if (destination == "@EX" && from == "@B")
-		return "swp\nwrexp\n";
-	if (destination == "@EX" && from == "@C")
-		return "swpc\nwrexp\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@A")
+	//	return "wrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@B")
+	//	return "swp\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
+	//if (split(destination, "[")[0] == "@EX" && from == "@C")
+	//	return "swpc\nwrexp " + split(split(destination, "[")[1], "]")[0] + "\n";
 
 	return "";
 }
@@ -1901,22 +2161,28 @@ int ParseValue(const string& input) {
 		return stoi(input);
 	if (IsLabel(input)) // If a label
 		return FindLabelLine(input, labels, labelLineValues);
-	if (IsPointer(input)) // If a pointer
-		return ParseValue(split(input, "*")[1]);
+	if (IsPointer(input)) { // If a pointer
+		std::string pval = split(input, "*")[1];
+		return ParseValue(pval.substr(pval.find_last_of("]") + 1, pval.size()));
+	}
 
 	return -1;
 }
 
 // Reads from mem at the address stored in pointer, into REG A
 void LoadPointer(const string& str) {
-	LoadAddress("@A", split(str, "*")[1]);
+	LoadAddress("@A", split(str, "]")[1]);
+	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("ldain");
+	compiledLines.push_back("bnk 0");
 }
 
 // Writes from REG B to mem at the address stored in pointer
 void StoreIntoPointer(const string& str) {
-	LoadAddress("@A", split(str, "*")[1]);
+	LoadAddress("@A", split(str, "]")[1]);
+	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("staout");
+	compiledLines.push_back("bnk 0");
 }
 
 void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
@@ -2306,30 +2572,31 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
 			compiledLines.push_back("");
 
-
-
-			// If second argument is an address
-			if (IsHex(valBPre)) {
-				LoadAddress("@B", to_string(valBProcessed));
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a register
-			else if (IsReg(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
-			}
-			// If second argument is a variable
-			else if (IsVar(valBPre)) {
-				LoadAddress("@B", valBPre);
-				compiledLines.at(compiledLines.size() - 1) += "\n";
-			}
-			// If second argument is a new decimal value
-			else if (IsDec(valBPre)) {
-				compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
-			}
-			// If second argument is a pointer
-			else if (IsPointer(valBPre)) {
-				LoadPointer(valBPre);
-			}
+			
+			// "not" command only takes a single argument, so don't attempt to load it
+			if(command != "not")
+				// If second argument is an address
+				if (IsHex(valBPre)) {
+					LoadAddress("@B", to_string(valBProcessed));
+					compiledLines.at(compiledLines.size() - 1) += "\n";
+				}
+				// If second argument is a register
+				else if (IsReg(valBPre)) {
+					compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
+				}
+				// If second argument is a variable
+				else if (IsVar(valBPre)) {
+					LoadAddress("@B", valBPre);
+					compiledLines.at(compiledLines.size() - 1) += "\n";
+				}
+				// If second argument is a new decimal value
+				else if (IsDec(valBPre)) {
+					compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
+				}
+				// If second argument is a pointer
+				else if (IsPointer(valBPre)) {
+					LoadPointer(valBPre);
+				}
 
 
 			// If first argument is an address

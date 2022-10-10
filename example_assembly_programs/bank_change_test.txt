@@ -1,0 +1,4 @@
+bnk 1
+bnk 0
+jmp
+here 2

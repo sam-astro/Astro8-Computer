@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Astro-8"
-#define MyAppVersion "v1.0.1-alpha"
+#define MyAppVersion "v1.1.0-alpha"
 #define MyAppPublisher "AstroSam"
 #define MyAppURL "https://github.com/sam-astro/Astro8-Computer"
 #define MyAppExeName "astro8.exe"
@@ -83,9 +83,9 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 [Files]
 Source: ".\Astro8-Emulator\x64\Release\{#MyAppExeName}"; DestDir: "{app}";  Flags: ignoreversion   
 Source: ".\Astro8-Emulator\x64\Release\char_set_memtape"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\Astro8-Emulator\x64\Release\high.wav"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\Astro8-Emulator\x64\Release\medium.wav"; DestDir: "{app}"; Flags: ignoreversion     
-Source: ".\Astro8-Emulator\x64\Release\low.wav"; DestDir: "{app}"; Flags: ignoreversion   
+Source: ".\Astro8-Emulator\x64\Release\noise.wav"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\Astro8-Emulator\x64\Release\square.wav"; DestDir: "{app}"; Flags: ignoreversion     
+Source: ".\Astro8-Emulator\x64\Release\triangle.wav"; DestDir: "{app}"; Flags: ignoreversion   
 Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}";             Flags: ignoreversion
 Source: ".\Releases\Astro8-Win_x64\SDL2_mixer.dll"; DestDir: "{app}";             Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files

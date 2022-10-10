@@ -10,20 +10,22 @@
 ///////////////////////
 
 
-change $WIDTH = 64
-change $HEIGHT = 64
+define $expLoc = 53500
 
-change $pixOffset = 61439 // Beginning of video memory
-change $charOffset = 61294 // Beginning of character memory
+change $WIDTH = 108
+change $HEIGHT = 108
+
+change $pixOffset = 53871 // Beginning of video memory
+change $charOffset = 53546 // Beginning of character memory
 
 change $slowBallSpeed = 0
 change $slowPaddleSpeed = 0
 
-change @EX = 168   // Zero out expansion port
+change *[1]$expLoc = 168   // Zero out expansion port
 change $key = 168
 
-change $LEFTSCOREPOS = 61306
-change $RIGHTSCOREPOS = 61312
+change $LEFTSCOREPOS = 53568
+change $RIGHTSCOREPOS = 53578
 
 change $PADDLECHAR = 11
 change $NETCHAR = 65
@@ -44,27 +46,27 @@ change $tempB = 0
 
 #start
 
-change $ballPosX = 32
-change $ballPosY = 32
+change $ballPosX = 54
+change $ballPosY = 54
 change $ballVelY = 1  //   0->Up    1->Down
 change $ballVelX = 1  //   0->Left  1->Right
 
 change $leftScore = 0
 change $rightScore = 0
 
-change $lPaddleY = 5
-change *$lcharPosition = 0
-change $rPaddleY = 5
-change *$rcharPosition = 0
+change $lPaddleY = 9
+//change *$lcharPosition = 0
+change $rPaddleY = 9
+//change *$rcharPosition = 0
 
 
 #netDrawLoop
-mult $temp,10 -> $tempB
-add 5,$tempB -> $tempB
+mult $temp,18 -> $tempB
+add 9,$tempB -> $tempB
 add $tempB,$charOffset -> $tempB
-change *$tempB = $NETCHAR
+change *[1]$tempB = $NETCHAR
 add $temp,1 -> $temp
-gotoif $temp<11, #netDrawLoop
+gotoif $temp<18, #netDrawLoop
 
 
 #update
@@ -77,7 +79,7 @@ gotoif $temp<11, #netDrawLoop
  // Slow the speed of calculating the paddles
 if $slowPaddleSpeed==14000:
     // Get keypress
-    change $key = @EX
+    change $key = *[1]$expLoc
 
     change $slowPaddleSpeed = 0
 
@@ -85,27 +87,31 @@ if $slowPaddleSpeed==14000:
     if $key==$W: // Up
         if $lPaddleY>0:
             sub $lPaddleY,1 -> $lPaddleY
-            change *$lcharPosition = 0
+            change *[1]$lcharPosition = 0
         endif
     endif
     if $key==$S: // Down
-        if $lPaddleY<10:
+        if $lPaddleY<17:
             add $lPaddleY,1 -> $lPaddleY
-            change *$lcharPosition = 0
+            change *[1]$lcharPosition = 0
         endif
     endif
 
+
+    // Get keypress
+    change $key = *[1]$expLoc
+    
     // Right paddle movement
     if $key==$UP: // Up
         if $rPaddleY>0:
             sub $rPaddleY,1 -> $rPaddleY
-            change *$rcharPosition = 0
+            change *[1]$rcharPosition = 0
         endif
     endif
     if $key==$DOWN: // Down
-        if $rPaddleY<10:
+        if $rPaddleY<17:
             add $rPaddleY,1 -> $rPaddleY
-            change *$rcharPosition = 0
+            change *[1]$rcharPosition = 0
         endif
     endif
 
@@ -115,15 +121,15 @@ if $slowPaddleSpeed==14000:
     //////////////////////////////////////
 
     // Left paddle
-    mult $lPaddleY,10 -> $temp
+    mult $lPaddleY,18 -> $temp
     add $charOffset,$temp -> $lcharPosition
-    change *$lcharPosition = $PADDLECHAR
+    change *[1]$lcharPosition = $PADDLECHAR
 
     // Right paddle
-    mult $rPaddleY,10 -> $temp
-    add 9,$temp -> $temp
+    mult $rPaddleY,18 -> $temp
+    add 17,$temp -> $temp
     add $charOffset,$temp -> $rcharPosition
-    change *$rcharPosition = $PADDLECHAR
+    change *[1]$rcharPosition = $PADDLECHAR
 
 endif
 #skipPaddles
@@ -135,7 +141,7 @@ endif
 //////////
 
 // Slow the speed of calculating the ball
-if $slowBallSpeed==20000:
+if $slowBallSpeed==10000:
 
     change $slowBallSpeed = 0
 
@@ -158,8 +164,8 @@ if $slowBallSpeed==20000:
 
     // Check if in L/R goals
     if $ballPosX==0: // Left goal
-        change $ballPosX = 32
-        change $ballPosY = 32
+        change $ballPosX = 54
+        change $ballPosY = 54
         change $ballVelX = 1
         add $rightScore,1 -> $rightScore
         // Restart game if player reaches 10 points
@@ -167,9 +173,9 @@ if $slowBallSpeed==20000:
             goto #start
         endif
     endif
-    if $ballPosX==63: // Right goal
-        change $ballPosX = 32
-        change $ballPosY = 32
+    if $ballPosX==107: // Right goal
+        change $ballPosX = 54
+        change $ballPosY = 54
         change $ballVelX = 0
         add $leftScore,1 -> $leftScore
         // Restart game if player reaches 10 points
@@ -183,7 +189,7 @@ if $slowBallSpeed==20000:
     if $ballPosY==0: // Top wall
         change $ballVelY = 1
     endif
-    if $ballPosY==63: // Bottom wall
+    if $ballPosY==107: // Bottom wall
         change $ballVelY = 0
     endif
 
@@ -198,34 +204,32 @@ if $slowBallSpeed==20000:
             endif
         endif
     endif
-    if $ballPosX>55: // If in range of right paddle
-        if $ballPosX<59: // There is extra space on the right side, make sure ball is not in this space.
-            mult $rPaddleY,6 -> $temp // Get relative position in pixel scale
-            add $temp,6 -> $tempB
-            if $ballPosY<$tempB:
-                if $ballPosY>$temp:
-                    change $ballVelX = 0
-                endif
+    if $ballPosX>98: // If in range of right paddle
+        mult $rPaddleY,6 -> $temp // Get relative position in pixel scale
+        add $temp,6 -> $tempB
+        if $ballPosY<$tempB:
+            if $ballPosY>$temp:
+                change $ballVelX = 0
             endif
         endif
     endif
 
 
     // Calculate and draw ball
-    change *$pixelPosition = 0 // Clear last position
+    change *[1]$pixelPosition = 0 // Clear last position
     mult $ballPosY,$WIDTH -> $temp
     add $temp,$ballPosX -> $temp
     add $temp,$pixOffset -> $pixelPosition
-    change *$pixelPosition = 65534 // Set current position to white
+    change *[1]$pixelPosition = 65535 // Set current position to white
 
 endif
 
 
 // Draw scores
 add $leftScore,39 -> $temp  // Left score
-change *$LEFTSCOREPOS = $temp
+change *[1]$LEFTSCOREPOS = $temp
 add $rightScore,39 -> $temp  // Right score
-change *$RIGHTSCOREPOS = $temp
+change *[1]$RIGHTSCOREPOS = $temp
 
 
 // Increment counters

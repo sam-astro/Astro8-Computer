@@ -6,21 +6,22 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-change $chMemOffset = 61294
+change $chMemOffset = 53546
 change $charCount = 0
-change @EX = 168
 change $cursorChar = 8
 change $lastKey = 168
+change $expLoc = 53500
+change $expLoc2 = 53502
 
 
 // Cursor/clear character
 add $chMemOffset,$charCount -> $actualAddress
-change *$actualAddress = $cursorChar
+change *[1]$actualAddress = $cursorChar
 
 #mainLoop // Main loop
 
 // Get any key press
-change $key = @EX
+change $key = *[1]$expLoc
 
 // If the user is pressing a key
 if $key!=168:
@@ -31,35 +32,36 @@ if $key!=168:
 			if $charCount>0:
 				// Clear character
 				add $chMemOffset,$charCount -> $actualAddress
-				change *$actualAddress = 0
+				change *[1]$actualAddress = 0
 
 				// Move backward in memory
 				sub $charCount,1 -> $charCount
 				// Cursor character
 				add $chMemOffset,$charCount -> $actualAddress
-				change *$actualAddress = $cursorChar
+				change *[1]$actualAddress = $cursorChar
 			endif
 		endif
 
 		if $key!=70: // If backspace key is NOT pressed
 			// Put character into memory
 			add $chMemOffset,$charCount -> $actualAddress
-			change *$actualAddress = $key
+			change *[1]$actualAddress = $key
 			
 			// Increment character position
 			add $charCount,1 -> $charCount
 
 			// Cursor/clear character
 			add $chMemOffset,$charCount -> $actualAddress
-			change *$actualAddress = $cursorChar
+			change *[1]$actualAddress = $cursorChar
 
 			// Reset character count if exceeds char limit
-			if $charCount==110:
+			if $charCount==324:
 				change $charCount = 0
 			endif
 		endif
 
 		change $lastKey = $key
+		change *[1]$expLoc2 = 23424
 	endif
 endif
 

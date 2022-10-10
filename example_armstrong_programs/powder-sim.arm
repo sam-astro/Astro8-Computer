@@ -3,13 +3,17 @@
 ///////////////
 // Variables //
 ///////////////
-define $pixOffset = 61439 // Beginning of video memory
-define $charOffset = 61294 // Beginning of character memory
+define $expLoc0 = 53500
+define $expLoc1 = 53501
+define $expLoc2 = 53502
 
-define $CursorMoveSpeed = 15000
+define $pixOffset = 53871 // Beginning of video memory
+define $charOffset = *[1]$0pos // Beginning of character memory
+
+define $CursorMoveSpeed = 10000
 define $cursorCount = 0
-define $cursorX = 32
-define $cursorY = 32
+define $cursorX = 54
+define $cursorY = 54
 
 define $drawSpeed = 10000
 define $drawCount = 0
@@ -18,20 +22,26 @@ define $drawType = 1 // 0 = nothing, 1 = sand, 2 = water
 define $waterColor = 3484
 define $sandColor = 0b110111011101110
 
-change @EX = 168
+change *[1]$expLoc0 = 168
 
 change $lastKey = 168
 
 define $bufferALoc = 20000
-define $bufferBLoc = 24096
+define $bufferBLoc = 31664
+
+change $0pos = 53546
+change $1pos = 53547
+change $2pos = 53548
+change $3pos = 53549
+change $4pos = 53550
 
 #Start
 // Set default UI
-change 61294 = 's'
-change 61295 = 'a'
-change 61296 = 'n'
-change 61297 = 'd'
-change 61298 = 0
+change *[1]$0pos = 's'
+change *[1]$1pos = 'a'
+change *[1]$2pos = 'n'
+change *[1]$3pos = 'd'
+change *[1]$4pos = 0
 
 
 #MainLoop
@@ -44,50 +54,49 @@ if $drawCount==$drawSpeed:
     add $bufferALoc,$copyOffset -> $loc1
     add $bufferBLoc,$copyOffset -> $loc2
 
-
-    change $currentPixel = *$loc1
+    change $currentPixel = *[0]$loc1
     if $currentPixel==0: // Only process pixels with something in them
         add 1,$copyOffset -> $copyOffset
         goto #Processor
     endif
-    if $loc1>24032: // Only process pixels that aren't in the bottom layer
+    if $loc1>31556: // Only process pixels that aren't in the bottom layer
         goto #EndofProcessLoop
     endif
 
     // Handle sand type
     if $currentPixel==$sandColor:
         // Calculate next position
-        add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
+        add $loc1,108 -> $loc1
+        change $pixelVal1 = *[0]$loc1
         if $pixelVal1==0: // If the pixel below this one is empty
-            change *$loc2 = 0
+            change *[0]$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
+            add $loc2,108 -> $loc2
+            change *[0]$loc2 = $currentPixel
         endif
         if $pixelVal1==$waterColor: // If the pixel below this one is water, then fall through it
-            change *$loc2 = $waterColor
+            change *[0]$loc2 = $waterColor
             add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
+            add $loc2,108 -> $loc2
+            change *[0]$loc2 = $currentPixel
         endif
         if $pixelVal1!=0: // If the pixel below this one is full
             // Check if bottom-left pixel is empty
             sub $loc1,1 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
+            if *[0]$loc1==0:
+                change *[0]$loc2 = 0
                 add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,63 -> $loc2
-                change *$loc2 = $currentPixel
+                add $loc2,107 -> $loc2
+                change *[0]$loc2 = $currentPixel
                 goto #EndofProcessLoop
             endif
             // Check if bottom-right pixel is empty
             add $loc1,2 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
+            if *[0]$loc1==0:
+                change *[0]$loc2 = 0
                 add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,65 -> $loc2
-                change *$loc2 = $currentPixel
+                add $loc2,109 -> $loc2
+                change *[0]$loc2 = $currentPixel
                 goto #EndofProcessLoop
             endif
         endif
@@ -95,54 +104,54 @@ if $drawCount==$drawSpeed:
     // Handle water type
     if $currentPixel==$waterColor:
         // Calculate next position
-        add $loc1,64 -> $loc1
-        change $pixelVal1 = *$loc1
+        add $loc1,108 -> $loc1
+        change $pixelVal1 = *[0]$loc1
         if $pixelVal1==0: // If the pixel below this one is empty
-            change *$loc2 = 0
+            change *[0]$loc2 = 0
             add $bufferBLoc,$copyOffset -> $loc2
-            add $loc2,64 -> $loc2
-            change *$loc2 = $currentPixel
+            add $loc2,108 -> $loc2
+            change *[0]$loc2 = $currentPixel
         endif
         if $pixelVal1!=0: // If the pixel below this one is full
             // Check if bottom-left pixel is empty
             sub $loc1,1 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
+            if *[0]$loc1==0:
+                change *[0]$loc2 = 0
                 add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,63 -> $loc2
-                change *$loc2 = $currentPixel
+                add $loc2,107 -> $loc2
+                change *[0]$loc2 = $currentPixel
                 goto #EndofProcessLoop
             endif
             // Check if bottom-right pixel is empty
             add $loc1,2 -> $loc1
-            if *$loc1==0:
-                change *$loc2 = 0
+            if *[0]$loc1==0:
+                change *[0]$loc2 = 0
                 add $bufferBLoc,$copyOffset -> $loc2
-                add $loc2,65 -> $loc2
-                change *$loc2 = $currentPixel
+                add $loc2,109 -> $loc2
+                change *[0]$loc2 = $currentPixel
                 goto #EndofProcessLoop
             endif
             // Check if right pixel is empty
-            sub $loc1,64 -> $loc1
-            if *$loc1==0:
+            sub $loc1,108 -> $loc1
+            if *[0]$loc1==0:
                 add $loc2,1 -> $loc2
-                if *$loc2==0:
+                if *[0]$loc2==0:
                     add $bufferBLoc,$copyOffset -> $loc2
-                    change *$loc2 = 0
+                    change *[0]$loc2 = 0
                     add $loc2,1 -> $loc2
-                    change *$loc2 = $currentPixel
+                    change *[0]$loc2 = $currentPixel
                 endif
                 goto #EndofProcessLoop
             endif
             // Check if left pixel is empty
             sub $loc1,2 -> $loc1
-            if *$loc1==0:
+            if *[0]$loc1==0:
                 sub $loc2,1 -> $loc2
-                if *$loc2==0:
+                if *[0]$loc2==0:
                     add $bufferBLoc,$copyOffset -> $loc2
-                    change *$loc2 = 0
+                    change *[0]$loc2 = 0
                     sub $loc2,1 -> $loc2
-                    change *$loc2 = $currentPixel
+                    change *[0]$loc2 = $currentPixel
                 endif
                 goto #EndofProcessLoop
             endif
@@ -151,7 +160,7 @@ if $drawCount==$drawSpeed:
     
     #EndofProcessLoop
     add 1,$copyOffset -> $copyOffset
-    gotoif $copyOffset<4096, #Processor
+    gotoif $copyOffset<11664, #Processor
 
 
 
@@ -162,102 +171,99 @@ if $drawCount==$drawSpeed:
     add $bufferALoc,$copyOffset -> $loc1
     add $bufferBLoc,$copyOffset -> $loc2
     
-    change *$loc1 = *$loc2
+    change *[0]$loc1 = *[0]$loc2
 
     add $pixOffset,$copyOffset -> $pixLoc
-    change *$pixLoc = *$loc2
+    change *[1]$pixLoc = *[0]$loc2
 
     add 1,$copyOffset -> $copyOffset
-    gotoif $copyOffset<4096, #Copier
+    gotoif $copyOffset<11664, #Copier
     
 
     
-    ///////////////////////
-    // Draw cursor color //
-    ///////////////////////
-    // Get center pixel
-    mult $cursorY,64 -> $temp
-    add $cursorX,$temp -> $temp
-    change $bufCoord = $temp
-    add $pixOffset,$temp -> $temp
-    // Left crosshair
-    sub $temp,2 -> $temp
-    change *$temp = 65535
-    sub $temp,1 -> $temp
-    change *$temp = 65535
-    // Right crosshair
-    add $temp,5 -> $temp
-    change *$temp = 65535
-    add $temp,1 -> $temp
-    change *$temp = 65535
-    // Top crosshair
-    sub $temp,3 -> $temp
-    sub $temp,128 -> $temp
-    change *$temp = 65535
-    sub $temp,64 -> $temp
-    change *$temp = 65535
-    // Bottom crosshair
-    add $temp,320 -> $temp
-    change *$temp = 65535
-    add $temp,64 -> $temp
-    change *$temp = 65535
+    // ///////////////////////
+    // // Draw cursor color //
+    // ///////////////////////
+    // // Get center pixel
+    // mult $cursorY,108 -> $temp
+    // add $cursorX,$temp -> $temp
+    // change $bufCoord = $temp
+    // add $pixOffset,$temp -> $temp
+    // // Left crosshair
+    // sub $temp,2 -> $temp
+    // change *[1]$temp = 65535
+    // sub $temp,1 -> $temp
+    // change *[1]$temp = 65535
+    // // Right crosshair
+    // add $temp,5 -> $temp
+    // change *[1]$temp = 65535
+    // add $temp,1 -> $temp
+    // change *[1]$temp = 65535
+    // // Top crosshair
+    // sub $temp,3 -> $temp
+    // sub $temp,216 -> $temp
+    // change *[1]$temp = 65535
+    // sub $temp,108 -> $temp
+    // change *[1]$temp = 65535
+    // // Bottom crosshair
+    // add $temp,540 -> $temp
+    // change *[1]$temp = 65535
+    // add $temp,108 -> $temp
+    // change *[1]$temp = 65535
 
     change $drawCount = 0
 endif
 
 if $CursorMoveSpeed==$cursorCount:
 
-    ////////////////////////
-    // Clear cursor color //
-    ////////////////////////
-    // Get center pixel
-    mult $cursorY,64 -> $temp
-    add $cursorX,$temp -> $temp
-    add $pixOffset,$temp -> $temp
-    // Left crosshair
-    sub $temp,2 -> $temp
-    change *$temp = 0
-    sub $temp,1 -> $temp
-    change *$temp = 0
-    // Right crosshair
-    add $temp,5 -> $temp
-    change *$temp = 0
-    add $temp,1 -> $temp
-    change *$temp = 0
-    // Top crosshair
-    sub $temp,3 -> $temp
-    sub $temp,128 -> $temp
-    change *$temp = 0
-    sub $temp,64 -> $temp
-    change *$temp = 0
-    // Bottom crosshair
-    add $temp,320 -> $temp
-    change *$temp = 0
-    add $temp,64 -> $temp
-    change *$temp = 0
+    // ////////////////////////
+    // // Clear cursor color //
+    // ////////////////////////
+    // // Get center pixel
+    // mult $cursorY,108 -> $temp
+    // add $cursorX,$temp -> $temp
+    // add $pixOffset,$temp -> $temp
+    // // Left crosshair
+    // sub $temp,2 -> $temp
+    // change *[1]$temp = 0
+    // sub $temp,1 -> $temp
+    // change *[1]$temp = 0
+    // // Right crosshair
+    // add $temp,5 -> $temp
+    // change *[1]$temp = 0
+    // add $temp,1 -> $temp
+    // change *[1]$temp = 0
+    // // Top crosshair
+    // sub $temp,3 -> $temp
+    // sub $temp,216 -> $temp
+    // change *[1]$temp = 0
+    // sub $temp,108 -> $temp
+    // change *[1]$temp = 0
+    // // Bottom crosshair
+    // add $temp,540 -> $temp
+    // change *[1]$temp = 0
+    // add $temp,108 -> $temp
+    // change *[1]$temp = 0
 
-    change $keypress = @EX
+    change $keypress = *[1]$expLoc0
+    change $mousePos = *[1]$expLoc1
 
-    if $keypress=='w':
-        if $cursorY>3:
-            sub $cursorY,1 -> $cursorY
+    and $mousePos,0b1111111 -> $newYPos
+    bsr $mousePos,7 -> $newXPos
+    and $newXPos,0b1111111 -> $newXPos
+
+    if $newYPos>3:
+        if $newYPos<104:
+            change $cursorY = $newYPos
         endif
     endif
-    if $keypress=='s':
-        if $cursorY<60:
-            add $cursorY,1 -> $cursorY
+    
+    if $newXPos>3:
+        if $newXPos<104:
+            change $cursorX = $newXPos
         endif
     endif
-    if $keypress=='a':
-        if $cursorX>3:
-            sub $cursorX,1 -> $cursorX
-        endif
-    endif
-    if $keypress=='d':
-        if $cursorX<60:
-            add $cursorX,1 -> $cursorX
-        endif
-    endif
+    
 
     if $keypress=='o':
         if $keypress!=$lastKey:
@@ -266,25 +272,25 @@ if $CursorMoveSpeed==$cursorCount:
                 change $drawType = 0
             endif
             if $drawType==0:
-                change 61294 = 'n'
-                change 61295 = 'o'
-                change 61296 = 'n'
-                change 61297 = 'e'
-                change 61298 = 0
+                change *[1]$0pos = 'n'
+                change *[1]$1pos = 'o'
+                change *[1]$2pos = 'n'
+                change *[1]$3pos = 'e'
+                change *[1]$4pos = 0
             endif
             if $drawType==1:
-                change 61294 = 's'
-                change 61295 = 'a'
-                change 61296 = 'n'
-                change 61297 = 'd'
-                change 61298 = 0
+                change *[1]$0pos = 's'
+                change *[1]$1pos = 'a'
+                change *[1]$2pos = 'n'
+                change *[1]$3pos = 'd'
+                change *[1]$4pos = 0
             endif
             if $drawType==2:
-                change 61294 = 'w'
-                change 61295 = 'a'
-                change 61296 = 't'
-                change 61297 = 'e'
-                change 61298 = 'r'
+                change *[1]$0pos = 'w'
+                change *[1]$1pos = 'a'
+                change *[1]$2pos = 't'
+                change *[1]$3pos = 'e'
+                change *[1]$4pos = 'r'
             endif
         endif
     endif
@@ -298,40 +304,49 @@ if $CursorMoveSpeed==$cursorCount:
     // Draw cursor color //
     ///////////////////////
     // Get center pixel
-    mult $cursorY,64 -> $temp
+    mult $cursorY,108 -> $temp
     add $cursorX,$temp -> $temp
     change $bufCoord = $temp
     add $pixOffset,$temp -> $temp
-    // Draw the correct particle
-    if $drawType==1:
-        add $bufferALoc,$bufCoord -> $bufCoord
-        change *$bufCoord = $sandColor
+
+    // If the left mouse button is pressed down
+    if $mousePos>=16384:
+        // Draw the correct particle
+        if $drawType==0:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = 0
+        endif
+        if $drawType==1:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = $sandColor
+        endif
+        if $drawType==2:
+            add $bufferALoc,$bufCoord -> $bufCoord
+            change *[0]$bufCoord = $waterColor
+        endif
     endif
-    if $drawType==2:
-        add $bufferALoc,$bufCoord -> $bufCoord
-        change *$bufCoord = $waterColor
-    endif
+
     // Left crosshair
     sub $temp,2 -> $temp
-    change *$temp = 65535
+    change *[1]$temp = 65535
     sub $temp,1 -> $temp
-    change *$temp = 65535
+    change *[1]$temp = 65535
     // Right crosshair
     add $temp,5 -> $temp
-    change *$temp = 65535
+    change *[1]$temp = 65535
     add $temp,1 -> $temp
-    change *$temp = 65535
+    change *[1]$temp = 65535
     // Top crosshair
     sub $temp,3 -> $temp
-    sub $temp,128 -> $temp
-    change *$temp = 65535
-    sub $temp,64 -> $temp
-    change *$temp = 65535
+    sub $temp,216 -> $temp
+    change *[1]$temp = 65535
+    sub $temp,108 -> $temp
+    change *[1]$temp = 65535
     // Bottom crosshair
-    add $temp,320 -> $temp
-    change *$temp = 65535
-    add $temp,64 -> $temp
-    change *$temp = 65535
+    add $temp,540 -> $temp
+    change *[1]$temp = 65535
+    add $temp,108 -> $temp
+    change *[1]$temp = 65535
 
     change $cursorCount = 0
 endif
