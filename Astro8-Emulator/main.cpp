@@ -83,37 +83,37 @@ static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU =   0b0000000000000001,
-	ALU_MU =   0b0000000000000010,
-	ALU_DI =   0b0000000000000011,
-	ALU_SL =   0b0000000000000100,
-	ALU_SR =   0b0000000000000101,
-	ALU_AND =  0b0000000000000110,
-	ALU_OR =   0b0000000000000111,
-	ALU_NOT =  0b0000000000001000,
+	ALU_SU = 0b0000000000000001,
+	ALU_MU = 0b0000000000000010,
+	ALU_DI = 0b0000000000000011,
+	ALU_SL = 0b0000000000000100,
+	ALU_SR = 0b0000000000000101,
+	ALU_AND = 0b0000000000000110,
+	ALU_OR = 0b0000000000000111,
+	ALU_NOT = 0b0000000000001000,
 	ALU_MASK = 0b0000000000001111,
 };
 
 enum ReadInstruction : MicroInstruction {
-	READ_RA =   0b0000000000010000,
-	READ_RB =   0b0000000000100000,
-	READ_RC =   0b0000000000110000,
-	READ_RM =   0b0000000001000000,
-	READ_IR =   0b0000000001010000,
-	READ_CR =   0b0000000001100000,
+	READ_RA = 0b0000000000010000,
+	READ_RB = 0b0000000000100000,
+	READ_RC = 0b0000000000110000,
+	READ_RM = 0b0000000001000000,
+	READ_IR = 0b0000000001010000,
+	READ_CR = 0b0000000001100000,
 	READ_MASK = 0b0000000001110000,
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA =   0b0000000010000000,
-	WRITE_WB =   0b0000000100000000,
-	WRITE_WC =   0b0000000110000000,
-	WRITE_IW =   0b0000001000000000,
-	WRITE_DW =   0b0000001010000000,
-	WRITE_WM =   0b0000001100000000,
-	WRITE_J =    0b0000001110000000,
-	WRITE_AW =   0b0000010000000000,
-	WRITE_BNK =  0b0000010010000000,
+	WRITE_WA = 0b0000000010000000,
+	WRITE_WB = 0b0000000100000000,
+	WRITE_WC = 0b0000000110000000,
+	WRITE_IW = 0b0000001000000000,
+	WRITE_DW = 0b0000001010000000,
+	WRITE_WM = 0b0000001100000000,
+	WRITE_J = 0b0000001110000000,
+	WRITE_AW = 0b0000010000000000,
+	WRITE_BNK = 0b0000010010000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -222,6 +222,18 @@ Options:
                            High frequencies may be too hard to reach for some cpus
 )V0G0N";
 
+#if WINDOWS
+std::string getexepath()
+{
+	wchar_t path[MAX_PATH] = { 0 };
+	GetModuleFileNameW(NULL, path, MAX_PATH);
+
+	wstring ws(path);
+	string str(ws.begin(), ws.end());
+
+	return str.substr(0, str.find_last_of("/\\"));;
+}
+#endif
 
 void apply_pixels(
 	std::vector<unsigned char>& pixels,
@@ -449,7 +461,7 @@ int GenerateCharacterROM() {
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
 
-	const std::string charsetFilename = executableDirectory + "/char_set_memtape";
+	const std::string charsetFilename = executableDirectory + (WINDOWS ? "\\" : "/") + "char_set_memtape";
 	ifstream charset(charsetFilename);
 
 	if (charset.is_open())
@@ -485,7 +497,11 @@ int main(int argc, char** argv)
 
 
 	// Get the executable's installed directory
+#if WINDOWS
+	executableDirectory = getexepath();
+#else
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
+#endif
 
 	std::string code = "";
 	std::string filePath = "";
@@ -933,9 +949,9 @@ void Update()
 		case READ_CR:
 			bus = programCounter;
 			break;
-		//case READ_RE:
-		//	bus = expansionPort[ExpReg];
-		//	break;
+			//case READ_RE:
+			//	bus = expansionPort[ExpReg];
+			//	break;
 		}
 
 
@@ -1112,8 +1128,8 @@ void Update()
 
 				// Calculate target frequency from beginning 5-bits
 				float offset = 0.0f;
-				float targetSpeed = (float)((bus & 0b11111111000) >> 3) + offset;
-				targetSpeed = (105.282f * pow(2.71828f, 0.09616f * targetSpeed) - 99.91f) / 400.0f;
+				//float targetSpeed = (float)((bus & 0b11111111000) >> 3) + offset;
+				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f + offset;
 				int targetChannel = bus & 0b111;
 
 				// Use upper 8 bits to play audio
@@ -2572,28 +2588,28 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
 			compiledLines.push_back("");
 
-			
+
 			// "not" command only takes a single argument, so don't attempt to load it
-			if(command != "not")
+			if (command != "not")
 				// If second argument is an address
 				if (IsHex(valBPre)) {
 					LoadAddress("@B", to_string(valBProcessed));
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-				// If second argument is a register
+			// If second argument is a register
 				else if (IsReg(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
 				}
-				// If second argument is a variable
+			// If second argument is a variable
 				else if (IsVar(valBPre)) {
 					LoadAddress("@B", valBPre);
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-				// If second argument is a new decimal value
+			// If second argument is a new decimal value
 				else if (IsDec(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 				}
-				// If second argument is a pointer
+			// If second argument is a pointer
 				else if (IsPointer(valBPre)) {
 					LoadPointer(valBPre);
 				}
