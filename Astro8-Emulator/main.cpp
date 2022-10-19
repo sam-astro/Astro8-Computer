@@ -777,6 +777,9 @@ int main(int argc, char** argv)
 	auto lastSecond = std::chrono::high_resolution_clock::now();
 	auto lastFrame = lastSecond;
 	auto lastTick = lastSecond;
+	
+	int lastKey = 0;
+	int samekeyUses = 10;
 
 	while (running)
 	{
@@ -816,6 +819,7 @@ int main(int argc, char** argv)
 			++frameCount;
 			pendingEvent = SDL_Event();
 			bool keyboardDecided = false;
+			int undecidedKey = 168;
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_KEYDOWN)
@@ -830,22 +834,37 @@ int main(int argc, char** argv)
 				}
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
-					if (event.type == SDL_KEYDOWN) {
-						memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
+					if (event.type == SDL_KEYDOWN && !keyboardDecided) {
+						if((int)(event.key.keysym.scancode) == lastKey){
+							if(samekeyUses>0){
+								undecidedKey = (int)(event.key.keysym.scancode);
+								samekeyUses -= 1;
+								keyboardDecided = true;
+							}
+							else{
+								samekeyUses = 10;
+								lastKey = 168;
+							}
+						}
+						else{
+							undecidedKey = (int)(event.key.keysym.scancode);
+						}
+						
+						//memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
-						PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-						PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
-						keyboardDecided = true;
+						//PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+						//PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+						//keyboardDecided = true;
 						lastEvent = event;
 					}
 					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
 						eventUses++;
 					}*/
-					else if (event.type == SDL_KEYUP) {
-						memoryBytes[1][53500] = 168;
-						keyboardDecided = true;
+					/*else if (event.type == SDL_KEYUP) {
+						//memoryBytes[1][53500] = 168;
+						//keyboardDecided = true;
 						lastEvent = event;
-					}
+					}*/
 				}
 				// If using the mouse in the expansion port
 				if (usingMouse)
@@ -877,6 +896,13 @@ int main(int argc, char** argv)
 							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
+			lastKey = ConvertAsciiToSdcii(undecidedKey);
+			memoryBytes[1][53500] = ConvertAsciiToSdcii(undecidedKey);
+			if(undecidedKey != 168){
+				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+			}
+
 		}
 	}
 
