@@ -27,7 +27,7 @@
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v1.0.1-alpha";
+std::string VERSION = "Astro-8 VERSION: v2.0.1-alpha";
 
 
 #if UNIX
