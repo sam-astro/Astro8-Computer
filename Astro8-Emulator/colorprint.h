@@ -73,6 +73,10 @@ static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineC
 	//PrintColored(entireLine, yellowFGColor, "");
 	//cout  << endl;
 
+	if (split(entireLine, " ").size() > 3)
+		if (stoi(trim(split(entireLine, " ")[3])) != 0)
+			return false;
+
 	if (memAddr <= currentLineCount + 1) // If it is 'set', then it will increment counter IF the memory location is in program mem
 		return true;
 	else

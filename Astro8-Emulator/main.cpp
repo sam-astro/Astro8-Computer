@@ -145,7 +145,7 @@ void Draw();
 void DrawPixel(int x, int y, int r, int g, int b);
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale);
 unsigned BitRange(unsigned value, unsigned offset, unsigned n);
-vector<std::string> parseCode(const std::string& input);
+vector<vector<std::string>> parseCode(const std::string& input);
 void GenerateMicrocode();
 std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
@@ -476,12 +476,12 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
-	memoryBytes.push_back(vector<int>());
-	memoryBytes.push_back(vector<int>());
-
 	// Fill the memory
-	for (int memindex = 0; memindex < 65535; memindex++)
-		memoryBytes[1].push_back(0);
+	for (int membank = 0; membank < 4; membank++) {
+		memoryBytes.push_back(vector<int>());
+		for (int memindex = 0; memindex < 65535; memindex++)
+			memoryBytes[membank].push_back(0);
+	}
 
 
 	// Get the executable's installed directory
@@ -700,15 +700,16 @@ int main(int argc, char** argv)
 		try
 		{
 			// Generate memory from code and convert from hex to decimal
-			vector<std::string> mbytes = parseCode(code);
-			for (int memindex = 0; memindex < mbytes.size(); memindex++)
-				memoryBytes[0].push_back(HexToDec(mbytes[memindex]));
+			vector<vector<std::string>> mbytes = parseCode(code);
+			for (int membank = 0; membank < mbytes.size(); membank++)
+				for (int memindex = 0; memindex < mbytes[membank].size(); memindex++)
+					memoryBytes[membank][memindex] = (HexToDec(mbytes[membank][memindex]));
 
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
 			f << "ASTRO-8 AEXE Executable file" << '\n';
 			f << (usingKeyboard == true ? "1" : "0") << '\n';
-			for (vector<string>::const_iterator i = mbytes.begin(); i != mbytes.end(); ++i) {
+			for (vector<string>::const_iterator i = mbytes[0].begin(); i != mbytes[0].end(); ++i) {
 				f << *i << '\n';
 			}
 			f.close();
@@ -843,7 +844,7 @@ int main(int argc, char** argv)
 							}
 							else{
 								samekeyUses = 10;
-								lastKey = 168;
+								//lastKey = 168;
 							}
 						}
 						else{
@@ -1167,7 +1168,7 @@ void Update()
 			memoryIndex = bus;
 			break;
 		case WRITE_BNK:
-			BankReg = bus & 1;
+			BankReg = bus & 3;
 			break;
 			//case WRITE_EXI:
 			//	ExpReg = bus & 3;
@@ -1414,11 +1415,14 @@ vector<std::string> explode(const std::string& str, const char& ch) {
 
 
 // Convert assembly into bytes
-vector<std::string> parseCode(const std::string& input)
+vector<vector<std::string>> parseCode(const std::string& input)
 {
-	vector<std::string> outputBytes;
-	for (int i = 0; i < 65535; i++)
-		outputBytes.push_back("0000");
+	vector<vector<std::string>> outputBytes;
+	for (int b = 0; b < 4; b++) {
+		outputBytes.push_back(vector<std::string>());
+		for (int i = 0; i < 65535; i++)
+			outputBytes[b].push_back("0000");
+	}
 
 	std::string icopy = input;
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
@@ -1446,11 +1450,23 @@ vector<std::string> parseCode(const std::string& input)
 		}
 
 		// Sets the specified memory location to a value:  set <addr> <val>
-		if (splitBySpace[0] == "SET")
+		if (splitBySpace[0] == "SET" && splitBySpace.size()==3)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
-			outputBytes[addr] = hVal;
+			outputBytes[0][addr] = hVal;
+#if DEV_MODE
+			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
+#endif
+			continue;
+		}
+
+		// Sets the specified memory location to a value:  set <addr> <val> <bank>
+		else if (splitBySpace[0] == "SET")
+		{
+			int addr = stoi(splitBySpace[1]);
+			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
+			outputBytes[stoi(splitBySpace[3])][addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -1462,7 +1478,7 @@ vector<std::string> parseCode(const std::string& input)
 		{
 			int addr = memaddr;
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
-			outputBytes[addr] = hVal;
+			outputBytes[0][addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
@@ -1471,7 +1487,7 @@ vector<std::string> parseCode(const std::string& input)
 		}
 
 		// Memory address is already used, skip.
-		if (outputBytes[memaddr] != "0000") {
+		if (outputBytes[0][memaddr] != "0000") {
 			memaddr += 1;
 		}
 
@@ -1487,7 +1503,7 @@ vector<std::string> parseCode(const std::string& input)
 #if DEV_MODE
 				cout << DecToBinFilled(f, 5);
 #endif
-				outputBytes[memaddr] = DecToBinFilled(f, 5);
+				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 			}
 		}
 
@@ -1497,19 +1513,19 @@ vector<std::string> parseCode(const std::string& input)
 #if DEV_MODE
 			cout << DecToBinFilled(stoi(splitBySpace[1]), 11);
 #endif
-			outputBytes[memaddr] += DecToBinFilled(stoi(splitBySpace[1]), 11);
+			outputBytes[0][memaddr] += DecToBinFilled(stoi(splitBySpace[1]), 11);
 		}
 		else
 		{
 #if DEV_MODE
 			cout << " 00000000000";
 #endif
-			outputBytes[memaddr] += "00000000000";
+			outputBytes[0][memaddr] += "00000000000";
 		}
 #if DEV_MODE
-		cout << "  " + BinToHexFilled(outputBytes[memaddr], 4) + "\n";
+		cout << "  " + BinToHexFilled(outputBytes[0][memaddr], 4) + "\n";
 #endif
-		outputBytes[memaddr] = BinToHexFilled(outputBytes[memaddr], 4); // Convert from binary to hex
+		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
 	}
 
@@ -1518,7 +1534,7 @@ vector<std::string> parseCode(const std::string& input)
 	std::string processedOutput = "";
 	processedOutput += "\nv3.0 hex words addressed\n";
 	processedOutput += "000: ";
-	for (int outindex = 0; outindex < outputBytes.size(); outindex++)
+	for (int outindex = 0; outindex < outputBytes[0].size(); outindex++)
 	{
 		if (outindex % 8 == 0 && outindex != 0)
 		{
@@ -1526,9 +1542,9 @@ vector<std::string> parseCode(const std::string& input)
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
 		}
-		processedOutput += outputBytes[outindex] + " ";
+		processedOutput += outputBytes[0][outindex] + " ";
 
-		std::string ttmp = outputBytes[outindex];
+		std::string ttmp = outputBytes[0][outindex];
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 	}
 #if DEV_MODE
@@ -2830,12 +2846,12 @@ string CompileCode(const string& inputcode) {
 		}
 	}
 
-	string formattedstr = "";
-	for (int l = 0; l < compiledLines.size(); l++)
-	{
-		formattedstr += trim(compiledLines[l]) + "\n";
-	}
-	compiledLines = split(formattedstr, "\n");
+	//string formattedstr = "";
+	//for (int l = 0; l < compiledLines.size(); l++)
+	//{
+	//	formattedstr += trim(compiledLines[l]) + "\n";
+	//}
+	//compiledLines = split(formattedstr, "\n");
 
 
 	cout << "* Compiling Armstrong  ";

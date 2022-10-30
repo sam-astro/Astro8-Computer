@@ -1,0 +1,101 @@
+#AS
+
+// Include and store the frame data in memory: Bank 1, 0-53500
+#include "frame_data.arm"
+
+
+define $pixelOffset = 53871
+define $slowMax = 300 // ~150
+
+
+
+#Start
+
+change frame = 0
+change $memoryLocation = 0
+change $bytePixelValue = 0
+change $tmp = 0
+change $tmp2 = 0
+change $slowCounter = 0
+change $slowCounter2 = 0
+
+
+// Loop through every pixel in a frame
+change $framePixel = 0
+change $bitPixel = 0
+change $byte = 0
+change $byteCnt = 0
+change $bank = 2
+#videoLoop
+    #frameLoop
+        change $bitPixel = 0
+
+        if $bank==2:
+            change $bytePixelValue = *[2]$byte // Load byte from memory
+        endif
+        if $bank==1:
+            change $bytePixelValue = *[1]$byte // Load byte from memory
+        endif
+        
+        //add $pixelOffset,$byte -> $tmp2
+        //change *[1]$tmp2 = $tmp
+
+        #pixelLoop
+            // sub 15,$bitPixel -> $shiftAmnt // Amount to shift to get the correct pixel
+            
+            and $bytePixelValue,1 -> $tmp
+
+            if $tmp==1:
+                change $tmp = 65535
+            endif
+            //mult $tmp,65535 -> $tmp // If pixel 0, then it will be black, if it is 1, then it will be white
+
+            // Calculate the on-screen location and set it to the correct color
+            add $pixelOffset,$framePixel -> $tmp2
+            change *[1]$tmp2 = $tmp
+
+            bsr $bytePixelValue,1 -> $bytePixelValue // Shift right
+
+            add 1,$bitPixel -> $bitPixel
+            add 1,$framePixel -> $framePixel
+            add 1,$fpX -> $fpX
+            if $fpX>=54:
+                add $framePixel,54 -> $framePixel
+                change $fpX = 0
+            endif
+        gotoif $bitPixel<16, #pixelLoop
+
+        add 1,$byte -> $byte
+        if $byte==65535:
+            change $bank = 1
+            change $byte = 0
+            change $byteCnt = 0
+        endif
+        add 1,$byteCnt -> $byteCnt
+    gotoif $byteCnt<183, #frameLoop
+
+    change $byteCnt = 0
+    change $bitPixel = 0
+    change $framePixel = 0
+    change $fpX = 0
+
+
+    // Delay until next frame
+    #timerLoc
+        #timer2Loc
+            add $slowCounter2,1 -> $slowCounter2
+        gotoif $slowCounter2<$slowMax, #timer2Loc
+        change $slowCounter2 = 0
+        add $slowCounter,1 -> $slowCounter
+    gotoif $slowCounter<$slowMax, #timerLoc
+    change $slowCounter = 0
+
+    add $frame,1 -> $frame
+
+gotoif $frame<1000, #videoLoop
+
+
+goto #Start
+
+#doneLoop
+goto #doneLoop
