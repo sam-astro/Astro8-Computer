@@ -521,7 +521,8 @@ in register **C**
 #### Syntax
 
 ```
-BNK 1
+LDIC 15
+BNKC    , Sets the memory bank register to 0b1111
 ```
 
 <br>
@@ -536,7 +537,8 @@ register **B** and advance program counter by 2
 #### Syntax
 
 ```
-BNK 1
+LDWB
+HERE <Value>
 ```
 
 <br>
