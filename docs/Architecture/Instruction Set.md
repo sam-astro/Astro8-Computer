@@ -521,7 +521,9 @@ in register **C**
 #### Syntax
 
 ```
-BNK 1
+LDIA 15  , Load 15 into A then swap it into C
+SWPC
+BNKC     , Sets the memory bank register to C, which is 15
 ```
 
 <br>
@@ -536,7 +538,8 @@ register **B** and advance program counter by 2
 #### Syntax
 
 ```
-BNK 1
+LDWB
+HERE <Value>
 ```
 
 <br>
