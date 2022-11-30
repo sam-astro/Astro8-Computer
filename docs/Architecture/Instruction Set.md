@@ -521,8 +521,9 @@ in register **C**
 #### Syntax
 
 ```
-LDIC 15
-BNKC    , Sets the memory bank register to 0b1111
+LDIA 15  , Load 15 into A then swap it into C
+SWPC
+BNKC     , Sets the memory bank register to C, which is 15
 ```
 
 <br>
