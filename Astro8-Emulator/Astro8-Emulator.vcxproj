@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="armstrong-compiler.cpp" />
     <ClCompile Include="assembler.cpp" />
+    <ClCompile Include="escapi.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +153,7 @@
     <ClInclude Include="assembler.h" />
     <ClInclude Include="color.hpp" />
     <ClInclude Include="colorprint.h" />
+    <ClInclude Include="escapi.h" />
     <ClInclude Include="processing.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

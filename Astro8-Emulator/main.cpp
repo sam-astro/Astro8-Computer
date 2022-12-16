@@ -33,13 +33,14 @@ std::string VERSION = "Astro-8 VERSION: v1.0.1-alpha";
 #if UNIX
 #include <unistd.h>
 #elif WINDOWS
-#include <windows.h>
+//#include <windows.h>
+#include "escapi.h"
 #endif
 
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable, verbose;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose, usingWebcam;
 
 bool usingKeyboard = true, usingMouse = true;
 
@@ -83,37 +84,37 @@ static_assert(sizeof(MicroInstruction) * 8 >= MICROINSTR_SIZE,
 MicroInstruction microinstructionData[2048];
 
 enum ALUInstruction : MicroInstruction {
-	ALU_SU =   0b0000000000000001,
-	ALU_MU =   0b0000000000000010,
-	ALU_DI =   0b0000000000000011,
-	ALU_SL =   0b0000000000000100,
-	ALU_SR =   0b0000000000000101,
-	ALU_AND =  0b0000000000000110,
-	ALU_OR =   0b0000000000000111,
-	ALU_NOT =  0b0000000000001000,
+	ALU_SU = 0b0000000000000001,
+	ALU_MU = 0b0000000000000010,
+	ALU_DI = 0b0000000000000011,
+	ALU_SL = 0b0000000000000100,
+	ALU_SR = 0b0000000000000101,
+	ALU_AND = 0b0000000000000110,
+	ALU_OR = 0b0000000000000111,
+	ALU_NOT = 0b0000000000001000,
 	ALU_MASK = 0b0000000000001111,
 };
 
 enum ReadInstruction : MicroInstruction {
-	READ_RA =   0b0000000000010000,
-	READ_RB =   0b0000000000100000,
-	READ_RC =   0b0000000000110000,
-	READ_RM =   0b0000000001000000,
-	READ_IR =   0b0000000001010000,
-	READ_CR =   0b0000000001100000,
+	READ_RA = 0b0000000000010000,
+	READ_RB = 0b0000000000100000,
+	READ_RC = 0b0000000000110000,
+	READ_RM = 0b0000000001000000,
+	READ_IR = 0b0000000001010000,
+	READ_CR = 0b0000000001100000,
 	READ_MASK = 0b0000000001110000,
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA =   0b0000000010000000,
-	WRITE_WB =   0b0000000100000000,
-	WRITE_WC =   0b0000000110000000,
-	WRITE_IW =   0b0000001000000000,
-	WRITE_DW =   0b0000001010000000,
-	WRITE_WM =   0b0000001100000000,
-	WRITE_J =    0b0000001110000000,
-	WRITE_AW =   0b0000010000000000,
-	WRITE_BNK =  0b0000010010000000,
+	WRITE_WA = 0b0000000010000000,
+	WRITE_WB = 0b0000000100000000,
+	WRITE_WC = 0b0000000110000000,
+	WRITE_IW = 0b0000001000000000,
+	WRITE_DW = 0b0000001010000000,
+	WRITE_WM = 0b0000001100000000,
+	WRITE_J = 0b0000001110000000,
+	WRITE_AW = 0b0000010000000000,
+	WRITE_BNK = 0b0000010010000000,
 	WRITE_MASK = 0b0000011110000000,
 };
 
@@ -215,6 +216,7 @@ Options:
   -r, --run                Run an already assembled program in AstroEXE format
                            (program.AEXE)
   -nk, --nokeyboard        Disable the keyboard input
+  -wb, --webcam            Enable webcam (uses default, only works on Windows)
   -nm, --nomouse           Disable the mouse input
   -v, --verbose            Write extra data to console for better debugging
   -f, --freq <value>       Override the default CPU target frequency with your
@@ -477,11 +479,7 @@ int GenerateCharacterROM() {
 int main(int argc, char** argv)
 {
 	// Fill the memory
-	for (int membank = 0; membank < 4; membank++) {
-		memoryBytes.push_back(vector<int>());
-		for (int memindex = 0; memindex < 65535; memindex++)
-			memoryBytes[membank].push_back(0);
-	}
+	memoryBytes = vector<vector<int>>(4, vector<int>(65535, 0));
 
 
 	// Get the executable's installed directory
@@ -527,6 +525,12 @@ int main(int argc, char** argv)
 			runAstroExecutable = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
+		else if (argval == "-wb" || argval == "--webcam") { // Enable webcam (uses default, only works on Windows)
+			if (WINDOWS)
+				usingWebcam = true;
+			else
+				PrintColored("\n! Could not enable Webcam, only works on Windows devices. !\n", yellowFGColor, "");
+		}
 		else if (argval == "-nm" || argval == "--nomouse") // Disable the mouse input
 			usingMouse = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
@@ -739,7 +743,7 @@ int main(int argc, char** argv)
 
 			// Skip two lines to begin reading AEXE data
 			for (int memindex = 2; memindex < filelines.size(); memindex++)
-				memoryBytes[0].push_back(HexToDec(filelines[memindex]));
+				memoryBytes[0][memindex-2] = HexToDec(filelines[memindex]);
 		}
 		else
 		{
@@ -754,6 +758,38 @@ int main(int argc, char** argv)
 	if (compileOnly || assembleOnly) {
 		PrintColored("\nFinished successfully", greenFGColor, "");
 		exit(1);
+	}
+
+
+	// Start Webcam if specified and compatable
+	struct SimpleCapParams capture;
+	while (usingWebcam) {
+		int devices = setupESCAPI();
+
+
+		if (devices == 0)
+		{
+			PrintColored("\n! Webcam initialization failure or no devices found. !\n", yellowFGColor, "");
+			usingWebcam = false;
+			break;
+		}
+
+		capture.mWidth = 108;
+		capture.mHeight = 108;
+		capture.mTargetBuf = new int[108 * 108];
+
+		if (initCapture(0, &capture) == 0)
+		{
+			PrintColored("\n! Webcam capture failure. !\n", yellowFGColor, "");
+			usingWebcam = false;
+			break;
+		}
+
+		//while (isCaptureDone(0) == 0)
+		//{
+		//	/* Wait until capture is done. */
+		//}
+		break;
 	}
 
 
@@ -778,9 +814,13 @@ int main(int argc, char** argv)
 	auto lastSecond = std::chrono::high_resolution_clock::now();
 	auto lastFrame = lastSecond;
 	auto lastTick = lastSecond;
-	
+
 	int lastKey = 0;
 	int samekeyUses = 10;
+
+#if WINDOWS
+	uint16_t webcamPixelLoc = 0;
+#endif
 
 	while (running)
 	{
@@ -799,7 +839,15 @@ int main(int argc, char** argv)
 				<< std::flush;
 			updateCount = 0;
 			frameCount = 0;
+
+			// Request webcam capture if on
+			if (usingWebcam) {
+				doCapture(0);
+				//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
+			}
 		}
+
+
 
 		// CPU tick
 		// Update 1000 times, otherwise chrono becomes a bottleneck
@@ -821,6 +869,26 @@ int main(int argc, char** argv)
 			pendingEvent = SDL_Event();
 			bool keyboardDecided = false;
 			int undecidedKey = 168;
+
+			// Write webcam pixel value to expansion port
+			//   AA YYYYYYY XXXXXXX
+			// AA = Pixel color
+			// YY = Y location
+			// XX = X location
+			if (usingWebcam) {
+				uint32_t pixVal = capture.mTargetBuf[webcamPixelLoc];
+				memoryBytes[1][53503] = (((
+					((pixVal & 255)
+						+ ((pixVal >> 8) & 255)
+						+ ((pixVal >> 16) & 255)) / 255
+					) & 3) << 14) + ((int)webcamPixelLoc / 108 << 7) + (webcamPixelLoc % 108);
+				webcamPixelLoc++;
+				if (webcamPixelLoc >= 11664)
+					webcamPixelLoc = 0;
+				//cout << ((memoryBytes[1][53503]>>14)&3)<<"  x: " << (memoryBytes[1][53503] & 0b1111111) << endl;
+			}
+
+
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_KEYDOWN)
@@ -836,21 +904,21 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN && !keyboardDecided) {
-						if((int)(event.key.keysym.scancode) == lastKey){
-							if(samekeyUses>0){
+						if ((int)(event.key.keysym.scancode) == lastKey) {
+							if (samekeyUses > 0) {
 								undecidedKey = (int)(event.key.keysym.scancode);
 								samekeyUses -= 1;
 								keyboardDecided = true;
 							}
-							else{
+							else {
 								samekeyUses = 10;
 								//lastKey = 168;
 							}
 						}
-						else{
+						else {
 							undecidedKey = (int)(event.key.keysym.scancode);
 						}
-						
+
 						//memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
 						//PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
@@ -899,7 +967,7 @@ int main(int argc, char** argv)
 			}
 			lastKey = ConvertAsciiToSdcii(undecidedKey);
 			memoryBytes[1][53500] = ConvertAsciiToSdcii(undecidedKey);
-			if(undecidedKey != 168){
+			if (undecidedKey != 168) {
 				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
 			}
@@ -909,6 +977,7 @@ int main(int argc, char** argv)
 
 	destroy(gRenderer, gWindow);
 	SDL_Quit();
+	deinitCapture(0);
 
 	return 0;
 }
@@ -960,9 +1029,9 @@ void Update()
 		case READ_CR:
 			bus = programCounter;
 			break;
-		//case READ_RE:
-		//	bus = expansionPort[ExpReg];
-		//	break;
+			//case READ_RE:
+			//	bus = expansionPort[ExpReg];
+			//	break;
 		}
 
 
@@ -1139,8 +1208,7 @@ void Update()
 
 				// Calculate target frequency from beginning 5-bits
 				float offset = 0.0f;
-				float targetSpeed = (float)((bus & 0b11111111000) >> 3) + offset;
-				targetSpeed = (105.282f * pow(2.71828f, 0.09616f * targetSpeed) - 99.91f) / 400.0f;
+				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f + offset;
 				int targetChannel = bus & 0b111;
 
 				// Use upper 8 bits to play audio
@@ -1450,7 +1518,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		}
 
 		// Sets the specified memory location to a value:  set <addr> <val>
-		if (splitBySpace[0] == "SET" && splitBySpace.size()==3)
+		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3)
 		{
 			int addr = stoi(splitBySpace[1]);
 			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
@@ -1614,10 +1682,7 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 void GenerateMicrocode()
 {
 	// Generate zeros in data
-	vector<std::string> output;
-	for (int osind = 0; osind < 2048; osind++) {
-		output.push_back("00000");
-	}
+	vector<std::string> output(2048, "00000");
 
 	// Remove spaces from instruction codes and make uppercase
 	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
@@ -2377,6 +2442,9 @@ string CompileCode(const string& inputcode) {
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		string command = trim(split(codelines[i], " ")[0]);
+		
+		if (verbose)
+			PrintColored("Compiling: " + to_string((int)((float)i/(float)codelines.size()*100)) + "%\n", "", "");
 
 
 		// "#" label marker ex. #JumpToHere
@@ -2614,28 +2682,28 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(",\n, " + command + "'  '" + valAPre + "' with '" + valBPre + "' into '" + outLoc + "'");
 			compiledLines.push_back("");
 
-			
+
 			// "not" command only takes a single argument, so don't attempt to load it
-			if(command != "not")
+			if (command != "not")
 				// If second argument is an address
 				if (IsHex(valBPre)) {
 					LoadAddress("@B", to_string(valBProcessed));
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-				// If second argument is a register
+			// If second argument is a register
 				else if (IsReg(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
 				}
-				// If second argument is a variable
+			// If second argument is a variable
 				else if (IsVar(valBPre)) {
 					LoadAddress("@B", valBPre);
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-				// If second argument is a new decimal value
+			// If second argument is a new decimal value
 				else if (IsDec(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 				}
-				// If second argument is a pointer
+			// If second argument is a pointer
 				else if (IsPointer(valBPre)) {
 					LoadPointer(valBPre);
 				}

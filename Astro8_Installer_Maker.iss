@@ -86,7 +86,9 @@ Source: ".\Astro8-Emulator\x64\Release\char_set_memtape"; DestDir: "{app}"; Flag
 Source: ".\Astro8-Emulator\x64\Release\noise.wav"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\Astro8-Emulator\x64\Release\square.wav"; DestDir: "{app}"; Flags: ignoreversion     
 Source: ".\Astro8-Emulator\x64\Release\triangle.wav"; DestDir: "{app}"; Flags: ignoreversion   
-Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}";             Flags: ignoreversion
+Source: ".\Releases\Astro8-Win_x64\SDL2.dll"; DestDir: "{app}";             Flags: ignoreversion    
+Source: ".\Releases\Astro8-Win_x64\SDL2_mixer.dll"; DestDir: "{app}";             Flags: ignoreversion
+Source: ".\Releases\Astro8-Win_x64\escapi.dll"; DestDir: "{app}";             Flags: ignoreversion
 Source: ".\Releases\Astro8-Win_x64\SDL2_mixer.dll"; DestDir: "{app}";             Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
