@@ -712,7 +712,11 @@ int main(int argc, char** argv)
 			// Store memory into an .AEXE file
 			std::ofstream f(projectDirectory + programName + ".aexe");
 			f << "ASTRO-8 AEXE Executable file" << '\n';
-			f << (usingKeyboard == true ? "1" : "0") << '\n';
+			f << (usingKeyboard == true ? "1" : "0");
+			f << (usingWebcam == true ? "1" : "0");
+			f << (usingMouse == true ? "1" : "0");
+			f << (verbose == true ? "1" : "0");
+			f << '\n';
 			for (vector<string>::const_iterator i = mbytes[0].begin(); i != mbytes[0].end(); ++i) {
 				f << *i << '\n';
 			}
@@ -739,6 +743,9 @@ int main(int argc, char** argv)
 			// the exact options to get it working
 			if (trim(filelines[1]).size() >= 1) {
 				usingKeyboard = trim(filelines[1])[0] == '1';
+				usingWebcam = trim(filelines[1])[1] == '1';
+				usingMouse = trim(filelines[1])[2] == '1';
+				verbose = trim(filelines[1])[3] == '1';
 			}
 
 			// Skip two lines to begin reading AEXE data
