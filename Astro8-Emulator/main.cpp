@@ -290,6 +290,23 @@ int clamp(int x, int min, int max) {
 
 
 
+class KeyPress{
+public:
+	int keyCode;
+	int uses = 10;
+	friend bool operator== ( const KeyPress &k1, const KeyPress &k2);
+	
+	KeyPress(int key, int life){
+		keyCode = key;
+		uses = life;
+	}
+};
+bool operator== ( const KeyPress &k1, const KeyPress &k2) 
+{
+        return k1.keyCode == k2.keyCode;
+}
+
+
 
 /* global vars */
 Uint16 audioFormat = MIX_DEFAULT_FORMAT;  // current audio format constant
@@ -828,7 +845,7 @@ int main(int argc, char** argv)
 #if WINDOWS
 	uint16_t webcamPixelLoc = 0;
 #endif
-
+	vector<KeyPress> keyRollover = {};
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -877,7 +894,7 @@ int main(int argc, char** argv)
 			bool keyboardDecided = false;
 			int undecidedKey = 168;
 
-			// Write webcam pixel value to expansion port
+			// If the user has activated the webcam feature, write current webcam pixel value to expansion port
 			//   AA YYYYYYY XXXXXXX
 			// AA = Pixel color
 			// YY = Y location
@@ -896,6 +913,7 @@ int main(int argc, char** argv)
 			}
 
 
+			// Poll all input events
 			while (SDL_PollEvent(&event))
 			{
 				if (event.type == SDL_KEYDOWN)
@@ -904,26 +922,18 @@ int main(int argc, char** argv)
 						SDL_SetRelativeMouseMode(SDL_FALSE);
 						SDL_ShowCursor(SDL_ENABLE);
 					}
+				// Quit if received the quit event
 				if (event.type == SDL_QUIT)
-				{
 					running = false;
-				}
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
-					if (event.type == SDL_KEYDOWN && !keyboardDecided) {
-						if ((int)(event.key.keysym.scancode) == lastKey) {
-							if (samekeyUses > 0) {
-								undecidedKey = (int)(event.key.keysym.scancode);
-								samekeyUses -= 1;
-								keyboardDecided = true;
-							}
-							else {
-								samekeyUses = 10;
-								//lastKey = 168;
-							}
-						}
-						else {
-							undecidedKey = (int)(event.key.keysym.scancode);
+					if (event.type == SDL_KEYDOWN) {
+						
+						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), 10));
+						// Ignore if the key is already in the rollover queue.
+						// Otherwise, add it to the queue
+						if (keyIt == keyRollover.end()) {
+							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), 10));
 						}
 
 						//memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
@@ -931,7 +941,7 @@ int main(int argc, char** argv)
 						//PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 						//PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
 						//keyboardDecided = true;
-						lastEvent = event;
+						//lastEvent = event;
 					}
 					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
 						eventUses++;
@@ -972,12 +982,21 @@ int main(int argc, char** argv)
 							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
-			lastKey = ConvertAsciiToSdcii(undecidedKey);
-			memoryBytes[1][53500] = ConvertAsciiToSdcii(undecidedKey);
-			if (undecidedKey != 168) {
-				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+			//lastKey = ConvertAsciiToSdcii(undecidedKey);
+			// If there are keys in the queue, use it and decrease the life
+			if(keyRollover.size() > 0){
+				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode);
+				keyRollover[0].uses--;
+				// If this key has been fully used, remove from the queue
+				if(keyRollover[0].uses <= 0)
+					keyRollover.erase(keyRollover.begin());
 			}
+			else
+				memoryBytes[1][53500] = 168;
+			//if (undecidedKey != 168) {
+			//	PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+			//	PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+			//}
 
 		}
 	}
@@ -996,7 +1015,9 @@ void Update()
 	for (int step = 0; step < 8; step++)
 	{
 
-		// Execute fetch in single step
+		// Execute fetch in single step (normally this process is done in multiple clock cycles,
+		// but since it is required for every instruction this emulator speeds it up a little bit.
+		// This does not change a program's functionality.)
 		if (step == 0)
 		{
 			// CR
@@ -1042,7 +1063,7 @@ void Update()
 		}
 
 
-			// Find ALU modifiers
+		// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
@@ -1173,7 +1194,7 @@ void Update()
 		}
 
 
-			// Check for any writes and execute if applicable
+		// Check for any writes and execute if applicable
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
@@ -1306,10 +1327,10 @@ void Update()
 			programCounter++;
 		}
 
-			if (mcode & STANDALONE_EI)
-			{
-				break;
-			}
+		if (mcode & STANDALONE_EI)
+		{
+			break;
+		}
 	}
 }
 
@@ -1373,6 +1394,7 @@ void DrawNextPixel() {
 	pixelRamIndex++;
 }
 
+// Draw an entire screen's worth of pixels
 void Draw() {
 	while (true) {
 		DrawNextPixel();
@@ -1463,6 +1485,7 @@ unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 	return(value >> offset) & ((1u << n) - 1);
 }
 
+// Split a string <str> by a char <ch> into a vector of strings vector<std::string>
 vector<std::string> explode(const std::string& str, const char& ch) {
 	std::string next;
 	vector<std::string> result;
@@ -1879,7 +1902,7 @@ vector<int> labelLineValues;
 vector<string> compiledLines;
 
 
-
+// This will convert ASCII/SDL2 key codes to their SDCII alternatives
 int ConvertAsciiToSdcii(int asciiCode) {
 	int conversionTable[600];  // [ascii] = sdcii
 	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
@@ -1955,6 +1978,7 @@ int ConvertAsciiToSdcii(int asciiCode) {
 	return actualVal;
 }
 
+// Convert Decimal int to Hexadecimal string, padded with <desiredSize>
 string DecToHexFilled(int input, int desiredSize)
 {
 	stringstream ss;
@@ -2138,6 +2162,7 @@ void StoreAddress(const string& reg, const string& address) {
 	}
 }
 
+// Function to determine the instructions needed to load an immediate value into any register
 void RegIdToLDI(const string& in, const string& followingValue) {
 	int actualValue = ParseValue(followingValue);
 
@@ -2215,6 +2240,8 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 	return "";
 }
 
+// Get the actual line number in compiled assembly, this takes `SET` commands into account,
+// where they set a location other than their own and is therefore not a real command when assembled.
 int ActualLineNumFromNum(int x) {
 	string outStr = "";
 	for (int i = 0; i < compiledLines.size(); i++)
@@ -2236,6 +2263,7 @@ int ActualLineNumFromNum(int x) {
 	return outInt;
 }
 
+// Find the memory location of an Armstrong variable, and if it doesn't exist allocate memory
 int GetVariableAddress(const string& id) {
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
@@ -2247,6 +2275,7 @@ int GetVariableAddress(const string& id) {
 	return 16382 + vars.size() - 1;
 }
 
+// Find the line number that a label refers to 
 int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
 	for (int i = 0; i < labels.size(); i++)
 		if (labelName == labels[i])
@@ -2256,6 +2285,7 @@ int FindLabelLine(const string& labelName, const vector<string>& labels, const v
 	return -1;
 }
 
+// Parse a value into it's final form, whether it is a constant, memory address, variable, label, or pointer
 int ParseValue(const string& input) {
 	if (input.size() > 2) {
 		if (IsHex(input))      // If preceded by '0x', then it is a hex number
@@ -2276,7 +2306,7 @@ int ParseValue(const string& input) {
 	if (IsLabel(input)) // If a label
 		return FindLabelLine(input, labels, labelLineValues);
 	if (IsPointer(input)) { // If a pointer
-		std::string pval = split(input, "*")[1];
+		std::string pval = input.substr(1);
 		return ParseValue(pval.substr(pval.find_last_of("]") + 1, pval.size()));
 	}
 
@@ -2299,6 +2329,7 @@ void StoreIntoPointer(const string& str) {
 	compiledLines.push_back("bnk 0");
 }
 
+// Generate assembly for logically comparing any two values, memory locations, or registers
 void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
