@@ -11,6 +11,7 @@
 #include <codecvt>
 #include "processing.h"
 #include <filesystem>
+#include <map>
 
 #include "armstrong-compiler.h"
 
@@ -293,12 +294,11 @@ int clamp(int x, int min, int max) {
 class KeyPress{
 public:
 	int keyCode;
-	int uses = 10;
+	int uses = 1;
 	friend bool operator== ( const KeyPress &k1, const KeyPress &k2);
 	
-	KeyPress(int key, int life){
+	KeyPress(int key){
 		keyCode = key;
-		uses = life;
 	}
 };
 bool operator== ( const KeyPress &k1, const KeyPress &k2) 
@@ -846,6 +846,7 @@ int main(int argc, char** argv)
 	uint16_t webcamPixelLoc = 0;
 #endif
 	vector<KeyPress> keyRollover = {};
+	std::map<int, bool> pressedKeys;
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -928,13 +929,9 @@ int main(int argc, char** argv)
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
 					if (event.type == SDL_KEYDOWN) {
+						pressedKeys[(int)(event.key.keysym.scancode)] = true;
+
 						
-						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), 10));
-						// Ignore if the key is already in the rollover queue.
-						// Otherwise, add it to the queue
-						if (keyIt == keyRollover.end()) {
-							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), 10));
-						}
 
 						//memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
 
@@ -943,6 +940,8 @@ int main(int argc, char** argv)
 						//keyboardDecided = true;
 						//lastEvent = event;
 					}
+					else if (event.type == SDL_KEYUP)
+						pressedKeys[(int)(event.key.keysym.scancode)] = false;
 					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
 						eventUses++;
 					}*/
@@ -982,21 +981,34 @@ int main(int argc, char** argv)
 							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
+
+			// For all currently pressed keys, iterate and distribute sending key data
+			map<int, bool>::iterator itr;
+			for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
+				if (itr->second == true) {
+					std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(itr->first)));
+					// Ignore if the key is already in the rollover queue.
+					// Otherwise, add it to the queue
+					if (keyIt == keyRollover.end()) {
+						keyRollover.push_back(KeyPress((int)(itr->first)));
+					}
+				}
+			}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
 			if(keyRollover.size() > 0){
 				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode);
 				keyRollover[0].uses--;
 				// If this key has been fully used, remove from the queue
-				if(keyRollover[0].uses <= 0)
+				if(keyRollover[0].uses <= 0 && pressedKeys[keyRollover[0].keyCode]==false)
 					keyRollover.erase(keyRollover.begin());
 			}
 			else
 				memoryBytes[1][53500] = 168;
-			//if (undecidedKey != 168) {
-			//	PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-			//	PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
-			//}
+			if (memoryBytes[1][53500] != 168) {
+				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
+				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+			}
 
 		}
 	}
