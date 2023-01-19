@@ -28,7 +28,7 @@
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v2.0.1-alpha";
+std::string VERSION = "Astro-8 VERSION: v2.0.2-alpha";
 
 
 #if UNIX
@@ -290,7 +290,7 @@ int clamp(int x, int min, int max) {
 }
 
 
-
+// Class for key press input
 class KeyPress{
 public:
 	int keyCode;
@@ -436,13 +436,13 @@ void setupPlaybackSpeedEffect(const Mix_Chunk* const chunk, const float& speed, 
 	// XXX is it correct to behave the same way to all S16 and U16 formats? Should we create case statements for AUDIO_S16SYS, AUDIO_S16LSB, AUDIO_S16MSB, etc, individually?
 	switch (audioFormat)
 	{
-	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
 	default:
-	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
 	}
 }
 
@@ -756,7 +756,7 @@ int main(int argc, char** argv)
 		// Make sure it is a valid AEXE file
 		if (trim(filelines[0]) == "ASTRO-8 AEXE Executable file") {
 			// Use values on the second line as static options
-			// This lets people distribute AEXE files wihtout having to describe
+			// This lets people distribute AEXE files without having to describe
 			// the exact options to get it working
 			if (trim(filelines[1]).size() >= 1) {
 				usingKeyboard = trim(filelines[1])[0] == '1';
@@ -858,7 +858,7 @@ int main(int argc, char** argv)
 		if (secondDiff > 1000.0) {
 			lastSecond = startTime;
 			cout << "\r                                                       \r"
-				<< SimplifiedHertz(updateCount)
+				<< "Freq: " << SimplifiedHertz(updateCount)
 				<< "\tFPS: " << to_string(frameCount)
 				<< "  programCounter: " << to_string(programCounter)
 				<< std::flush;
@@ -928,18 +928,8 @@ int main(int argc, char** argv)
 					running = false;
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
-					if (event.type == SDL_KEYDOWN) {
+					if (event.type == SDL_KEYDOWN)
 						pressedKeys[(int)(event.key.keysym.scancode)] = true;
-
-						
-
-						//memoryBytes[1][53500] = ConvertAsciiToSdcii((int)(event.key.keysym.scancode));
-
-						//PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
-						//PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
-						//keyboardDecided = true;
-						//lastEvent = event;
-					}
 					else if (event.type == SDL_KEYUP)
 						pressedKeys[(int)(event.key.keysym.scancode)] = false;
 					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
@@ -964,6 +954,9 @@ int main(int argc, char** argv)
 						//mXRel = mXRel < 0 ? ((mXRel /4) << 6) & 0b111111000000 : (((~mXRel/4) + 1) << 6) & 0b111111000000;
 						//mYRel = -mYRel < 0 ? (-mYRel /4) & 0b111111 : ((~-mYRel /4) + 1) & 0b111111;
 
+						// This system sends the currrent coordinates of the mouse pointer,
+						// which is different than how a mouse actually works I'm quite sure, 
+						// And instead they send the relative movement since the last data send, like the above code tried to implement.
 						memoryBytes[1][53501] = ((event.motion.x << 7) + event.motion.y) + (memoryBytes[1][53501] & 0b1100000000000000);
 
 					}
@@ -985,6 +978,7 @@ int main(int argc, char** argv)
 			// For all currently pressed keys, iterate and distribute sending key data
 			map<int, bool>::iterator itr;
 			for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
+				// If the key is pressed/held down
 				if (itr->second == true) {
 					std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(itr->first)));
 					// Ignore if the key is already in the rollover queue.
@@ -992,6 +986,11 @@ int main(int argc, char** argv)
 					if (keyIt == keyRollover.end()) {
 						keyRollover.push_back(KeyPress((int)(itr->first)));
 					}
+				}
+				// If the key has recently been released, add 168 to queue and delete from map
+				else{
+					keyRollover.push_back(KeyPress(168));
+					pressedKeys.erase(itr);
 				}
 			}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
@@ -1023,7 +1022,7 @@ int main(int argc, char** argv)
 bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
-
+	// Fo all steps in the instruction, execute it's corresponding microinstruction
 	for (int step = 0; step < 8; step++)
 	{
 
@@ -1042,7 +1041,7 @@ void Update()
 			step = 2;
 		}
 
-		// Address in microcode ROM
+		// Access the microcode of the current instruction from the rom
 		int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
 		MicroInstruction mcode = microinstructionData[microcodeLocation];
 
@@ -1051,22 +1050,22 @@ void Update()
 		MicroInstruction readInstr = mcode & READ_MASK;
 		switch (readInstr) [[likely]]
 		{
-		case READ_RA:
+		case READ_RA: // Read from A register onto bus
 			bus = AReg;
 			break;
-		case READ_RB:
+		case READ_RB: // Read from B register onto bus
 			bus = BReg;
 			break;
-		case READ_RC:
+		case READ_RC: // Read from C reagister onto bus
 			bus = CReg;
 			break;
-		case READ_RM:
+		case READ_RM: // Read from memory address onto bus
 			bus = memoryBytes[BankReg][memoryIndex];
 			break;
-		case READ_IR:
+		case READ_IR: // Read from the instruction register onto bus
 			bus = InstructionReg & 0b1111111111;
 			break;
-		case READ_CR:
+		case READ_CR: // Read from the program counter onto bus
 			bus = programCounter;
 			break;
 			//case READ_RE:
@@ -1085,7 +1084,7 @@ void Update()
 			flags[1] = 0;
 			switch (aluInstr)
 			{
-			case ALU_SU: // Subtract
+			case ALU_SU: // Subtract @B from @A and put answer into @A
 				flags[1] = 1;
 				if (AReg - BReg == 0)
 					flags[0] = 1;
@@ -1097,7 +1096,7 @@ void Update()
 				}
 				break;
 
-			case ALU_MU: // Multiply
+			case ALU_MU: // Multiply @A and @B and put answer into @A
 				if (AReg * BReg == 0)
 					flags[0] = 1;
 				bus = AReg * BReg;
@@ -1108,7 +1107,7 @@ void Update()
 				}
 				break;
 
-			case ALU_DI: // Divide
+			case ALU_DI: // Divide @A by @B and put answer into @A
 				// Dont divide by zero
 				if (BReg != 0) {
 					if (AReg / BReg == 0)
@@ -1127,7 +1126,7 @@ void Update()
 				}
 				break;
 
-			case ALU_SL: // Logical bit shift left
+			case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
 				bus = AReg << (BReg & 0b1111);
 
 				if (bus == 0)
@@ -1140,7 +1139,7 @@ void Update()
 				}
 				break;
 
-			case ALU_SR: // Logical bit shift right
+			case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
 				bus = AReg >> (BReg & 0b1111);
 
 				if (bus == 0)
@@ -1153,7 +1152,7 @@ void Update()
 				}
 				break;
 
-			case ALU_AND: // Logical AND
+			case ALU_AND: // Logical AND @A and @B and put answer into @A
 				bus = AReg & BReg;
 
 				if (bus == 0)
@@ -1166,7 +1165,7 @@ void Update()
 				}
 				break;
 
-			case ALU_OR: // Logical OR
+			case ALU_OR: // Logical OR @A and @B and put answer into @A
 				bus = AReg | BReg;
 
 				if (bus == 0)
@@ -1179,7 +1178,7 @@ void Update()
 				}
 				break;
 
-			case ALU_NOT: // Logical NOT
+			case ALU_NOT: // Logical NOT @A and @B and put answer into @A
 				bus = ~AReg;
 
 				if (bus == 0)
@@ -1192,7 +1191,7 @@ void Update()
 				}
 				break;
 
-			default: // Add
+			default: // Add @A and @B and put answer into @A
 				if (AReg + BReg == 0)
 					flags[0] = 1;
 				bus = AReg + BReg;
@@ -1211,19 +1210,20 @@ void Update()
 		switch (writeInstr)
 		{
 		[[likely]] default: break;
-		case WRITE_WA:
+		case WRITE_WA: // Write from bus into A register
 			AReg = bus;
 			break;
-		case WRITE_WB:
+		case WRITE_WB: // Write from bus into B register
 			BReg = bus;
 			break;
-		case WRITE_WC:
+		case WRITE_WC: // Write from bus into C register
 			CReg = bus;
 			break;
-		case WRITE_IW:
+		case WRITE_IW: // Write from bus into Instruction register
 			InstructionReg = bus;
 			break;
-		case WRITE_WM:
+		case WRITE_WM: // Write from bus into memory location
+			// If the region of memory we are writing to is the expansion port mapped memory location for music
 			// Only play audio if writing to the dedicated audio expansion port
 			if (BankReg == 1 && memoryIndex == 53502) {
 				if (verbose) {
@@ -1235,114 +1235,62 @@ void Update()
 				////////////
 				// Audio: //
 				////////////
-
-				//		Format (old):     FFFFFCCC XXXXXXXX
+				
 				//		Format:     XXXXX FFFFFFFFCCC
 				//		You can only toggle one channel at a time per expansion port write.
 				//		CCC is converted to the index of the channel that is toggled
 				//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
 				//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
 				//		is changed and the channel is turned ON if it isn't already
-				//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output
+				//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
+				//              This means the first channel is index 1, etc.
 
 
-				// Calculate target frequency from beginning 5-bits
+				// Calculate target frequency from beginning 8-bits
 				float offset = 0.0f;
 				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f + offset;
 				int targetChannel = bus & 0b111;
 
 				// Use upper 8 bits to play audio
 				if (targetChannel > 0 && targetChannel <= 4)
+					// If the channel is not playing and the selected frequency is not 0, start playing with frequency
 					if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
 						speed_chunks[targetChannel - 1] = targetSpeed;
 						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
 						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
 					}
+					// If the channel is playing and the selected frequency is not 0, change frequency
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
 						speed_chunks[targetChannel - 1] = targetSpeed;
 					}
+					// If the channel is playing and the selected frequency is 0, stop channel
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
 						Mix_HaltChannel(targetChannel - 1);
 					}
 
 			}
+			// Otherwise just set the memory value to the bus
 			else
 				memoryBytes[BankReg][memoryIndex] = bus;
 			break;
-		case WRITE_J:
+		case WRITE_J: // Write from bus into program counter, ie a `JUMP`
 			programCounter = bus;
 			break;
-		case WRITE_AW:
+		case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
 			memoryIndex = bus;
 			break;
-		case WRITE_BNK:
+		case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
 			BankReg = bus & 3;
-			break;
-			//case WRITE_EXI:
-			//	ExpReg = bus & 3;
-			//	break;
-			//	case WRITE_WE:
-			//		expansionPort[ExpReg] = bus;
-			//		if (verbose) {
-			//			PrintColored("\n	-- cout >> ", brightBlackFGColor, "");
-			//			PrintColored(to_string(expansionPort[ExpReg]) + " ", greenFGColor, "");
-			//			PrintColored(to_string(ExpReg), blueFGColor, "");
-			//			cout << "\n";
-			//			//PrintColored(DecToBinFilled(expansionPort[ExpReg], 16), greenFGColor, "");
-			//			//cout << "\n";
-			//		}
-
-			//		// Only play audio if writing to the dedicated audio expansion port
-			//		if (ExpReg == 2) {
-			//			////////////
-			//			// Audio: //
-			//			////////////
-
-			//			//		Format:     FFFFFCCC XXXXXXXX
-			//			//		You can only toggle one channel at a time per expansion port write.
-			//			//		CCC is converted to the index of the channel that is toggled
-			//			//		Then the frequency for that channel is defined as an int value stored in FFFFF
-			//			//      If FFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
-			//			//		is changed and the channel is turned ON if it isn't already
-			//			//      CCC indexing starts at 1 instead of 0 to prevent accidental audio output
-
-
-			//			// Calculate target frequency from beginning 5-bits
-			//			float offset = 0.0f;
-			//			float targetSpeed = (((bus & 0b1111100000000000) >> 11) / 15.0f) + offset;
-			//			int targetChannel = (bus & 0b11100000000) >> 8;
-
-			//			// Use upper 8 bits to play audio
-			//			if (targetChannel > 0 && targetChannel <= 4)
-			//				if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
-			//					speed_chunks[targetChannel - 1] = targetSpeed;
-			//					Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
-			//					setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
-			//				}
-			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
-			//					speed_chunks[targetChannel - 1] = targetSpeed;
-			//				}
-			//				else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
-			//					Mix_HaltChannel(targetChannel - 1);
-			//				}
-
-			//		}
-
-
 			break;
 		}
 
 
 		// Standalone microinstructions (ungrouped)
-		if (mcode & STANDALONE_CE) [[unlikely]]
-		{
+		if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
 			programCounter++;
-		}
 
-		if (mcode & STANDALONE_EI)
-		{
+		if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
 			break;
-		}
 	}
 }
 
@@ -1423,6 +1371,7 @@ void DrawPixel(int x, int y, int r, int g, int b)
 	SDL_RenderDrawPoint(gRenderer, x, y);
 }
 
+// Neatly convert a large float number of Hz to a string with label
 std::string SimplifiedHertz(float input) {
 	if (input == INFINITY)
 		input = FLT_MAX;
