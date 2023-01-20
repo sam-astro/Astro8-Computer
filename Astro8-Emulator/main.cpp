@@ -405,8 +405,8 @@ struct PlaybackSpeedEffectHandler
 			for (int i = 0; i < bufferSize; i++)
 				buffer[i] = 0;
 
-			if (attemptSelfHalting)
-				Mix_HaltChannel(mixChannel);  // XXX unsafe call, since it locks audio; but no safer solution was found yet...
+			//if (attemptSelfHalting)
+			//	Mix_HaltChannel(mixChannel);  // XXX unsafe call, since it locks audio; but no safer solution was found yet...
 		}
 	}
 
@@ -436,13 +436,13 @@ void setupPlaybackSpeedEffect(const Mix_Chunk* const chunk, const float& speed, 
 	// XXX is it correct to behave the same way to all S16 and U16 formats? Should we create case statements for AUDIO_S16SYS, AUDIO_S16LSB, AUDIO_S16MSB, etc, individually?
 	switch (audioFormat)
 	{
-	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
-	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
-	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
 	default:
-	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
-	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
-	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, *speed, loop, trySelfHalt); break;
+	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
+	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
 	}
 }
 
@@ -987,11 +987,11 @@ int main(int argc, char** argv)
 						keyRollover.push_back(KeyPress((int)(itr->first)));
 					}
 				}
-				// If the key has recently been released, add 168 to queue and delete from map
-				else{
-					keyRollover.push_back(KeyPress(168));
-					pressedKeys.erase(itr);
-				}
+				//// If the key has recently been released, add 168 to queue and delete from map
+				//else{
+				//	keyRollover.push_back(KeyPress(168));
+				//	pressedKeys.erase(itr);
+				//}
 			}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
@@ -1022,7 +1022,7 @@ int main(int argc, char** argv)
 bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
-	// Fo all steps in the instruction, execute it's corresponding microinstruction
+	// For all steps in the instruction, execute it's corresponding microinstruction
 	for (int step = 0; step < 8; step++)
 	{
 
@@ -1257,7 +1257,7 @@ void Update()
 					if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
 						speed_chunks[targetChannel - 1] = targetSpeed;
 						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
-						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, true);
+						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, false);
 					}
 					// If the channel is playing and the selected frequency is not 0, change frequency
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
@@ -1265,6 +1265,7 @@ void Update()
 					}
 					// If the channel is playing and the selected frequency is 0, stop channel
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
+						//Mix_FadeOutChannel(targetChannel - 1, 10);
 						Mix_HaltChannel(targetChannel - 1);
 					}
 
