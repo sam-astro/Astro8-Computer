@@ -62,6 +62,10 @@ if $key!=168:
 
 		change $lastKey = $key
 		change *[1]$expLoc2 = 23424
+
+		asm"
+		vbuf
+		"
 	endif
 endif
 

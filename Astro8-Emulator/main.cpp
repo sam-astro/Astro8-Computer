@@ -28,7 +28,7 @@
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v2.0.2-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
 
 
 #if UNIX
@@ -37,7 +37,6 @@ std::string VERSION = "Astro-8 VERSION: v2.0.2-alpha";
 //#include <windows.h>
 #include "escapi.h"
 #endif
-
 
 using namespace std;
 
@@ -62,7 +61,10 @@ int imgY = 0;
 int charPixX = 0;
 int charPixY = 0;
 int characterRamIndex = 0;
-int pixelRamIndex = 53871;
+int pixelRamIndex = 0;
+
+// The register which stores the index of video buffer getting written to, and the video card reads and uses the opposite one.
+bool VideoBufReg = false;
 
 
 // 10000000 = 10.0MHz
@@ -70,6 +72,7 @@ int target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
 vector<vector<int>> memoryBytes;
+vector<vector<int>> videoBuffer;
 
 std::string projectDirectory;
 std::string executableDirectory;
@@ -107,16 +110,17 @@ enum ReadInstruction : MicroInstruction {
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA = 0b0000000010000000,
-	WRITE_WB = 0b0000000100000000,
-	WRITE_WC = 0b0000000110000000,
-	WRITE_IW = 0b0000001000000000,
-	WRITE_DW = 0b0000001010000000,
-	WRITE_WM = 0b0000001100000000,
-	WRITE_J = 0b0000001110000000,
-	WRITE_AW = 0b0000010000000000,
-	WRITE_BNK = 0b0000010010000000,
-	WRITE_MASK = 0b0000011110000000,
+	WRITE_WA =     0b0000000010000000,
+	WRITE_WB =     0b0000000100000000,
+	WRITE_WC =     0b0000000110000000,
+	WRITE_IW =     0b0000001000000000,
+	WRITE_DW =     0b0000001010000000,
+	WRITE_WM =     0b0000001100000000,
+	WRITE_J =      0b0000001110000000,
+	WRITE_AW =     0b0000010000000000,
+	WRITE_BNK =    0b0000010010000000,
+	WRITE_VBUF =   0b0000010100000000,
+	WRITE_MASK =   0b0000011110000000,
 };
 
 enum StandaloneInstruction : MicroInstruction {
@@ -161,10 +165,10 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "BNKC", "LDWB" };
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB"};
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK" };
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK", "VBF"};
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -201,6 +205,7 @@ std::string instructioncodes[] = {
 		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
 		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
 		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
+		"vbuf( 2=vbf & 3=ei", // Swap the video buffer
 		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
 		"ldwb( 2=cr,aw & 3=ce,rm,wb & 4=ei", // Load value directly after counter into B, and advance counter by 2
 };
@@ -495,8 +500,11 @@ int GenerateCharacterROM() {
 
 int main(int argc, char** argv)
 {
+
+	//std::cout << std::to_string((uint16_t)(((uint16_t)0b1000000000000000)<< (uint16_t)0b1)) << endl;
 	// Fill the memory
 	memoryBytes = vector<vector<int>>(4, vector<int>(65535, 0));
+	videoBuffer = vector<vector<int>>(2, vector<int>(11990, 0));
 
 
 	// Get the executable's installed directory
@@ -1060,7 +1068,7 @@ void Update()
 			bus = CReg;
 			break;
 		case READ_RM: // Read from memory address onto bus
-			bus = memoryBytes[BankReg][memoryIndex];
+			bus = (BankReg==1&& memoryIndex>=53546)?videoBuffer[VideoBufReg][memoryIndex - 53546] : memoryBytes[BankReg][memoryIndex];
 			break;
 		case READ_IR: // Read from the instruction register onto bus
 			bus = InstructionReg & 0b1111111111;
@@ -1127,7 +1135,7 @@ void Update()
 				break;
 
 			case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
-				bus = AReg << (BReg & 0b1111);
+				bus = (uint16_t)(AReg << (BReg & 0b1111));
 
 				if (bus == 0)
 					flags[0] = 1;
@@ -1140,7 +1148,7 @@ void Update()
 				break;
 
 			case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
-				bus = AReg >> (BReg & 0b1111);
+				bus = (uint16_t)(AReg >> (BReg & 0b1111));
 
 				if (bus == 0)
 					flags[0] = 1;
@@ -1271,8 +1279,12 @@ void Update()
 
 			}
 			// Otherwise just set the memory value to the bus
-			else
-				memoryBytes[BankReg][memoryIndex] = bus;
+			else {
+				if(BankReg == 1 && memoryIndex >= 53546) // If a video location
+					videoBuffer[(int)VideoBufReg][memoryIndex- 53546] = bus;
+				else // Else a normal memory location
+					memoryBytes[BankReg][memoryIndex] = bus;
+			}
 			break;
 		case WRITE_J: // Write from bus into program counter, ie a `JUMP`
 			programCounter = bus;
@@ -1282,6 +1294,10 @@ void Update()
 			break;
 		case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
 			BankReg = bus & 3;
+			break;
+		case WRITE_VBUF: // Write from bus into bank register, which changes the current memory bank being accessed
+			VideoBufReg = !VideoBufReg;
+			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
 			break;
 		}
 
@@ -1296,10 +1312,10 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = memoryBytes[1][characterRamIndex + 53546];
+	int characterRamValue = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	int pixelVal = memoryBytes[1][pixelRamIndex];
+	int pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex+324];
 	int r, g, b;
 
 	if (charPixRomVal == true) {
@@ -1359,8 +1375,8 @@ void DrawNextPixel() {
 void Draw() {
 	while (true) {
 		DrawNextPixel();
-		if (pixelRamIndex >= 65535) {
-			pixelRamIndex = 53871;
+		if (pixelRamIndex >= 108*108) {
+			pixelRamIndex = 0;
 			break;
 		}
 	}
