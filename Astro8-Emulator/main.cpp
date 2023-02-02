@@ -1295,7 +1295,7 @@ void Update()
 		case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
 			BankReg = bus & 3;
 			break;
-		case WRITE_VBUF: // Write from bus into bank register, which changes the current memory bank being accessed
+		case WRITE_VBUF: // Swap the video front and back buffer.
 			VideoBufReg = !VideoBufReg;
 			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
 			break;
