@@ -875,11 +875,13 @@ int main(int argc, char** argv)
 			updateCount = 0;
 			frameCount = 0;
 
+			#if WINDOWS
 			// Request webcam capture if on
 			if (usingWebcam) {
 				doCapture(0);
 				//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
 			}
+			#endif
 		}
 
 
