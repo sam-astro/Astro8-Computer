@@ -235,5 +235,7 @@ change *[1]$RIGHTSCOREPOS = $temp
 // Increment counters
 add $slowBallSpeed,1 -> $slowBallSpeed
 add $slowPaddleSpeed,1 -> $slowPaddleSpeed
+
+presentvbuff
 goto #update
 

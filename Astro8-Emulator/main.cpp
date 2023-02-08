@@ -40,39 +40,43 @@ std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable, verbose, usingWebcam;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose, usingWebcam, imageOnlyMode;
 
 bool usingKeyboard = true, usingMouse = true;
 
+uint16_t imageOnlyModeFrames = 10;
+uint16_t imageOnlyModeFrameCount = 10;
 
-int AReg = 0;
-int BReg = 0;
-int CReg = 0;
-int BankReg = 0;
-int InstructionReg = 0;
-int flags[2] = { 0, 0 };
+uint8_t randomID = 0;
+
+uint16_t AReg = 0;
+uint16_t BReg = 0;
+uint16_t CReg = 0;
+uint8_t BankReg = 0;
+uint16_t InstructionReg = 0;
+uint8_t flags[2] = { 0, 0 };
 int bus = 0;
-int outputReg = 0;
+uint16_t outputReg = 0;
 uint16_t memoryIndex = 0;
-uint64_t programCounter = 0;
+uint16_t programCounter = 0;
 
-int imgX = 0;
-int imgY = 0;
-int charPixX = 0;
-int charPixY = 0;
-int characterRamIndex = 0;
-int pixelRamIndex = 0;
+uint8_t imgX = 0;
+uint8_t imgY = 0;
+uint8_t charPixX = 0;
+uint8_t charPixY = 0;
+uint16_t characterRamIndex = 0;
+uint16_t pixelRamIndex = 0;
 
 // The register which stores the index of video buffer getting written to, and the video card reads and uses the opposite one.
 bool VideoBufReg = false;
 
 
 // 10000000 = 10.0MHz
-int target_cpu_freq = 10000000;
+uint32_t target_cpu_freq = 10000000;
 #define TARGET_RENDER_FPS 60.0
 
-vector<vector<int>> memoryBytes;
-vector<vector<int>> videoBuffer;
+vector<vector<uint16_t>> memoryBytes;
+vector<vector<uint16_t>> videoBuffer;
 
 std::string projectDirectory;
 std::string executableDirectory;
@@ -110,17 +114,17 @@ enum ReadInstruction : MicroInstruction {
 };
 
 enum WriteInstruction : MicroInstruction {
-	WRITE_WA =     0b0000000010000000,
-	WRITE_WB =     0b0000000100000000,
-	WRITE_WC =     0b0000000110000000,
-	WRITE_IW =     0b0000001000000000,
-	WRITE_DW =     0b0000001010000000,
-	WRITE_WM =     0b0000001100000000,
-	WRITE_J =      0b0000001110000000,
-	WRITE_AW =     0b0000010000000000,
-	WRITE_BNK =    0b0000010010000000,
-	WRITE_VBUF =   0b0000010100000000,
-	WRITE_MASK =   0b0000011110000000,
+	WRITE_WA = 0b0000000010000000,
+	WRITE_WB = 0b0000000100000000,
+	WRITE_WC = 0b0000000110000000,
+	WRITE_IW = 0b0000001000000000,
+	WRITE_DW = 0b0000001010000000,
+	WRITE_WM = 0b0000001100000000,
+	WRITE_J = 0b0000001110000000,
+	WRITE_AW = 0b0000010000000000,
+	WRITE_BNK = 0b0000010010000000,
+	WRITE_VBUF = 0b0000010100000000,
+	WRITE_MASK = 0b0000011110000000,
 };
 
 enum StandaloneInstruction : MicroInstruction {
@@ -155,6 +159,7 @@ vector<vector<std::string>> parseCode(const std::string& input);
 void GenerateMicrocode();
 std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
+void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(108 * 108 * 4, 0);
@@ -165,10 +170,10 @@ Mix_Chunk* waveforms[4];
 float speed_chunks[4] = { 1, 1, 1, 1 };
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB"};
+vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB" };
 
 std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK", "VBF"};
+std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK", "VBF" };
 std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR" };
 std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
 std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
@@ -228,6 +233,8 @@ Options:
   -f, --freq <value>       Override the default CPU target frequency with your
                            own.      Default = 10    higher = faster
                            High frequencies may be too hard to reach for some cpus
+  --imagemode [frames]     Don't render anything, instead capture [frames] number
+                           of frames, which is 10 by default, and save to disk
 )V0G0N";
 
 
@@ -296,19 +303,19 @@ int clamp(int x, int min, int max) {
 
 
 // Class for key press input
-class KeyPress{
+class KeyPress {
 public:
-	int keyCode;
-	int uses = 1;
-	friend bool operator== ( const KeyPress &k1, const KeyPress &k2);
-	
-	KeyPress(int key){
+	uint16_t keyCode;
+	uint16_t uses = 1;
+	friend bool operator== (const KeyPress& k1, const KeyPress& k2);
+
+	KeyPress(int key) {
 		keyCode = key;
 	}
 };
-bool operator== ( const KeyPress &k1, const KeyPress &k2) 
+bool operator== (const KeyPress& k1, const KeyPress& k2)
 {
-        return k1.keyCode == k2.keyCode;
+	return k1.keyCode == k2.keyCode;
 }
 
 
@@ -503,9 +510,10 @@ int main(int argc, char** argv)
 
 	//std::cout << std::to_string((uint16_t)(((uint16_t)0b1000000000000000)<< (uint16_t)0b1)) << endl;
 	// Fill the memory
-	memoryBytes = vector<vector<int>>(4, vector<int>(65535, 0));
-	videoBuffer = vector<vector<int>>(2, vector<int>(11990, 0));
+	memoryBytes = vector<vector<uint16_t>>(4, vector<uint16_t>(65535, 0));
+	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
+	randomID = rand() % 255;
 
 	// Get the executable's installed directory
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
@@ -560,6 +568,19 @@ int main(int argc, char** argv)
 			usingMouse = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
 			verbose = true;
+		else if (argval == "--imagemode") { // Don't render anything, instead capture <frames> number of frames and save to disk
+			try
+			{
+				imageOnlyMode = true;
+				std::filesystem::create_directory(projectDirectory + "./frames_" + std::to_string(randomID) + "/");
+				imageOnlyModeFrames = stoi(argv[i + 1]);
+				imageOnlyModeFrameCount = imageOnlyModeFrames;
+				i++;
+			}
+			catch (const std::exception&)
+			{
+			}
+		}
 		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
 			try
 			{
@@ -775,7 +796,7 @@ int main(int argc, char** argv)
 
 			// Skip two lines to begin reading AEXE data
 			for (int memindex = 2; memindex < filelines.size(); memindex++)
-				memoryBytes[0][memindex-2] = HexToDec(filelines[memindex]);
+				memoryBytes[0][memindex - 2] = HexToDec(filelines[memindex]);
 		}
 		else
 		{
@@ -831,7 +852,8 @@ int main(int argc, char** argv)
 	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
 	cout << "\n\n";
 
-	InitGraphics("Astro-8 Emulator", 108, 108, 5);
+	if (!imageOnlyMode) // No need to initialize graphics if no rendering is taking place
+		InitGraphics("Astro-8 Emulator", 108, 108, 5);
 
 
 	bool keyPress = false;
@@ -847,8 +869,8 @@ int main(int argc, char** argv)
 	auto lastFrame = lastSecond;
 	auto lastTick = lastSecond;
 
-	int lastKey = 0;
-	int samekeyUses = 10;
+	uint16_t lastKey = 0;
+	uint16_t samekeyUses = 10;
 
 #if WINDOWS
 	uint16_t webcamPixelLoc = 0;
@@ -1003,11 +1025,11 @@ int main(int argc, char** argv)
 			}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
-			if(keyRollover.size() > 0){
+			if (keyRollover.size() > 0) {
 				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode);
 				keyRollover[0].uses--;
 				// If this key has been fully used, remove from the queue
-				if(keyRollover[0].uses <= 0 && pressedKeys[keyRollover[0].keyCode]==false)
+				if (keyRollover[0].uses <= 0 && pressedKeys[keyRollover[0].keyCode] == false)
 					keyRollover.erase(keyRollover.begin());
 			}
 			else
@@ -1068,7 +1090,7 @@ void Update()
 			bus = CReg;
 			break;
 		case READ_RM: // Read from memory address onto bus
-			bus = (BankReg==1&& memoryIndex>=53546)?videoBuffer[VideoBufReg][memoryIndex - 53546] : memoryBytes[BankReg][memoryIndex];
+			bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
 			break;
 		case READ_IR: // Read from the instruction register onto bus
 			bus = InstructionReg & 0b1111111111;
@@ -1082,7 +1104,7 @@ void Update()
 		}
 
 
-		// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
+			// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
 		MicroInstruction aluInstr = mcode & ALU_MASK;
 
 		// Standalone microinstruction (ungrouped)
@@ -1213,7 +1235,7 @@ void Update()
 		}
 
 
-		// Check for any writes and execute if applicable
+			// Check for any writes and execute if applicable
 		MicroInstruction writeInstr = mcode & WRITE_MASK;
 		switch (writeInstr)
 		{
@@ -1243,7 +1265,7 @@ void Update()
 				////////////
 				// Audio: //
 				////////////
-				
+
 				//		Format:     XXXXX FFFFFFFFCCC
 				//		You can only toggle one channel at a time per expansion port write.
 				//		CCC is converted to the index of the channel that is toggled
@@ -1267,11 +1289,11 @@ void Update()
 						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
 						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, false);
 					}
-					// If the channel is playing and the selected frequency is not 0, change frequency
+				// If the channel is playing and the selected frequency is not 0, change frequency
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
 						speed_chunks[targetChannel - 1] = targetSpeed;
 					}
-					// If the channel is playing and the selected frequency is 0, stop channel
+				// If the channel is playing and the selected frequency is 0, stop channel
 					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
 						//Mix_FadeOutChannel(targetChannel - 1, 10);
 						Mix_HaltChannel(targetChannel - 1);
@@ -1280,8 +1302,8 @@ void Update()
 			}
 			// Otherwise just set the memory value to the bus
 			else {
-				if(BankReg == 1 && memoryIndex >= 53546) // If a video location
-					videoBuffer[(int)VideoBufReg][memoryIndex- 53546] = bus;
+				if (BankReg == 1 && memoryIndex >= 53546) // If a video location
+					videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
 				else // Else a normal memory location
 					memoryBytes[BankReg][memoryIndex] = bus;
 			}
@@ -1298,13 +1320,16 @@ void Update()
 		case WRITE_VBUF: // Write from bus into bank register, which changes the current memory bank being accessed
 			VideoBufReg = !VideoBufReg;
 			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+			if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
+				Draw();
+			}
 			break;
 		}
 
 
 		// Standalone microinstructions (ungrouped)
 		if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
-			programCounter++;
+			programCounter = programCounter == 65535 ? 0 : programCounter + 1;
 
 		if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
 			break;
@@ -1315,7 +1340,7 @@ void DrawNextPixel() {
 	int characterRamValue = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	int pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex+324];
+	int pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex + 324];
 	int r, g, b;
 
 	if (charPixRomVal == true) {
@@ -1375,10 +1400,16 @@ void DrawNextPixel() {
 void Draw() {
 	while (true) {
 		DrawNextPixel();
-		if (pixelRamIndex >= 108*108) {
+		if (pixelRamIndex >= 108 * 108) {
 			pixelRamIndex = 0;
 			break;
 		}
+	}
+	if (imageOnlyMode) {
+		Save_Frame(projectDirectory + "./frames_" + std::to_string(randomID) + "/frame_" + std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount), pixels);
+		imageOnlyModeFrameCount -= 1;
+		if (imageOnlyModeFrameCount <= 0)
+			exit(1);
 	}
 }
 
@@ -1386,6 +1417,26 @@ void DrawPixel(int x, int y, int r, int g, int b)
 {
 	SDL_SetRenderDrawColor(gRenderer, r, g, b, 255);
 	SDL_RenderDrawPoint(gRenderer, x, y);
+}
+
+void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals)
+{
+	constexpr auto dimx = 108u, dimy = 108u;
+
+	using namespace std;
+	ofstream ofs(name + ".ppm", ios_base::out | ios_base::binary);
+	ofs << "P6" << endl << dimx << ' ' << dimy << endl << "255" << endl;
+
+
+	for (auto y = 0u; y < dimy; ++y)
+		for (auto x = 0u; x < dimx; ++x) {
+			const unsigned int offset = (y * 4 * dimx) + x * 4;
+			ofs << img_vals[offset + 0] << img_vals[offset + 1] << img_vals[offset + 2];       // red, green, blue
+		}
+
+	ofs.close();
+
+	PrintColored("saved file to \"" + name + ".ppm\"\n", "", "");
 }
 
 // Neatly convert a large float number of Hz to a string with label
@@ -1633,7 +1684,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+		}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1768,7 +1819,7 @@ void GenerateMicrocode()
 			}
 		}
 
-	}
+			}
 
 	// Do actual processing
 #if DEV_MODE
@@ -1841,7 +1892,7 @@ void GenerateMicrocode()
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
-	}
+			}
 
 	// Print the output
 	std::string processedOutput = "";
@@ -1872,7 +1923,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-}
+		}
 
 vector<string> vars;
 vector<string> labels;
@@ -2458,9 +2509,9 @@ string CompileCode(const string& inputcode) {
 	for (int i = 0; i < codelines.size(); i++)
 	{
 		string command = trim(split(codelines[i], " ")[0]);
-		
+
 		if (verbose)
-			PrintColored("Compiling: " + to_string((int)((float)i/(float)codelines.size()*100)) + "%\n", "", "");
+			PrintColored("Compiling: " + to_string((int)((float)i / (float)codelines.size() * 100)) + "%\n", "", "");
 
 
 		// "#" label marker ex. #JumpToHere
@@ -2918,6 +2969,20 @@ string CompileCode(const string& inputcode) {
 					break;
 				compiledLines.push_back(split(codelines[i], "\"")[0]);
 			}
+
+			continue;
+		}
+
+		// 'presentvbuff' swap the back/front video buffers
+		else if (trim(split(codelines[i], "\"")[0]) == "presentvbuff")
+		{
+			if (verbose) {
+				PrintColored("ok.	", greenFGColor, "");
+				cout << "asm:\n";
+			}
+
+			compiledLines.push_back(",\n, " + string("present video buffer"));
+			compiledLines.push_back("vbuf");
 
 			continue;
 		}
