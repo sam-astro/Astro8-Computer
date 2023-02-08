@@ -814,6 +814,7 @@ int main(int argc, char** argv)
 	}
 
 
+	#if WINDOWS
 	// Start Webcam if specified and compatable
 	struct SimpleCapParams capture;
 	while (usingWebcam) {
@@ -844,6 +845,7 @@ int main(int argc, char** argv)
 		//}
 		break;
 	}
+	#endif
 
 
 	// Start Emulation
@@ -895,11 +897,13 @@ int main(int argc, char** argv)
 			updateCount = 0;
 			frameCount = 0;
 
+			#if WINDOWS
 			// Request webcam capture if on
 			if (usingWebcam) {
 				doCapture(0);
 				//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
 			}
+			#endif
 		}
 
 
@@ -930,6 +934,7 @@ int main(int argc, char** argv)
 			// AA = Pixel color
 			// YY = Y location
 			// XX = X location
+			#if WINDOWS
 			if (usingWebcam) {
 				uint32_t pixVal = capture.mTargetBuf[webcamPixelLoc];
 				memoryBytes[1][53503] = (((
@@ -942,6 +947,7 @@ int main(int argc, char** argv)
 					webcamPixelLoc = 0;
 				//cout << ((memoryBytes[1][53503]>>14)&3)<<"  x: " << (memoryBytes[1][53503] & 0b1111111) << endl;
 			}
+			#endif
 
 
 			// Poll all input events
@@ -1044,7 +1050,9 @@ int main(int argc, char** argv)
 
 	destroy(gRenderer, gWindow);
 	SDL_Quit();
+	#if WINDOWS
 	deinitCapture(0);
+	#endif
 
 	return 0;
 }
@@ -1317,7 +1325,7 @@ void Update()
 		case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
 			BankReg = bus & 3;
 			break;
-		case WRITE_VBUF: // Write from bus into bank register, which changes the current memory bank being accessed
+		case WRITE_VBUF: // Swap the video front and back buffer.
 			VideoBufReg = !VideoBufReg;
 			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
 			if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
