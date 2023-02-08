@@ -29,6 +29,11 @@ The two most supported ways to program for the computer is using the [assembly l
 2. Unzip the downloaded file
 ### Linux
 1. Make sure you have [SDL2 installed](https://wiki.libsdl.org/Installation#supported_platforms) on your system
+
+    For debian based operating systems, you can do this with:
+```
+sudo apt-get install -y libsdl2-2.0-0 libsdl2-mixer-2.0-0
+```
 2. Navigate to [the most recent release](https://github.com/sam-astro/Astro8-Computer/releases), and download the **Linux** version
 3. Unzip the downloaded file
 ### From Source
