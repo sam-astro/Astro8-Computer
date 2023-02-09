@@ -1415,10 +1415,13 @@ void Draw() {
 		}
 	}
 	if (imageOnlyMode) {
-		uint8_t padd_amount = std::to_string(imageOnlyModeFrames).length();
-		std::string unpadded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
-		std::string paddedFrameNum = std::string(padd_amount - std::min<int>(padd_amount, unpadded.length()), '0') + unpadded;
-		Save_Frame(projectDirectory + "./frames/frame_" + paddedFrameNum, pixels);
+		auto padded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
+		padded.insert(0, 5U - std::min<int>(std::string::size_type(5), padded.length()), '0');
+		
+		//uint8_t padd_amount = std::to_string(imageOnlyModeFrames).length();
+		//std::string unpadded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
+		//std::string paddedFrameNum = std::string(padd_amount - std::min<int>(padd_amount, unpadded.length()), '0') + unpadded;
+		Save_Frame(projectDirectory + "./frames/frame_" + padded, pixels);
 		imageOnlyModeFrameCount -= 1;
 		if (imageOnlyModeFrameCount <= 0)
 			exit(1);
