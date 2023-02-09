@@ -47,8 +47,6 @@ bool usingKeyboard = true, usingMouse = true;
 uint16_t imageOnlyModeFrames = 10;
 uint16_t imageOnlyModeFrameCount = 10;
 
-uint8_t randomID = 0;
-
 uint16_t AReg = 0;
 uint16_t BReg = 0;
 uint16_t CReg = 0;
@@ -513,7 +511,7 @@ int main(int argc, char** argv)
 	memoryBytes = vector<vector<uint16_t>>(4, vector<uint16_t>(65535, 0));
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
-	randomID = rand() % 255;
+	//randomID = rand() % 255;
 
 	// Get the executable's installed directory
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
@@ -572,7 +570,7 @@ int main(int argc, char** argv)
 			try
 			{
 				imageOnlyMode = true;
-				std::filesystem::create_directory(projectDirectory + "./frames_" + std::to_string(randomID) + "/");
+				std::filesystem::create_directory(projectDirectory + "./frames/");
 				imageOnlyModeFrames = stoi(argv[i + 1]);
 				imageOnlyModeFrameCount = imageOnlyModeFrames;
 				i++;
@@ -1414,7 +1412,7 @@ void Draw() {
 		}
 	}
 	if (imageOnlyMode) {
-		Save_Frame(projectDirectory + "./frames_" + std::to_string(randomID) + "/frame_" + std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount), pixels);
+		Save_Frame(projectDirectory + "./frames/frame_" + std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount), pixels);
 		imageOnlyModeFrameCount -= 1;
 		if (imageOnlyModeFrameCount <= 0)
 			exit(1);
