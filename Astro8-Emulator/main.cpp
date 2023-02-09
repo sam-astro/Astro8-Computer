@@ -571,7 +571,7 @@ int main(int argc, char** argv)
 			{
 				imageOnlyMode = true;
 				std::filesystem::create_directory(projectDirectory + "./frames");
-				cout<<"Created Directory at: \""+(projectDirectory + "./frames")+"\""<<endl
+				cout<<"Created Directory at: \""+(projectDirectory + "./frames")+"\""<<endl;
 				imageOnlyModeFrames = stoi(argv[i + 1]);
 				imageOnlyModeFrameCount = imageOnlyModeFrames;
 				i++;
