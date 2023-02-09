@@ -130,6 +130,9 @@ if $slowPaddleSpeed==14000:
     add 17,$temp -> $temp
     add $charOffset,$temp -> $rcharPosition
     change *[1]$rcharPosition = $PADDLECHAR
+    
+    // Render screen
+    presentvbuff
 
 endif
 #skipPaddles
@@ -222,6 +225,8 @@ if $slowBallSpeed==10000:
     add $temp,$pixOffset -> $pixelPosition
     change *[1]$pixelPosition = 65535 // Set current position to white
 
+    // Render screen
+    presentvbuff
 endif
 
 
@@ -236,6 +241,5 @@ change *[1]$RIGHTSCOREPOS = $temp
 add $slowBallSpeed,1 -> $slowBallSpeed
 add $slowPaddleSpeed,1 -> $slowPaddleSpeed
 
-presentvbuff
 goto #update
 
