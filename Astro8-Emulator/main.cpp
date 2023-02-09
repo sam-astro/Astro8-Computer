@@ -924,7 +924,7 @@ int main(int argc, char** argv)
 		// Frame
 		if (frameDiff > (1000.0 / TARGET_RENDER_FPS)) {
 			lastFrame = startTime;
-			Draw();
+			//Draw();
 			++frameCount;
 			pendingEvent = SDL_Event();
 			bool keyboardDecided = false;
@@ -1329,9 +1329,9 @@ void Update()
 		case WRITE_VBUF: // Swap the video front and back buffer.
 			VideoBufReg = !VideoBufReg;
 			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
-			if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
+			//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
 				Draw();
-			}
+			//}
 			break;
 		}
 
