@@ -1417,7 +1417,7 @@ void Draw() {
 	if (imageOnlyMode) {
 		uint8_t padd_amount = std::to_string(imageOnlyModeFrames).length();
 		std::string unpadded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
-		std::string paddedFrameNum = std::string(padd_amount - std::min(padd_amount, unpadded.length()), '0') + unpadded;
+		std::string paddedFrameNum = std::string(padd_amount - std::min<int>(padd_amount, unpadded.length()), '0') + unpadded;
 		Save_Frame(projectDirectory + "./frames/frame_" + paddedFrameNum, pixels);
 		imageOnlyModeFrameCount -= 1;
 		if (imageOnlyModeFrameCount <= 0)
