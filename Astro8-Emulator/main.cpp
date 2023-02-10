@@ -304,7 +304,7 @@ int clamp(int x, int min, int max) {
 class KeyPress {
 public:
 	uint16_t keyCode;
-	uint16_t uses = 1;
+	int uses = 1;
 	friend bool operator== (const KeyPress& k1, const KeyPress& k2);
 
 	KeyPress(int key) {
@@ -1014,6 +1014,7 @@ int main(int argc, char** argv)
 
 			// For all currently pressed keys, iterate and distribute sending key data
 			map<int, bool>::iterator itr;
+			int pressedcount = 0;
 			for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
 				// If the key is pressed/held down
 				if (itr->second == true) {
@@ -1023,27 +1024,31 @@ int main(int argc, char** argv)
 					if (keyIt == keyRollover.end()) {
 						keyRollover.push_back(KeyPress((int)(itr->first)));
 					}
+					pressedcount++;
 				}
 				//// If the key has recently been released, add 168 to queue and delete from map
 				//else{
 				//	keyRollover.push_back(KeyPress(168));
+				//	//pressedKeys[itr->first] = false;
 				//	pressedKeys.erase(itr);
 				//}
 			}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
-			if (keyRollover.size() > 0) {
+			if (pressedcount > 0) {
 				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode);
 				keyRollover[0].uses--;
 				// If this key has been fully used, remove from the queue
-				if (keyRollover[0].uses <= 0 && pressedKeys[keyRollover[0].keyCode] == false)
+				if (keyRollover[0].uses <= 0)
 					keyRollover.erase(keyRollover.begin());
 			}
-			//else
-			//	memoryBytes[1][53500] = 168;
-			if (memoryBytes[1][53500] != 168 && verbose) {
+			else
+				memoryBytes[1][53500] = 168;
+			if (verbose && memoryBytes[1][53500] != 168) {
 				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
+				PrintColored("	-- amount pressed: ", brightBlackFGColor, "");
+				PrintColored(to_string(pressedcount), greenFGColor, "");
 			}
 
 		}
