@@ -1039,9 +1039,9 @@ int main(int argc, char** argv)
 				if (keyRollover[0].uses <= 0 && pressedKeys[keyRollover[0].keyCode] == false)
 					keyRollover.erase(keyRollover.begin());
 			}
-			else
-				memoryBytes[1][53500] = 168;
-			if (memoryBytes[1][53500] != 168) {
+			//else
+			//	memoryBytes[1][53500] = 168;
+			if (memoryBytes[1][53500] != 168 && verbose) {
 				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
 			}
