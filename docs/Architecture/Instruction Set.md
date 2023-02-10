@@ -46,8 +46,9 @@ nav_order : 3
 26. [OR](#or)
 27. [NOT](#not)
 28. [BNK](#bnk)
-29. [BNKC](#bnkc)
-30. [LDWB](#ldwb)
+29. [VBUF](#vbuf)
+30. [BNKC](#bnkc)
+31. [LDWB](#ldwb)
 
 <br>
 
@@ -511,9 +512,23 @@ BNK 1
 
 <br>
 
-## BNKC
+## VBUF
 
 ID: 29
+
+Copy the video buffer to video card - displays the editable video memory
+
+#### Syntax
+
+```
+VBUF
+```
+
+<br>
+
+## BNKC
+
+ID: 30
 
 Change the memory bank register to the value<br>
 in register **C**
@@ -530,7 +545,7 @@ BNKC     , Sets the memory bank register to C, which is 15
 
 ## LDWB
 
-ID: 30
+ID: 31
 
 Load value directly after counter into <br>
 register **B** and advance program counter by 2
