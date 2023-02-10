@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Astro-8"
-#define MyAppVersion "v2.1.0-alpha"
+#define MyAppVersion "v3.0.0-alpha"
 #define MyAppPublisher "AstroSam"
 #define MyAppURL "https://github.com/sam-astro/Astro8-Computer"
 #define MyAppExeName "astro8.exe"
@@ -35,7 +35,7 @@ OutputBaseFilename=Astro8-Setup
 SetupIconFile=.\images\A8-Logo-Installer-Small.ico
 Compression=lzma
 SolidCompression=yes
-;WizardStyle=modern
+WizardStyle=modern
 UsePreviousTasks=no
 
 [Tasks]
