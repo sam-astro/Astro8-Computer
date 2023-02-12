@@ -4,8 +4,8 @@
 #include <string> 
 #include <chrono>
 #include <limits.h>
-#include <SDL.h>
-#include <SDL_mixer.h>
+//#include <SDL.h>
+//#include <SDL_mixer.h>
 #include <sstream>
 #include <fstream>
 #include <codecvt>
@@ -13,8 +13,13 @@
 #include <filesystem>
 #include <map>
 
-#include "armstrong-compiler.h"
+#include "VSSynth/VSSynth.h"
 
+#include "armstrong-compiler.h"
+//#include "synth.cpp"
+
+using namespace VSSynth;
+using namespace Generators;
 
 #ifdef _WIN32
 #define SYS_PAUSE system("pause")
@@ -26,7 +31,7 @@
 	")   </dev/tty")
 #endif
 
-#define DEV_MODE false
+#define DEV_MODE true
 
 std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
 
@@ -69,8 +74,8 @@ uint16_t pixelRamIndex = 0;
 bool VideoBufReg = false;
 
 
-// 10000000 = 10.0MHz
-uint32_t target_cpu_freq = 10000000;
+// 16000000 = 16.0MHz
+uint32_t target_cpu_freq = 16000000;
 #define TARGET_RENDER_FPS 60.0
 
 vector<vector<uint16_t>> memoryBytes;
@@ -158,14 +163,17 @@ void GenerateMicrocode();
 std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
 void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals);
+static void write_samples(int16_t* s_byteStream, long begin, long end, long length);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(108 * 108 * 4, 0);
 
 
-Mix_Chunk* waveforms[4];
+//Mix_Chunk* waveforms[4];
 
-float speed_chunks[4] = { 1, 1, 1, 1 };
+float lastFreq[4] = { 440, 440, 440, 440 };
+bool isPlaying[4] = { false, false, false, false };
+Tone* tone[4];
 
 
 vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB" };
@@ -229,7 +237,7 @@ Options:
   -nm, --nomouse           Disable the mouse input
   -v, --verbose            Write extra data to console for better debugging
   -f, --freq <value>       Override the default CPU target frequency with your
-                           own.      Default = 10    higher = faster
+                           own.      Default = 16    higher = faster
                            High frequencies may be too hard to reach for some cpus
   --imagemode [frames]     Don't render anything, instead capture [frames] number
                            of frames, which is 10 by default, and save to disk
@@ -277,17 +285,17 @@ void set_pixel(
 
 void destroy(SDL_Renderer* renderer, SDL_Window* window)
 {
-	for (int i = 0; i < sizeof(waveforms) / sizeof(waveforms[0]); i++)
-	{
-		Mix_FreeChunk(waveforms[i]);
-		waveforms[i] = NULL;
-	}
+	//for (int i = 0; i < sizeof(waveforms) / sizeof(waveforms[0]); i++)
+	//{
+	//	//Mix_FreeChunk(waveforms[i]);
+	//	waveforms[i] = NULL;
+	//}
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-	Mix_Quit();
+	//Mix_Quit();
 }
 
 int clamp(int x, int min, int max) {
@@ -314,146 +322,6 @@ public:
 bool operator== (const KeyPress& k1, const KeyPress& k2)
 {
 	return k1.keyCode == k2.keyCode;
-}
-
-
-
-/* global vars */
-Uint16 audioFormat = MIX_DEFAULT_FORMAT;  // current audio format constant
-int audioFrequency,  // frequency rate of the current audio format
-audioChannelCount,  // number of channels of the current audio format
-audioAllocatedMixChannelsCount;  // number of mix channels allocated
-
-static inline Uint16 formatSampleSize(Uint16 format) { return (format & 0xFF) / 8; }
-
-// Get chunk time length (in ms) given its size and current audio format
-static int computeChunkLengthMillisec(int chunkSize)
-{
-	const Uint32 points = chunkSize / formatSampleSize(audioFormat);  // bytes / samplesize == sample points
-	const Uint32 frames = (points / audioChannelCount);  // sample points / channels == sample frames
-	return ((frames * 1000) / audioFrequency);  // (sample frames * 1000) / frequency == play length, in ms
-}
-
-// Custom handler object to control which part of the Mix_Chunk's audio data will be played, with which pitch-related modifications.
-// This needed to be a template because the actual Mix_Chunk's data format may vary (AUDIO_U8, AUDIO_S16, etc) and the data type varies with it (Uint8, Sint16, etc)
-// The AudioFormatType should be the data type that is compatible with the current SDL_mixer-initialized audio format.
-template<typename AudioFormatType>
-struct PlaybackSpeedEffectHandler
-{
-	const AudioFormatType* const chunkData;  // pointer to the chunk sample data (as array)
-	const float& speedFactor;  // the playback speed factor
-	float position;  // current position of the sound, in ms
-	const int duration;  // the duration of the sound, in ms
-	const int chunkSize;  // the size of the sound, as a number of indexes (or sample points). thinks of this as a array size when using the proper array type (instead of just Uint8*).
-	const bool loop;  // flags whether playback should stay looping
-	const bool attemptSelfHalting;  // flags whether playback should be halted by this callback when playback is finished
-	bool altered;  // true if this playback has been pitched by this handler
-
-	PlaybackSpeedEffectHandler(const Mix_Chunk& chunk, const float& speed, bool loop, bool trySelfHalt)
-		: chunkData(reinterpret_cast<AudioFormatType*>(chunk.abuf)), speedFactor(speed),
-		position(0), duration(computeChunkLengthMillisec(chunk.alen)),
-		chunkSize(chunk.alen / formatSampleSize(audioFormat)),
-		loop(loop), attemptSelfHalting(trySelfHalt), altered(false)
-	{}
-
-	// processing function to be able to change chunk speed/pitch.
-	void modifyStreamPlaybackSpeed(int mixChannel, void* stream, int length)
-	{
-		AudioFormatType* buffer = static_cast<AudioFormatType*>(stream);
-		const int bufferSize = length / sizeof(AudioFormatType);  // buffer size (as array)
-		const float speedFactor = this->speedFactor;  // take a "snapshot" of speed factor
-
-		// if there is still sound to be played
-		if (position < duration || loop)
-		{
-			const float delta = 1000.0 / audioFrequency,  // normal duration of each sample
-				vdelta = delta * speedFactor;  // virtual stretched duration, scaled by 'speedFactor'
-
-		// if playback is unaltered and pitch is required (for the first time)
-			if (!altered && speedFactor != 1.0f)
-				altered = true;  // flags playback modification and proceed to the pitch routine.
-
-			if (altered)  // if unaltered, this pitch routine is skipped
-			{
-				for (int i = 0; i < bufferSize; i += audioChannelCount)
-				{
-					const int j = i / audioChannelCount;  // j goes from 0 to size/channelCount, incremented 1 by 1
-					const float x = position + j * vdelta;  // get "virtual" index. its corresponding value will be interpolated.
-					const int k = floor(x / delta);  // get left index to interpolate from original chunk data (right index will be this plus 1)
-					const float prop = (x / delta) - k;  // get the proportion of the right value (left will be 1.0 minus this)
-
-					// usually just 2 channels: 0 (left) and 1 (right), but who knows...
-					for (int c = 0; c < audioChannelCount; c++)
-					{
-						// check if k will be within bounds
-						if (k * audioChannelCount + audioChannelCount - 1 < chunkSize || loop)
-						{
-							AudioFormatType v0 = chunkData[(k * audioChannelCount + c) % chunkSize],
-								v1 = chunkData[((k + 1) * audioChannelCount + c) % chunkSize];
-
-							// put interpolated value on 'data'
-							buffer[i + c] = v0 + prop * (v1 - v0);  // linear interpolation (single multiplication)
-						}
-						else  // if k will be out of bounds (chunk bounds), it means we already finished; thus, we'll pass silence
-						{
-							buffer[i + c] = 0;
-						}
-					}
-				}
-			}
-
-			// update position
-			position += (bufferSize / audioChannelCount) * vdelta;
-
-			// reset position if looping
-			if (loop) while (position > duration)
-				position -= duration;
-		}
-		else  // if we already played the whole sound but finished earlier than expected by SDL_mixer (due to faster playback speed)
-		{
-			// set silence on the buffer since Mix_HaltChannel() poops out some of it for a few ms.
-			for (int i = 0; i < bufferSize; i++)
-				buffer[i] = 0;
-
-			//if (attemptSelfHalting)
-			//	Mix_HaltChannel(mixChannel);  // XXX unsafe call, since it locks audio; but no safer solution was found yet...
-		}
-	}
-
-	// Mix_EffectFunc_t callback that redirects to handler method (handler passed via userData)
-	static void mixEffectFuncCallback(int channel, void* stream, int length, void* userData)
-	{
-		static_cast<PlaybackSpeedEffectHandler*>(userData)->modifyStreamPlaybackSpeed(channel, stream, length);
-	}
-
-	// Mix_EffectDone_t callback that deletes the handler at the end of the effect usage  (handler passed via userData)
-	static void mixEffectDoneCallback(int, void* userData)
-	{
-		delete static_cast<PlaybackSpeedEffectHandler*>(userData);
-	}
-
-	// function to register a handler to this channel for the next playback.
-	static void registerEffect(int channel, const Mix_Chunk& chunk, const float& speed, bool loop, bool trySelfHalt)
-	{
-		Mix_RegisterEffect(channel, mixEffectFuncCallback, mixEffectDoneCallback, new PlaybackSpeedEffectHandler(chunk, speed, loop, trySelfHalt));
-	}
-};
-
-// Register playback speed effect handler according to the current audio format; effect valid for a single playback; if playback is looped, lasts until it's halted
-void setupPlaybackSpeedEffect(const Mix_Chunk* const chunk, const float& speed, int channel, bool loop = false, bool trySelfHalt = false)
-{
-	// select the register function for the current audio format and register the effect using the compatible handlers
-	// XXX is it correct to behave the same way to all S16 and U16 formats? Should we create case statements for AUDIO_S16SYS, AUDIO_S16LSB, AUDIO_S16MSB, etc, individually?
-	switch (audioFormat)
-	{
-	case AUDIO_U8:  PlaybackSpeedEffectHandler<Uint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_S8:  PlaybackSpeedEffectHandler<Sint8 >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_U16: PlaybackSpeedEffectHandler<Uint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	default:
-	case AUDIO_S16: PlaybackSpeedEffectHandler<Sint16>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_S32: PlaybackSpeedEffectHandler<Sint32>::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	case AUDIO_F32: PlaybackSpeedEffectHandler<float >::registerEffect(channel, *chunk, speed, loop, trySelfHalt); break;
-	}
 }
 
 
@@ -502,9 +370,10 @@ int GenerateCharacterROM() {
 	return chline.length();
 }
 
-
 int main(int argc, char** argv)
 {
+	if (DEV_MODE)
+		verbose = true;
 
 	//std::cout << std::to_string((uint16_t)(((uint16_t)0b1000000000000000)<< (uint16_t)0b1)) << endl;
 	// Fill the memory
@@ -880,6 +749,65 @@ int main(int argc, char** argv)
 #endif
 	vector<KeyPress> keyRollover = {};
 	std::map<int, bool> pressedKeys;
+
+
+
+	// Channel A
+	Tone t0(
+		[](double frequency, double time) {
+			return Waveforms::square(
+				frequency,
+				time,
+				0); // LFO
+		});
+	tone[0] = &t0;
+	(*tone[0]).setVolume(30);
+	// Channel B
+	Tone t1(
+		[](double frequency, double time) {
+			return Waveforms::square(
+				frequency,
+				time,
+				0); // LFO
+		});
+	tone[1] = &t1;
+	(*tone[1]).setVolume(30);
+	// Channel C
+	Tone t2(
+		[](double frequency, double time) {
+			return Waveforms::triangle(
+				frequency,
+				time,
+				0); // LFO
+		});
+	tone[2] = &t2;
+	(*tone[2]).setVolume(30);
+	// Channel D
+	Tone t3(
+		[](double frequency, double time) {
+			return Waveforms::noise();
+		});
+	tone[3] = &t3;
+	(*tone[3]).setVolume(30);
+
+	//(*tone[0]).playNote(Notes::C4);
+	//(*tone[1]).playNote(Notes::C4);
+	//(*tone[2]).playNote(Notes::C4);
+	//(*tone[3]).playNote(Notes::C4);
+
+	// Create a synthesizer, with default settings
+	Synthesizer synth;
+
+	// Open the synth for playback with the sine wave we have created
+	synth.open();
+	synth.addSoundGenerator(tone[0]);
+	synth.addSoundGenerator(tone[1]);
+	synth.addSoundGenerator(tone[2]);
+	synth.addSoundGenerator(tone[3]);
+	synth.unpause();
+
+
+
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -1292,25 +1220,31 @@ void Update()
 
 				// Calculate target frequency from beginning 8-bits
 				float offset = 0.0f;
-				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f + offset;
+				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f*440.0f + offset;
 				int targetChannel = bus & 0b111;
+				//(*tone).playNote(targetSpeed * 440);
+				//(*tone)->holdNote(targetSpeed*440);
 
 				// Use upper 8 bits to play audio
 				if (targetChannel > 0 && targetChannel <= 4)
 					// If the channel is not playing and the selected frequency is not 0, start playing with frequency
-					if (Mix_Playing(targetChannel - 1) == false && targetSpeed > offset) {
-						speed_chunks[targetChannel - 1] = targetSpeed;
-						Mix_PlayChannel(targetChannel - 1, waveforms[targetChannel - 1], -1);
-						setupPlaybackSpeedEffect(waveforms[targetChannel - 1], speed_chunks[targetChannel - 1], targetChannel - 1, true, false);
+					if (isPlaying[targetChannel-1] == false && targetSpeed > offset) {
+						isPlaying[targetChannel - 1] = true;
+						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+						(*tone[targetChannel - 1]).playNote(targetSpeed);
+						lastFreq[targetChannel - 1] = targetSpeed;
 					}
 				// If the channel is playing and the selected frequency is not 0, change frequency
-					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed > offset && speed_chunks[targetChannel - 1] != targetSpeed) {
-						speed_chunks[targetChannel - 1] = targetSpeed;
+					else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
+						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+						(*tone[targetChannel - 1]).playNote(targetSpeed);
+						lastFreq[targetChannel - 1] = targetSpeed;
 					}
 				// If the channel is playing and the selected frequency is 0, stop channel
-					else if (Mix_Playing(targetChannel - 1) == true && targetSpeed == offset) {
-						//Mix_FadeOutChannel(targetChannel - 1, 10);
-						Mix_HaltChannel(targetChannel - 1);
+					else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
+						isPlaying[targetChannel - 1] = false;
+						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+						lastFreq[targetChannel - 1] = targetSpeed;
 					}
 
 			}
@@ -1498,26 +1432,27 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	//Get window surface
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
 
-	//Initialize SDL_mixer
-	if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096) < 0)
-		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+	////Initialize SDL_mixer
+	//if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096) < 0)
+	//	printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 
-	Mix_QuerySpec(&audioFrequency, &audioFormat, &audioChannelCount);  // query specs
-	audioAllocatedMixChannelsCount = Mix_AllocateChannels(MIX_CHANNELS);
+	////Mix_QuerySpec(&audioFrequency, &audioFormat, &audioChannelCount);  // query specs
+	//Mix_AllocateChannels(4);
 
-	// Load waves
-	waveforms[0] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
-	if (waveforms[0] == NULL)
-		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	waveforms[1] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
-	if (waveforms[1] == NULL)
-		cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	waveforms[2] = Mix_LoadWAV((executableDirectory + "/triangle.wav").c_str());
-	if (waveforms[2] == NULL)
-		cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
-	if (waveforms[3] == NULL)
-		cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	//// Load waves
+	//waveforms[0] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
+	//if (waveforms[0] == NULL)
+	//	cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	//waveforms[1] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
+	//if (waveforms[1] == NULL)
+	//	cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	//waveforms[2] = Mix_LoadWAV((executableDirectory + "/triangle.wav").c_str());
+	//if (waveforms[2] == NULL)
+	//	cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	//waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
+	//if (waveforms[3] == NULL)
+	//	cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
+	
 
 	return 0;
 }
