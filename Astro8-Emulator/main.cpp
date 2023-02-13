@@ -31,7 +31,7 @@ using namespace Generators;
 	")   </dev/tty")
 #endif
 
-#define DEV_MODE true
+#define DEV_MODE false
 
 std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
 

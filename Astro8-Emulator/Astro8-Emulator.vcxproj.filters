@@ -27,12 +27,6 @@
     <ClCompile Include="escapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="audio.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="synth.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="colorprint.h">

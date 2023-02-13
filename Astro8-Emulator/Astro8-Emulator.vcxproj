@@ -145,10 +145,8 @@
   <ItemGroup>
     <ClCompile Include="armstrong-compiler.cpp" />
     <ClCompile Include="assembler.cpp" />
-    <ClCompile Include="audio.cpp" />
     <ClCompile Include="escapi.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="synth.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="armstrong-compiler.h" />
