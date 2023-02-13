@@ -164,6 +164,7 @@ std::string SimplifiedHertz(float input);
 int ConvertAsciiToSdcii(int asciiCode);
 void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals);
 static void write_samples(int16_t* s_byteStream, long begin, long end, long length);
+uint16_t ConvertNoteIndexToFrequency(uint8_t index);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(108 * 108 * 4, 0);
