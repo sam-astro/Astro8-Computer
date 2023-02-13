@@ -1883,7 +1883,7 @@ vector<int> labelLineValues;
 vector<string> compiledLines;
 
 uint16_t ConvertNoteIndexToFrequency(uint8_t index){
-	const uint16_t conversionTable[96];
+	uint16_t conversionTable[96];
 	conversionTable[0] = 0;
 	conversionTable[1] = 16;
 	conversionTable[2] = 17;
@@ -1975,7 +1975,7 @@ uint16_t ConvertNoteIndexToFrequency(uint8_t index){
 
 // This will convert ASCII/SDL2 key codes to their SDCII alternatives
 int ConvertAsciiToSdcii(int asciiCode) {
-	const uint8_t conversionTable[600];  // [ascii] = sdcii
+	uint8_t conversionTable[600];  // [ascii] = sdcii
 	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
 		conversionTable[i] = -1;
 
