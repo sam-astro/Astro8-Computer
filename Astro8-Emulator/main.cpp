@@ -1218,14 +1218,11 @@ void Update()
 				//              This means the first channel is index 1, etc.
 
 
-				// Calculate target frequency from beginning 8-bits
+				// Calculate target frequency from beginning 7-bits
 				float offset = 0.0f;
-				float targetSpeed = (float)((bus & 0b11111111000) >> 3) / 15.0f*440.0f + offset;
+				float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
 				int targetChannel = bus & 0b111;
-				//(*tone).playNote(targetSpeed * 440);
-				//(*tone)->holdNote(targetSpeed*440);
 
-				// Use upper 8 bits to play audio
 				if (targetChannel > 0 && targetChannel <= 4)
 					// If the channel is not playing and the selected frequency is not 0, start playing with frequency
 					if (isPlaying[targetChannel-1] == false && targetSpeed > offset) {
@@ -1885,10 +1882,100 @@ vector<string> labels;
 vector<int> labelLineValues;
 vector<string> compiledLines;
 
+uint16_t ConvertNoteIndexToFrequency(uint8_t index){
+	const uint16_t conversionTable[96];
+	conversionTable[0] = 0;
+	conversionTable[1] = 16;
+	conversionTable[2] = 17;
+	conversionTable[3] = 18;
+	conversionTable[4] = 19;
+	conversionTable[5] = 20;
+	conversionTable[6] = 21;
+	conversionTable[7] = 23;
+	conversionTable[8] = 24;
+	conversionTable[9] = 26;
+	conversionTable[10] = 27;
+	conversionTable[11] = 29;
+	conversionTable[12] = 30;
+	conversionTable[13] = 32;
+	conversionTable[14] = 34;
+	conversionTable[15] = 36;
+	conversionTable[16] = 38;
+	conversionTable[17] = 41;
+	conversionTable[18] = 43;
+	conversionTable[19] = 46;
+	conversionTable[20] = 49;
+	conversionTable[21] = 52;
+	conversionTable[22] = 55;
+	conversionTable[23] = 58;
+	conversionTable[24] = 61;
+	conversionTable[25] = 65;
+	conversionTable[26] = 69;
+	conversionTable[27] = 73;
+	conversionTable[28] = 77;
+	conversionTable[29] = 82;
+	conversionTable[30] = 87;
+	conversionTable[31] = 92;
+	conversionTable[32] = 98;
+	conversionTable[33] = 104;
+	conversionTable[34] = 110;
+	conversionTable[35] = 116;
+	conversionTable[36] = 123;
+	conversionTable[37] = 130;
+	conversionTable[38] = 138;
+	conversionTable[39] = 146;
+	conversionTable[40] = 155;
+	conversionTable[41] = 164;
+	conversionTable[42] = 174;
+	conversionTable[43] = 185;
+	conversionTable[44] = 196;
+	conversionTable[45] = 207;
+	conversionTable[46] = 220;
+	conversionTable[47] = 233;
+	conversionTable[48] = 246;
+	conversionTable[49] = 261;
+	conversionTable[50] = 277;
+	conversionTable[51] = 293;
+	conversionTable[52] = 311;
+	conversionTable[53] = 329;
+	conversionTable[54] = 349;
+	conversionTable[55] = 370;
+	conversionTable[56] = 392;
+	conversionTable[57] = 415;
+	conversionTable[58] = 440;
+	conversionTable[59] = 466;
+	conversionTable[60] = 493;
+	conversionTable[61] = 523;
+	conversionTable[62] = 554;
+	conversionTable[63] = 587;
+	conversionTable[64] = 622;
+	conversionTable[65] = 659;
+	conversionTable[66] = 698;
+	conversionTable[67] = 740;
+	conversionTable[68] = 783;
+	conversionTable[69] = 830;
+	conversionTable[70] = 880;
+	conversionTable[71] = 932;
+	conversionTable[72] = 987;
+	conversionTable[73] = 1046;
+	conversionTable[74] = 1108;
+	conversionTable[75] = 1174;
+	conversionTable[76] = 1244;
+	conversionTable[77] = 1318;
+	conversionTable[78] = 1396;
+	conversionTable[79] = 1480;
+	conversionTable[80] = 1567;
+	conversionTable[81] = 1661;
+	conversionTable[82] = 1760;
+	conversionTable[83] = 1864;
+	conversionTable[84] = 1975;
+	
+	return conversionTable[index];
+}
 
 // This will convert ASCII/SDL2 key codes to their SDCII alternatives
 int ConvertAsciiToSdcii(int asciiCode) {
-	int conversionTable[600];  // [ascii] = sdcii
+	const uint8_t conversionTable[600];  // [ascii] = sdcii
 	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
 		conversionTable[i] = -1;
 
