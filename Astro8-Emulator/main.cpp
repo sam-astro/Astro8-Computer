@@ -1283,16 +1283,25 @@ void Update()
 }
 
 void DrawNextPixel() {
-	int characterRamValue = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
+	uint16_t charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
+	uint16_t characterRamValue = charVal & 0b11111111;
+	uint16_t colorValue = (charVal >> 8) & 0b11111111;
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	int pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex + 324];
+	uint16_t pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex + 324];
 	int r, g, b;
 
 	if (charPixRomVal == true) {
-		r = 255;
-		g = 255;
-		b = 255;
+		// If the color is set to 0, then make it white, or vice versa.
+		// This is for compatibility with previous program versions, which default the color to 0.
+		if(colorValue == 0)
+			colorValue = 0b11111111;
+		if(colorValue == 0b11111111)
+			colorValue = 0;
+		
+		r = BitRange(pixelVal, 5, 3) * 36 + 0b11;
+		g = BitRange(pixelVal, 2, 3) * 36 + 0b11;
+		b = BitRange(pixelVal, 0, 2) * 85;
 	}
 	else {
 		r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
