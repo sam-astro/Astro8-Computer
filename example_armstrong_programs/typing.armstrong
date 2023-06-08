@@ -45,6 +45,7 @@ if $key!=168:
 		if $key!=70: // If backspace key is NOT pressed
 			// Put character into memory
 			add $chMemOffset,$charCount -> $actualAddress
+			add $key,0b11100110 -> $key // Set the color using new system.
 			change *[1]$actualAddress = $key
 			
 			// Increment character position
