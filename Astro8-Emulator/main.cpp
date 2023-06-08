@@ -860,22 +860,29 @@ int main(int argc, char** argv)
 			int undecidedKey = 168;
 
 			// If the user has activated the webcam feature, write current webcam pixel value to expansion port
-			//   AA YYYYYYY XXXXXXX
-			// AA = Pixel color
-			// YY = Y location
-			// XX = X location
 			#if WINDOWS
 			if (usingWebcam) {
-				uint32_t pixVal = capture.mTargetBuf[webcamPixelLoc];
-				memoryBytes[1][53503] = (((
-					((pixVal & 255)
-						+ ((pixVal >> 8) & 255)
-						+ ((pixVal >> 16) & 255)) / 255
-					) & 3) << 14) + ((int)webcamPixelLoc / 108 << 7) + (webcamPixelLoc % 108);
-				webcamPixelLoc++;
-				if (webcamPixelLoc >= 11664)
-					webcamPixelLoc = 0;
-				//cout << ((memoryBytes[1][53503]>>14)&3)<<"  x: " << (memoryBytes[1][53503] & 0b1111111) << endl;
+				// If the program is asking for more data, reply
+				if(memoryBytes[1][53503] >= 0b1000000000000000){
+					// Message request looks like:
+					// Format: 0b10 YYYYYYY XXXXXXX    (where (X,Y) is the start pixel)
+					uint16_t xReq = memoryBytes[1][53503] & 0b11111111;
+					uint16_t yReq = (memoryBytes[1][53503] >> 8) & 0b11111111;
+					
+					uint16_t outputWord = 0;
+					
+					// Colors come in groups of 6, like 0b0000 CC CC CC CC CC CC
+					// The first 4 bits are blank, since they are used for controls
+					// The groups are ordered from right to left (CC at right end is the Leftmost pixel location)
+					
+					// Iterate the 6 groups
+					for(int gg = 0; gg < 6; gg++){
+						uint32_t pixVal = capture.mTargetBuf[xReq * yReq + gg];
+						uint8_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
+						outputWord = outputWord | (compressedColor << (gg * 2));
+					}
+					memoryBytes[1][53503] = outputWord;
+				}
 			}
 			#endif
 
