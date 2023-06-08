@@ -808,6 +808,11 @@ int main(int argc, char** argv)
 	synth.unpause();
 
 
+	#if WINDOWS
+	// Request initial webcam capture if on
+	if (usingWebcam)
+		doCapture(0);
+	#endif
 
 	while (running)
 	{
@@ -827,13 +832,13 @@ int main(int argc, char** argv)
 			updateCount = 0;
 			frameCount = 0;
 
-			#if WINDOWS
-			// Request webcam capture if on
-			if (usingWebcam) {
-				doCapture(0);
-				//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
-			}
-			#endif
+			//#if WINDOWS
+			//// Request webcam capture if on
+			//if (usingWebcam) {
+			//	doCapture(0);
+			//	//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
+			//}
+			//#endif
 		}
 
 
@@ -871,17 +876,36 @@ int main(int argc, char** argv)
 					
 					uint16_t outputWord = 0;
 					
-					// Colors come in groups of 6, like 0b0000 CC CC CC CC CC CC
-					// The first 4 bits are blank, since they are used for controls
+					// Colors come in groups of 7, like 0b00 CC CC CC CC CC CC CC
+					// The first 2 bits are blank, since they are used for controls
 					// The groups are ordered from right to left (CC at right end is the Leftmost pixel location)
-					
-					// Iterate the 6 groups
-					for(int gg = 0; gg < 6; gg++){
-						uint32_t pixVal = capture.mTargetBuf[xReq * yReq + gg];
-						uint8_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
+
+					// Iterate the 7 groups
+					for (int gg = 0; gg < 7; gg++) {
+						uint32_t pixVal = capture.mTargetBuf[xReq + (yReq * 108) + gg];
+						uint16_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
 						outputWord = outputWord | (compressedColor << (gg * 2));
 					}
 					memoryBytes[1][53503] = outputWord;
+
+					//// Then the next 8 groups (uses +1 more expansion ports)
+					//for (int i = 0; i < 1; i++)
+					//{
+					//	outputWord = 0;
+					//	for (int gg = 0; gg < 8; gg++) {
+					//		int targetIndex = xReq + (yReq * 108) + gg + 7 + (i * 8);
+					//		uint32_t pixVal = capture.mTargetBuf[targetIndex >= 108*108 ? targetIndex - 108*108 : targetIndex];
+					//		uint16_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
+					//		outputWord = outputWord | (compressedColor << (gg * 2));
+					//	}
+					//	memoryBytes[1][53504 + i] = outputWord;
+					//}
+				}
+				// If command is 0b01, then capture image
+				else if (memoryBytes[1][53503] == 0b0100000000000000) {
+					doCapture(0);
+					memoryBytes[1][53503] = 0;
+					cout << endl << "picture" << endl;
 				}
 			}
 			#endif
@@ -1290,12 +1314,12 @@ void Update()
 }
 
 void DrawNextPixel() {
-	uint16_t charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
-	uint16_t characterRamValue = charVal & 0b11111111;
-	uint16_t colorValue = (charVal >> 8) & 0b11111111;
+	int charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
+	int characterRamValue = charVal & 0b11111111;
+	int colorValue = (charVal >> 8) & 0b11111111;
 	bool charPixRomVal = characterRom[(characterRamValue * 64) + (charPixY * 8) + charPixX];
 
-	uint16_t pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex + 324];
+	int pixelVal = videoBuffer[(int)(!VideoBufReg)][pixelRamIndex + 324];
 	int r, g, b;
 
 	if (charPixRomVal == true) {
@@ -1303,12 +1327,16 @@ void DrawNextPixel() {
 		// This is for compatibility with previous program versions, which default the color to 0.
 		if(colorValue == 0)
 			colorValue = 0b11111111;
-		if(colorValue == 0b11111111)
+		else if(colorValue == 0b11111111)
 			colorValue = 0;
-		
-		r = BitRange(pixelVal, 5, 3) * 36 + 0b11;
-		g = BitRange(pixelVal, 2, 3) * 36 + 0b11;
-		b = BitRange(pixelVal, 0, 2) * 85;
+
+		r = BitRange(colorValue, 5, 3) * 36 + 0b11;
+		g = BitRange(colorValue, 2, 3) * 36 + 0b11;
+		b = BitRange(colorValue, 0, 2) * 85;
+
+		//r = 255;
+		//g = 255;
+		//b = 255;
 	}
 	else {
 		r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
