@@ -866,8 +866,8 @@ int main(int argc, char** argv)
 				if(memoryBytes[1][53503] >= 0b1000000000000000){
 					// Message request looks like:
 					// Format: 0b10 YYYYYYY XXXXXXX    (where (X,Y) is the start pixel)
-					uint16_t xReq = memoryBytes[1][53503] & 0b11111111;
-					uint16_t yReq = (memoryBytes[1][53503] >> 8) & 0b11111111;
+					uint16_t xReq = memoryBytes[1][53503] & 0b1111111;
+					uint16_t yReq = (memoryBytes[1][53503] >> 7) & 0b1111111;
 					
 					uint16_t outputWord = 0;
 					
