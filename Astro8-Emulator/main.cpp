@@ -376,12 +376,25 @@ int main(int argc, char** argv)
 	if (DEV_MODE)
 		verbose = true;
 
-	//std::cout << std::to_string((uint16_t)(((uint16_t)0b1000000000000000)<< (uint16_t)0b1)) << endl;
 	// Fill the memory
 	memoryBytes = vector<vector<uint16_t>>(4, vector<uint16_t>(65535, 0));
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
-	//randomID = rand() % 255;
+	//// Fill video buffers with random data to emulate real ram chip
+	//std::srand(sizeof(argv));
+	//std::generate(videoBuffer[0].begin(), videoBuffer[0].end(), std::rand);
+	//std::generate(videoBuffer[1].begin(), videoBuffer[1].end(), std::rand);
+	videoBuffer[1][148] = 14;
+	videoBuffer[1][149] = 27;
+	videoBuffer[1][150] = 27;
+	videoBuffer[1][151] = 32;
+	videoBuffer[1][152] = 21;
+	videoBuffer[1][153] = 26;
+	videoBuffer[1][154] = 19;
+	videoBuffer[1][155] = 54;
+	videoBuffer[1][156] = 54;
+	videoBuffer[1][157] = 54;
+
 
 	// Get the executable's installed directory
 	executableDirectory = filesystem::weakly_canonical(filesystem::path(argv[0])).parent_path().string();
@@ -814,6 +827,12 @@ int main(int argc, char** argv)
 		doCapture(0);
 	#endif
 
+	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
+	Draw();
+	for (size_t i = 0; i < 1000000000; i++){}
+	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
+
+
 	while (running)
 	{
 		auto startTime = std::chrono::high_resolution_clock::now();
@@ -888,18 +907,18 @@ int main(int argc, char** argv)
 					}
 					memoryBytes[1][53503] = outputWord;
 
-					//// Then the next 8 groups (uses +1 more expansion ports)
-					//for (int i = 0; i < 1; i++)
-					//{
-					//	outputWord = 0;
-					//	for (int gg = 0; gg < 8; gg++) {
-					//		int targetIndex = xReq + (yReq * 108) + gg + 7 + (i * 8);
-					//		uint32_t pixVal = capture.mTargetBuf[targetIndex >= 108*108 ? targetIndex - 108*108 : targetIndex];
-					//		uint16_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
-					//		outputWord = outputWord | (compressedColor << (gg * 2));
-					//	}
-					//	memoryBytes[1][53504 + i] = outputWord;
-					//}
+					// Then the next 8 groups (uses +1 more expansion ports)
+					for (int i = 0; i < 1; i++)
+					{
+						outputWord = 0;
+						for (int gg = 0; gg < 8; gg++) {
+							int targetIndex = xReq + (yReq * 108) + gg + 7 + (i * 8);
+							uint32_t pixVal = capture.mTargetBuf[targetIndex >= 108*108 ? targetIndex - 108*108 : targetIndex];
+							uint16_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
+							outputWord = outputWord | (compressedColor << (gg * 2));
+						}
+						memoryBytes[1][53504 + i] = outputWord;
+					}
 				}
 				// If command is 0b01, then capture image
 				else if (memoryBytes[1][53503] == 0b0100000000000000) {
