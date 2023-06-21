@@ -45,7 +45,7 @@ std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable, verbose, usingWebcam, imageOnlyMode;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode;
 
 bool usingKeyboard = true, usingMouse = true, performanceMode = true;
 
@@ -275,6 +275,8 @@ Options:
   -wb, --webcam            Enable webcam (uses default, only works on Windows)
   -nm, --nomouse           Disable the mouse input
   -v, --verbose            Write extra data to console for better debugging
+  -vv, --superverbose      Write a lot of extra data to console for even better
+                           debugging
   -f, --freq <value>       Override the default CPU target frequency with your
                            own.      Default = 16    higher = faster
                            High frequencies may be too hard to reach for some cpus
@@ -487,6 +489,8 @@ int main(int argc, char** argv)
 			usingMouse = false;
 		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
 			verbose = true;
+		else if (argval == "-vv" || argval == "--superverbose") // Write extra data to console for better debugging
+			superVerbose = true;
 		else if (argval == "--imagemode") { // Don't render anything, instead capture <frames> number of frames and save to disk
 			try
 			{
@@ -1398,7 +1402,7 @@ void Update()
 			break;
 		case LDIB:
 			BReg = arg;
-			if (verbose)
+			if (superVerbose)
 				cout << "ldib  set BReg to " << BReg << endl;
 			break;
 		case STA:
@@ -1467,7 +1471,7 @@ void Update()
 			break;
 		case JMP:
 			programCounter = GetMem(0, programCounter);
-			if (verbose)
+			if (superVerbose)
 				cout << "jmp  jump to " << programCounter << endl;
 			break;
 		case JMPZ:
@@ -1475,7 +1479,7 @@ void Update()
 				programCounter = GetMem(0, programCounter);
 			else
 				programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "jmpz  jump to " << programCounter << endl;
 			break;
 		case JMPC:
@@ -1483,41 +1487,41 @@ void Update()
 				programCounter = GetMem(0, programCounter);
 			else
 				programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "jmpc  jump to " << programCounter << endl;
 			break;
 		case JREG:
 			programCounter = AReg;
-			if (verbose)
+			if (superVerbose)
 				cout << "jreg  jump to " << AReg << endl;
 			break;
 		case LDAIN:
 			AReg = GetMem(BankReg, AReg);
-			if (verbose)
+			if (superVerbose)
 				cout << "ldain  change AReg to " << GetMem(BankReg, AReg) << endl;
 			break;
 		case STAOUT:
 			SetMem(BankReg, AReg, BReg);
-			if (verbose)
+			if (superVerbose)
 				cout << "staout  store BReg to " << AReg << endl;
 			break;
 		case LDLGE:
 			AReg = GetMem(BankReg, GetMem(0, programCounter));
 			programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
 			break;
 		case STLGE:
 			SetMem(BankReg, GetMem(0, programCounter), AReg);
 			programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "stlge  store AReg to " << GetMem(0, programCounter) << endl;
 			break;
 		case LDW:
 			//AReg = memoryBytes[0][programCounter];
 			AReg = GetMem(0, programCounter);
 			programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "ldw  change AReg to " << AReg << endl;
 			break;
 		case SWP:
@@ -1610,25 +1614,25 @@ void Update()
 			break;
 		case BNK:
 			BankReg = arg & 0b11;
-			if (verbose)
+			if (superVerbose)
 				cout << "bnk  bank change to " << arg << endl;
 			break;
 		case VBUF:
 			VideoBufReg = !VideoBufReg;
 			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
 			Draw();
-			if (verbose)
+			if (superVerbose)
 				cout << "vbuf" << endl;
 			break;
 		case BNKC:
 			BankReg = CReg & 0b11;
-			if (verbose)
+			if (superVerbose)
 				cout << "bnkc  bank change to " << CReg << endl;
 			break;
 		case LDWB:
 			BReg = GetMem(0, programCounter);
 			programCounter++;
-			if (verbose)
+			if (superVerbose)
 				cout << "ldwb  change BReg to " << BReg << endl;
 			break;
 		}
