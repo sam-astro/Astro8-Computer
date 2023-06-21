@@ -47,7 +47,7 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose, usingWebcam, imageOnlyMode;
 
-bool usingKeyboard = true, usingMouse = true;
+bool usingKeyboard = true, usingMouse = true, performanceMode = true;
 
 uint16_t imageOnlyModeFrames = 10;
 uint16_t imageOnlyModeFrameCount = 10;
@@ -136,6 +136,41 @@ enum StandaloneInstruction : MicroInstruction {
 	STANDALONE_ST = 0b0010000000000000,
 	STANDALONE_CE = 0b0100000000000000,
 	STANDALONE_EO = 0b1000000000000000,
+};
+
+enum int {
+	NOP = 0,
+	AIN,
+	BIN,
+	CIN,
+	LDIA,
+	LDIB,
+	STA,
+	ADD,
+	SUB,
+	MULT,
+	DIV,
+	JMP,
+	JMPZ,
+	JMPC,
+	JREG,
+	LDAIN,
+	STAOUT,
+	LDLGE,
+	STLGE,
+	LDW,
+	SWP,
+	SWPC,
+	PCR,
+	BSL,
+	BSR,
+	AND,
+	OR,
+	NOT,
+	BNK,
+	VBUF,
+	BNKC,
+	LDWB,
 };
 
 
@@ -1045,293 +1080,439 @@ int main(int argc, char** argv)
 bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
-	// For all steps in the instruction, execute it's corresponding microinstruction
-	for (int step = 0; step < 8; step++)
-	{
-
-		// Execute fetch in single step (normally this process is done in multiple clock cycles,
-		// but since it is required for every instruction this emulator speeds it up a little bit.
-		// This does not change a program's functionality.)
-		if (step == 0)
+	// If performanceMode is turned off, execute in classic mode
+	if(!performanceMode)
+		// For all steps in the instruction, execute it's corresponding microinstruction
+		for (int step = 0; step < 8; step++)
 		{
-			// CR
-			// AW
-			// RM
-			// IW
-			InstructionReg = memoryBytes[0][programCounter];
-			// CE
-			programCounter += 1;
-			step = 2;
-		}
-
-		// Access the microcode of the current instruction from the rom
-		int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
-		MicroInstruction mcode = microinstructionData[microcodeLocation];
-
-
-		// Check for any reads and execute if applicable
-		MicroInstruction readInstr = mcode & READ_MASK;
-		switch (readInstr) [[likely]]
-		{
-		case READ_RA: // Read from A register onto bus
-			bus = AReg;
-			break;
-		case READ_RB: // Read from B register onto bus
-			bus = BReg;
-			break;
-		case READ_RC: // Read from C reagister onto bus
-			bus = CReg;
-			break;
-		case READ_RM: // Read from memory address onto bus
-			bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
-			break;
-		case READ_IR: // Read from the instruction register onto bus
-			bus = InstructionReg & 0b1111111111;
-			break;
-		case READ_CR: // Read from the program counter onto bus
-			bus = programCounter;
-			break;
-			//case READ_RE:
-			//	bus = expansionPort[ExpReg];
-			//	break;
-		}
-
-
-			// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
-		MicroInstruction aluInstr = mcode & ALU_MASK;
-
-		// Standalone microinstruction (ungrouped)
-		if (mcode & STANDALONE_EO) [[unlikely]]
-		{
-			flags[0] = 0;
-			flags[1] = 0;
-			switch (aluInstr)
+	
+			// Execute fetch in single step (normally this process is done in multiple clock cycles,
+			// but since it is required for every instruction this emulator speeds it up a little bit.
+			// This does not change a program's functionality.)
+			if (step == 0)
 			{
-			case ALU_SU: // Subtract @B from @A and put answer into @A
-				flags[1] = 1;
-				if (AReg - BReg == 0)
-					flags[0] = 1;
-				bus = AReg - BReg;
-				if (bus < 0)
-				{
-					bus = 65535 + bus;
-					flags[1] = 0;
-				}
+				// CR
+				// AW
+				// RM
+				// IW
+				InstructionReg = memoryBytes[0][programCounter];
+				// CE
+				programCounter += 1;
+				step = 2;
+			}
+	
+			// Access the microcode of the current instruction from the rom
+			int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
+			MicroInstruction mcode = microinstructionData[microcodeLocation];
+	
+	
+			// Check for any reads and execute if applicable
+			MicroInstruction readInstr = mcode & READ_MASK;
+			switch (readInstr) [[likely]]
+			{
+			case READ_RA: // Read from A register onto bus
+				bus = AReg;
 				break;
-
-			case ALU_MU: // Multiply @A and @B and put answer into @A
-				if (AReg * BReg == 0)
-					flags[0] = 1;
-				bus = AReg * BReg;
-				if (bus >= 65535)
+			case READ_RB: // Read from B register onto bus
+				bus = BReg;
+				break;
+			case READ_RC: // Read from C reagister onto bus
+				bus = CReg;
+				break;
+			case READ_RM: // Read from memory address onto bus
+				bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
+				break;
+			case READ_IR: // Read from the instruction register onto bus
+				bus = InstructionReg & 0b1111111111;
+				break;
+			case READ_CR: // Read from the program counter onto bus
+				bus = programCounter;
+				break;
+				//case READ_RE:
+				//	bus = expansionPort[ExpReg];
+				//	break;
+			}
+	
+	
+				// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
+			MicroInstruction aluInstr = mcode & ALU_MASK;
+	
+			// Standalone microinstruction (ungrouped)
+			if (mcode & STANDALONE_EO) [[unlikely]]
+			{
+				flags[0] = 0;
+				flags[1] = 0;
+				switch (aluInstr)
 				{
-					bus = bus - 65535;
+				case ALU_SU: // Subtract @B from @A and put answer into @A
 					flags[1] = 1;
-				}
-				break;
-
-			case ALU_DI: // Divide @A by @B and put answer into @A
-				// Dont divide by zero
-				if (BReg != 0) {
-					if (AReg / BReg == 0)
+					if (AReg - BReg == 0)
 						flags[0] = 1;
-					bus = AReg / BReg;
+					bus = AReg - BReg;
+					if (bus < 0)
+					{
+						bus = 65535 + bus;
+						flags[1] = 0;
+					}
+					break;
+	
+				case ALU_MU: // Multiply @A and @B and put answer into @A
+					if (AReg * BReg == 0)
+						flags[0] = 1;
+					bus = AReg * BReg;
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_DI: // Divide @A by @B and put answer into @A
+					// Dont divide by zero
+					if (BReg != 0) {
+						if (AReg / BReg == 0)
+							flags[0] = 1;
+						bus = AReg / BReg;
+					}
+					else {
+						flags[0] = 1;
+						bus = 0;
+					}
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
+					bus = (uint16_t)(AReg << (BReg & 0b1111));
+	
+					if (bus == 0)
+						flags[0] = 1;
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
+					bus = (uint16_t)(AReg >> (BReg & 0b1111));
+	
+					if (bus == 0)
+						flags[0] = 1;
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_AND: // Logical AND @A and @B and put answer into @A
+					bus = AReg & BReg;
+	
+					if (bus == 0)
+						flags[0] = 1;
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_OR: // Logical OR @A and @B and put answer into @A
+					bus = AReg | BReg;
+	
+					if (bus == 0)
+						flags[0] = 1;
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				case ALU_NOT: // Logical NOT @A and @B and put answer into @A
+					bus = ~AReg;
+	
+					if (bus == 0)
+						flags[0] = 1;
+	
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
+	
+				default: // Add @A and @B and put answer into @A
+					if (AReg + BReg == 0)
+						flags[0] = 1;
+					bus = AReg + BReg;
+					if (bus >= 65535)
+					{
+						bus = bus - 65535;
+						flags[1] = 1;
+					}
+					break;
 				}
+			}
+	
+	
+				// Check for any writes and execute if applicable
+			MicroInstruction writeInstr = mcode & WRITE_MASK;
+			switch (writeInstr)
+			{
+			[[likely]] default: break;
+			case WRITE_WA: // Write from bus into A register
+				AReg = bus;
+				break;
+			case WRITE_WB: // Write from bus into B register
+				BReg = bus;
+				break;
+			case WRITE_WC: // Write from bus into C register
+				CReg = bus;
+				break;
+			case WRITE_IW: // Write from bus into Instruction register
+				InstructionReg = bus;
+				break;
+			case WRITE_WM: // Write from bus into memory location
+				// If the region of memory we are writing to is the expansion port mapped memory location for music
+				// Only play audio if writing to the dedicated audio expansion port
+				if (BankReg == 1 && memoryIndex == 53502) {
+					if (verbose) {
+						PrintColored("	-- cout >> ", brightBlackFGColor, "");
+						PrintColored(to_string(BankReg) + " ", blueFGColor, "");
+						PrintColored(to_string(bus) + " ", greenFGColor, "");
+						cout << "\n";
+					}
+					////////////
+					// Audio: //
+					////////////
+	
+					//		Format:     XXXXX FFFFFFFFCCC
+					//		You can only toggle one channel at a time per expansion port write.
+					//		CCC is converted to the index of the channel that is toggled
+					//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+					//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+					//		is changed and the channel is turned ON if it isn't already
+					//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
+					//              This means the first channel is index 1, etc.
+	
+	
+					// Calculate target frequency from beginning 7-bits
+					float offset = 0.0f;
+					float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
+					int targetChannel = bus & 0b111;
+	
+					if (targetChannel > 0 && targetChannel <= 4)
+						// If the channel is not playing and the selected frequency is not 0, start playing with frequency
+						if (isPlaying[targetChannel-1] == false && targetSpeed > offset) {
+							isPlaying[targetChannel - 1] = true;
+							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+							(*tone[targetChannel - 1]).playNote(targetSpeed);
+							lastFreq[targetChannel - 1] = targetSpeed;
+						}
+					// If the channel is playing and the selected frequency is not 0, change frequency
+						else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
+							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+							(*tone[targetChannel - 1]).playNote(targetSpeed);
+							lastFreq[targetChannel - 1] = targetSpeed;
+						}
+					// If the channel is playing and the selected frequency is 0, stop channel
+						else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
+							isPlaying[targetChannel - 1] = false;
+							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+							lastFreq[targetChannel - 1] = targetSpeed;
+						}
+	
+				}
+				// Otherwise just set the memory value to the bus
 				else {
-					flags[0] = 1;
-					bus = 0;
-				}
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
+					if (BankReg == 1 && memoryIndex >= 53546) // If a video location
+						videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
+					else // Else a normal memory location
+						memoryBytes[BankReg][memoryIndex] = bus;
 				}
 				break;
-
-			case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
-				bus = (uint16_t)(AReg << (BReg & 0b1111));
-
-				if (bus == 0)
-					flags[0] = 1;
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
+			case WRITE_J: // Write from bus into program counter, ie a `JUMP`
+				programCounter = bus;
 				break;
-
-			case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
-				bus = (uint16_t)(AReg >> (BReg & 0b1111));
-
-				if (bus == 0)
-					flags[0] = 1;
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
+			case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
+				memoryIndex = bus;
 				break;
-
-			case ALU_AND: // Logical AND @A and @B and put answer into @A
-				bus = AReg & BReg;
-
-				if (bus == 0)
-					flags[0] = 1;
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
+			case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
+				BankReg = bus & 3;
 				break;
-
-			case ALU_OR: // Logical OR @A and @B and put answer into @A
-				bus = AReg | BReg;
-
-				if (bus == 0)
-					flags[0] = 1;
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
-				break;
-
-			case ALU_NOT: // Logical NOT @A and @B and put answer into @A
-				bus = ~AReg;
-
-				if (bus == 0)
-					flags[0] = 1;
-
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
-				break;
-
-			default: // Add @A and @B and put answer into @A
-				if (AReg + BReg == 0)
-					flags[0] = 1;
-				bus = AReg + BReg;
-				if (bus >= 65535)
-				{
-					bus = bus - 65535;
-					flags[1] = 1;
-				}
+			case WRITE_VBUF: // Swap the video front and back buffer.
+				VideoBufReg = !VideoBufReg;
+				videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+				//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
+					Draw();
+				//}
 				break;
 			}
+	
+	
+			// Standalone microinstructions (ungrouped)
+			if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
+				programCounter = programCounter == 65535 ? 0 : programCounter + 1;
+	
+			if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
+				break;
 		}
+	// If in performance mode, execute instructions quickly
+	else{
+		// Fetch
+		InstructionReg = memoryBytes[0][programCounter];
+		uint16_t inst = ((InstructionReg >> 6) & 0b11111100000);
+		uint16_t arg = InstructionReg & 0b11111111111);
+		programCounter += 1;
 
-
-			// Check for any writes and execute if applicable
-		MicroInstruction writeInstr = mcode & WRITE_MASK;
-		switch (writeInstr)
+		
+		switch (inst)
 		{
-		[[likely]] default: break;
-		case WRITE_WA: // Write from bus into A register
-			AReg = bus;
+		case NOP:
 			break;
-		case WRITE_WB: // Write from bus into B register
-			BReg = bus;
+		case AIN:
+			AReg = memoryBytes[BankReg][arg];
 			break;
-		case WRITE_WC: // Write from bus into C register
-			CReg = bus;
+		case BIN:
+			BReg = memoryBytes[BankReg][arg];
 			break;
-		case WRITE_IW: // Write from bus into Instruction register
-			InstructionReg = bus;
+		case CIN:
+			CReg = memoryBytes[BankReg][arg];
 			break;
-		case WRITE_WM: // Write from bus into memory location
-			// If the region of memory we are writing to is the expansion port mapped memory location for music
-			// Only play audio if writing to the dedicated audio expansion port
-			if (BankReg == 1 && memoryIndex == 53502) {
-				if (verbose) {
-					PrintColored("	-- cout >> ", brightBlackFGColor, "");
-					PrintColored(to_string(BankReg) + " ", blueFGColor, "");
-					PrintColored(to_string(bus) + " ", greenFGColor, "");
-					cout << "\n";
-				}
-				////////////
-				// Audio: //
-				////////////
-
-				//		Format:     XXXXX FFFFFFFFCCC
-				//		You can only toggle one channel at a time per expansion port write.
-				//		CCC is converted to the index of the channel that is toggled
-				//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
-				//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
-				//		is changed and the channel is turned ON if it isn't already
-				//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
-				//              This means the first channel is index 1, etc.
-
-
-				// Calculate target frequency from beginning 7-bits
-				float offset = 0.0f;
-				float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
-				int targetChannel = bus & 0b111;
-
-				if (targetChannel > 0 && targetChannel <= 4)
-					// If the channel is not playing and the selected frequency is not 0, start playing with frequency
-					if (isPlaying[targetChannel-1] == false && targetSpeed > offset) {
-						isPlaying[targetChannel - 1] = true;
-						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-						(*tone[targetChannel - 1]).playNote(targetSpeed);
-						lastFreq[targetChannel - 1] = targetSpeed;
-					}
-				// If the channel is playing and the selected frequency is not 0, change frequency
-					else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
-						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-						(*tone[targetChannel - 1]).playNote(targetSpeed);
-						lastFreq[targetChannel - 1] = targetSpeed;
-					}
-				// If the channel is playing and the selected frequency is 0, stop channel
-					else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
-						isPlaying[targetChannel - 1] = false;
-						(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-						lastFreq[targetChannel - 1] = targetSpeed;
-					}
-
-			}
-			// Otherwise just set the memory value to the bus
-			else {
-				if (BankReg == 1 && memoryIndex >= 53546) // If a video location
-					videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
-				else // Else a normal memory location
-					memoryBytes[BankReg][memoryIndex] = bus;
-			}
+		case LDIA:
+			AReg = arg;
 			break;
-		case WRITE_J: // Write from bus into program counter, ie a `JUMP`
-			programCounter = bus;
+		case LDIB:
+			AReg = arg;
 			break;
-		case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
-			memoryIndex = bus;
+		case STA:
+			memoryBytes[BankReg][arg] = AReg;
 			break;
-		case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
-			BankReg = bus & 3;
+		case ADD:
+			AReg += BReg;
 			break;
-		case WRITE_VBUF: // Swap the video front and back buffer.
-			VideoBufReg = !VideoBufReg;
-			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
-			//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
-				Draw();
-			//}
+		case SUB:
+			AReg -= BReg;
+			break;
+		case MULT:
+			AReg *= BReg;
+			break;
+		case DIV:
+			AReg /= BReg;
+			break;
+		case JMP:
+			programCounter = memoryBytes[0][programCounter+1];
+			break;
+		case JMPZ:
+			if(flags[0] == 1)
+				programCounter = memoryBytes[0][programCounter+1];
+			else
+				programCounter++;
+			break;
+		case JMPC:
+			if(flags[1] == 1)
+				programCounter = memoryBytes[0][programCounter+1];
+			else
+				programCounter++;
+			break;
+		case JREG:
+			programCounter = AReg;
+			break;
+		case LDAIN:
+			AReg = memoryBytes[BankReg][AReg];
+			break;
+		case STAOUT:
+			memoryBytes[BankReg][AReg] = BReg;
+			break;
+		case LDLGE:
+			AReg = memoryBytes[BankReg][memoryBytes[0][programCounter+1]];
+			programCounter++;
+			break;
+		case STLGE:
+			memoryBytes[BankReg][memoryBytes[0][programCounter+1]] = AReg;
+			programCounter++;
+			break;
+		case LDW:
+			AReg = memoryBytes[0][memoryBytes[0][programCounter+1]];
+			programCounter++;
+			break;
+		case SWP:
+			CReg = AReg;
+			AReg = BReg;
+			BReg = CReg;
+			break;
+		case SWPC:
+			BReg = CReg;
+			CReg = AReg;
+			AReg = BReg;
+			break;
+		case PCR:
+			AReg = programCounter;
+			break;
+		case BSL:
+			AReg <<= BReg;
+			break;
+		case BSR:
+			AReg >>= BReg;
+			break;
+		case AND:
+			AReg &= BReg;
+			break;
+		case OR:
+			AReg |= BReg;
+			break;
+		case NOT:
+			AReg ~= BReg;
 			break;
 		}
-
-
-		// Standalone microinstructions (ungrouped)
-		if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
-			programCounter = programCounter == 65535 ? 0 : programCounter + 1;
-
-		if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
-			break;
 	}
+		
 }
 
+enum int {
+	NOP = 0,
+	AIN,
+	BIN,
+	CIN,
+	LDIA,
+	LDIB,
+	STA,
+	ADD,
+	SUB,
+	MULT,
+	DIV,
+	JMP,
+	JMPZ,
+	JMPC,
+	JREG,
+	LDAIN,
+	STAOUT,
+	LDLGE,
+	STLGE,
+	LDW,
+	SWP,
+	SWPC,
+	PCR,
+	BSL,
+	BSR,
+	AND,
+	OR,
+	NOT,
+	BNK,
+	VBUF,
+	BNKC,
+	LDWB,
+};
 void DrawNextPixel() {
 	int charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
 	int characterRamValue = charVal & 0b11111111;
