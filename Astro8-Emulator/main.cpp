@@ -138,9 +138,10 @@ enum StandaloneInstruction : MicroInstruction {
 	STANDALONE_EO = 0b1000000000000000,
 };
 
-enum int {
+using FullInstruction = uint16_t;
+enum AllInstructions : FullInstruction {
 	NOP = 0,
-	AIN,
+	AIN = 1,
 	BIN,
 	CIN,
 	LDIA,
@@ -200,6 +201,8 @@ int ConvertAsciiToSdcii(int asciiCode);
 void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals);
 static void write_samples(int16_t* s_byteStream, long begin, long end, long length);
 uint16_t ConvertNoteIndexToFrequency(uint8_t index);
+uint16_t GetMem(uint16_t bank, uint16_t address);
+void SetMem(uint16_t bank, uint16_t address, uint16_t data);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(108 * 108 * 4, 0);
@@ -729,7 +732,7 @@ int main(int argc, char** argv)
 	}
 
 
-	#if WINDOWS
+#if WINDOWS
 	// Start Webcam if specified and compatable
 	struct SimpleCapParams capture;
 	while (usingWebcam) {
@@ -760,7 +763,7 @@ int main(int argc, char** argv)
 		//}
 		break;
 	}
-	#endif
+#endif
 
 
 	// Start Emulation
@@ -771,9 +774,9 @@ int main(int argc, char** argv)
 
 	if (!imageOnlyMode) // No need to initialize graphics if no rendering is taking place
 		InitGraphics("Astro-8 Emulator", 108, 108, 5);
-	else{ // Create required directory if outputting images
+	else { // Create required directory if outputting images
 		std::filesystem::create_directory(projectDirectory + "./frames");
-		cout<<"Created Directory at: \""+(projectDirectory + "./frames")+"\""<<endl;
+		cout << "Created Directory at: \"" + (projectDirectory + "./frames") + "\"" << endl;
 	}
 
 
@@ -856,15 +859,15 @@ int main(int argc, char** argv)
 	synth.unpause();
 
 
-	#if WINDOWS
+#if WINDOWS
 	// Request initial webcam capture if on
 	if (usingWebcam)
 		doCapture(0);
-	#endif
+#endif
 
 	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
 	Draw();
-	for (size_t i = 0; i < 1000000000; i++){}
+	for (size_t i = 0; i < 1000000000; i++) {}
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 
@@ -919,17 +922,17 @@ int main(int argc, char** argv)
 			int undecidedKey = 168;
 
 			// If the user has activated the webcam feature, write current webcam pixel value to expansion port
-			#if WINDOWS
+#if WINDOWS
 			if (usingWebcam) {
 				// If the program is asking for more data, reply
-				if(memoryBytes[1][53503] >= 0b1000000000000000){
+				if (memoryBytes[1][53503] >= 0b1000000000000000) {
 					// Message request looks like:
 					// Format: 0b10 YYYYYYY XXXXXXX    (where (X,Y) is the start pixel)
 					uint16_t xReq = memoryBytes[1][53503] & 0b1111111;
 					uint16_t yReq = (memoryBytes[1][53503] >> 7) & 0b1111111;
-					
+
 					uint16_t outputWord = 0;
-					
+
 					// Colors come in groups of 7, like 0b00 CC CC CC CC CC CC CC
 					// The first 2 bits are blank, since they are used for controls
 					// The groups are ordered from right to left (CC at right end is the Leftmost pixel location)
@@ -948,7 +951,7 @@ int main(int argc, char** argv)
 						outputWord = 0;
 						for (int gg = 0; gg < 8; gg++) {
 							int targetIndex = xReq + (yReq * 108) + gg + 7 + (i * 8);
-							uint32_t pixVal = capture.mTargetBuf[targetIndex >= 108*108 ? targetIndex - 108*108 : targetIndex];
+							uint32_t pixVal = capture.mTargetBuf[targetIndex >= 108 * 108 ? targetIndex - 108 * 108 : targetIndex];
 							uint16_t compressedColor = ((pixVal & 255) + ((pixVal >> 8) & 255) + ((pixVal >> 16) & 255)) / 255;
 							outputWord = outputWord | (compressedColor << (gg * 2));
 						}
@@ -962,7 +965,7 @@ int main(int argc, char** argv)
 					cout << endl << "picture" << endl;
 				}
 			}
-			#endif
+#endif
 
 
 			// Poll all input events
@@ -1070,9 +1073,9 @@ int main(int argc, char** argv)
 
 	destroy(gRenderer, gWindow);
 	SDL_Quit();
-	#if WINDOWS
+#if WINDOWS
 	deinitCapture(0);
-	#endif
+#endif
 
 	return 0;
 }
@@ -1081,11 +1084,11 @@ bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
 	// If performanceMode is turned off, execute in classic mode
-	if(!performanceMode)
+	if (!performanceMode)
 		// For all steps in the instruction, execute it's corresponding microinstruction
 		for (int step = 0; step < 8; step++)
 		{
-	
+
 			// Execute fetch in single step (normally this process is done in multiple clock cycles,
 			// but since it is required for every instruction this emulator speeds it up a little bit.
 			// This does not change a program's functionality.)
@@ -1100,23 +1103,23 @@ void Update()
 				programCounter += 1;
 				step = 2;
 			}
-	
+
 			// Access the microcode of the current instruction from the rom
 			int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
 			MicroInstruction mcode = microinstructionData[microcodeLocation];
-	
-	
+
+
 			// Check for any reads and execute if applicable
 			MicroInstruction readInstr = mcode & READ_MASK;
 			switch (readInstr) [[likely]]
-			{
+				{
 			case READ_RA: // Read from A register onto bus
 				bus = AReg;
 				break;
 			case READ_RB: // Read from B register onto bus
 				bus = BReg;
 				break;
-			case READ_RC: // Read from C reagister onto bus
+			case READ_RC: // Read from C register onto bus
 				bus = CReg;
 				break;
 			case READ_RM: // Read from memory address onto bus
@@ -1131,320 +1134,391 @@ void Update()
 				//case READ_RE:
 				//	bus = expansionPort[ExpReg];
 				//	break;
-			}
-	
-	
-				// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
-			MicroInstruction aluInstr = mcode & ALU_MASK;
-	
-			// Standalone microinstruction (ungrouped)
-			if (mcode & STANDALONE_EO) [[unlikely]]
-			{
-				flags[0] = 0;
-				flags[1] = 0;
-				switch (aluInstr)
-				{
-				case ALU_SU: // Subtract @B from @A and put answer into @A
-					flags[1] = 1;
-					if (AReg - BReg == 0)
-						flags[0] = 1;
-					bus = AReg - BReg;
-					if (bus < 0)
+				}
+
+
+					// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
+				MicroInstruction aluInstr = mcode & ALU_MASK;
+
+				// Standalone microinstruction (ungrouped)
+				if (mcode & STANDALONE_EO) [[unlikely]]
 					{
-						bus = 65535 + bus;
+						flags[0] = 0;
 						flags[1] = 0;
-					}
-					break;
-	
-				case ALU_MU: // Multiply @A and @B and put answer into @A
-					if (AReg * BReg == 0)
-						flags[0] = 1;
-					bus = AReg * BReg;
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_DI: // Divide @A by @B and put answer into @A
-					// Dont divide by zero
-					if (BReg != 0) {
-						if (AReg / BReg == 0)
-							flags[0] = 1;
-						bus = AReg / BReg;
-					}
-					else {
-						flags[0] = 1;
-						bus = 0;
-					}
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
-					bus = (uint16_t)(AReg << (BReg & 0b1111));
-	
-					if (bus == 0)
-						flags[0] = 1;
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
-					bus = (uint16_t)(AReg >> (BReg & 0b1111));
-	
-					if (bus == 0)
-						flags[0] = 1;
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_AND: // Logical AND @A and @B and put answer into @A
-					bus = AReg & BReg;
-	
-					if (bus == 0)
-						flags[0] = 1;
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_OR: // Logical OR @A and @B and put answer into @A
-					bus = AReg | BReg;
-	
-					if (bus == 0)
-						flags[0] = 1;
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				case ALU_NOT: // Logical NOT @A and @B and put answer into @A
-					bus = ~AReg;
-	
-					if (bus == 0)
-						flags[0] = 1;
-	
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-	
-				default: // Add @A and @B and put answer into @A
-					if (AReg + BReg == 0)
-						flags[0] = 1;
-					bus = AReg + BReg;
-					if (bus >= 65535)
-					{
-						bus = bus - 65535;
-						flags[1] = 1;
-					}
-					break;
-				}
-			}
-	
-	
-				// Check for any writes and execute if applicable
-			MicroInstruction writeInstr = mcode & WRITE_MASK;
-			switch (writeInstr)
-			{
-			[[likely]] default: break;
-			case WRITE_WA: // Write from bus into A register
-				AReg = bus;
-				break;
-			case WRITE_WB: // Write from bus into B register
-				BReg = bus;
-				break;
-			case WRITE_WC: // Write from bus into C register
-				CReg = bus;
-				break;
-			case WRITE_IW: // Write from bus into Instruction register
-				InstructionReg = bus;
-				break;
-			case WRITE_WM: // Write from bus into memory location
-				// If the region of memory we are writing to is the expansion port mapped memory location for music
-				// Only play audio if writing to the dedicated audio expansion port
-				if (BankReg == 1 && memoryIndex == 53502) {
-					if (verbose) {
-						PrintColored("	-- cout >> ", brightBlackFGColor, "");
-						PrintColored(to_string(BankReg) + " ", blueFGColor, "");
-						PrintColored(to_string(bus) + " ", greenFGColor, "");
-						cout << "\n";
-					}
-					////////////
-					// Audio: //
-					////////////
-	
-					//		Format:     XXXXX FFFFFFFFCCC
-					//		You can only toggle one channel at a time per expansion port write.
-					//		CCC is converted to the index of the channel that is toggled
-					//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
-					//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
-					//		is changed and the channel is turned ON if it isn't already
-					//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
-					//              This means the first channel is index 1, etc.
-	
-	
-					// Calculate target frequency from beginning 7-bits
-					float offset = 0.0f;
-					float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
-					int targetChannel = bus & 0b111;
-	
-					if (targetChannel > 0 && targetChannel <= 4)
-						// If the channel is not playing and the selected frequency is not 0, start playing with frequency
-						if (isPlaying[targetChannel-1] == false && targetSpeed > offset) {
-							isPlaying[targetChannel - 1] = true;
-							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-							(*tone[targetChannel - 1]).playNote(targetSpeed);
-							lastFreq[targetChannel - 1] = targetSpeed;
+						switch (aluInstr)
+						{
+						case ALU_SU: // Subtract @B from @A and put answer into @A
+							flags[1] = 1;
+							if (AReg - BReg == 0)
+								flags[0] = 1;
+							bus = AReg - BReg;
+							if (bus < 0)
+							{
+								bus = 65535 + bus;
+								flags[1] = 0;
+							}
+							break;
+
+						case ALU_MU: // Multiply @A and @B and put answer into @A
+							if (AReg * BReg == 0)
+								flags[0] = 1;
+							bus = AReg * BReg;
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_DI: // Divide @A by @B and put answer into @A
+							// Dont divide by zero
+							if (BReg != 0) {
+								if (AReg / BReg == 0)
+									flags[0] = 1;
+								bus = AReg / BReg;
+							}
+							else {
+								flags[0] = 1;
+								bus = 0;
+							}
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
+							bus = (uint16_t)(AReg << (BReg & 0b1111));
+
+							if (bus == 0)
+								flags[0] = 1;
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
+							bus = (uint16_t)(AReg >> (BReg & 0b1111));
+
+							if (bus == 0)
+								flags[0] = 1;
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_AND: // Logical AND @A and @B and put answer into @A
+							bus = AReg & BReg;
+
+							if (bus == 0)
+								flags[0] = 1;
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_OR: // Logical OR @A and @B and put answer into @A
+							bus = AReg | BReg;
+
+							if (bus == 0)
+								flags[0] = 1;
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						case ALU_NOT: // Logical NOT @A and @B and put answer into @A
+							bus = ~AReg;
+
+							if (bus == 0)
+								flags[0] = 1;
+
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
+
+						default: // Add @A and @B and put answer into @A
+							if (AReg + BReg == 0)
+								flags[0] = 1;
+							bus = AReg + BReg;
+							if (bus >= 65535)
+							{
+								bus = bus - 65535;
+								flags[1] = 1;
+							}
+							break;
 						}
-					// If the channel is playing and the selected frequency is not 0, change frequency
-						else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
-							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-							(*tone[targetChannel - 1]).playNote(targetSpeed);
-							lastFreq[targetChannel - 1] = targetSpeed;
+					}
+
+
+						// Check for any writes and execute if applicable
+					MicroInstruction writeInstr = mcode & WRITE_MASK;
+					switch (writeInstr)
+					{
+					[[likely]] default: break;
+					case WRITE_WA: // Write from bus into A register
+						AReg = bus;
+						break;
+					case WRITE_WB: // Write from bus into B register
+						BReg = bus;
+						break;
+					case WRITE_WC: // Write from bus into C register
+						CReg = bus;
+						break;
+					case WRITE_IW: // Write from bus into Instruction register
+						InstructionReg = bus;
+						break;
+					case WRITE_WM: // Write from bus into memory location
+						// If the region of memory we are writing to is the expansion port mapped memory location for music
+						// Only play audio if writing to the dedicated audio expansion port
+						if (BankReg == 1 && memoryIndex == 53502) {
+							if (verbose) {
+								PrintColored("	-- cout >> ", brightBlackFGColor, "");
+								PrintColored(to_string(BankReg) + " ", blueFGColor, "");
+								PrintColored(to_string(bus) + " ", greenFGColor, "");
+								cout << "\n";
+							}
+							////////////
+							// Audio: //
+							////////////
+
+							//		Format:     XXXXX FFFFFFFFCCC
+							//		You can only toggle one channel at a time per expansion port write.
+							//		CCC is converted to the index of the channel that is toggled
+							//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+							//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+							//		is changed and the channel is turned ON if it isn't already
+							//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
+							//              This means the first channel is index 1, etc.
+
+
+							// Calculate target frequency from beginning 7-bits
+							float offset = 0.0f;
+							float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
+							int targetChannel = bus & 0b111;
+
+							if (targetChannel > 0 && targetChannel <= 4)
+								// If the channel is not playing and the selected frequency is not 0, start playing with frequency
+								if (isPlaying[targetChannel - 1] == false && targetSpeed > offset) {
+									isPlaying[targetChannel - 1] = true;
+									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+									(*tone[targetChannel - 1]).playNote(targetSpeed);
+									lastFreq[targetChannel - 1] = targetSpeed;
+								}
+							// If the channel is playing and the selected frequency is not 0, change frequency
+								else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
+									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+									(*tone[targetChannel - 1]).playNote(targetSpeed);
+									lastFreq[targetChannel - 1] = targetSpeed;
+								}
+							// If the channel is playing and the selected frequency is 0, stop channel
+								else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
+									isPlaying[targetChannel - 1] = false;
+									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+									lastFreq[targetChannel - 1] = targetSpeed;
+								}
+
 						}
-					// If the channel is playing and the selected frequency is 0, stop channel
-						else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
-							isPlaying[targetChannel - 1] = false;
-							(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-							lastFreq[targetChannel - 1] = targetSpeed;
+						// Otherwise just set the memory value to the bus
+						else {
+							if (BankReg == 1 && memoryIndex >= 53546) // If a video location
+								videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
+							else // Else a normal memory location
+								memoryBytes[BankReg][memoryIndex] = bus;
 						}
-	
-				}
-				// Otherwise just set the memory value to the bus
-				else {
-					if (BankReg == 1 && memoryIndex >= 53546) // If a video location
-						videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
-					else // Else a normal memory location
-						memoryBytes[BankReg][memoryIndex] = bus;
-				}
-				break;
-			case WRITE_J: // Write from bus into program counter, ie a `JUMP`
-				programCounter = bus;
-				break;
-			case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
-				memoryIndex = bus;
-				break;
-			case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
-				BankReg = bus & 3;
-				break;
-			case WRITE_VBUF: // Swap the video front and back buffer.
-				VideoBufReg = !VideoBufReg;
-				videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
-				//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
-					Draw();
-				//}
-				break;
-			}
-	
-	
-			// Standalone microinstructions (ungrouped)
-			if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
-				programCounter = programCounter == 65535 ? 0 : programCounter + 1;
-	
-			if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
-				break;
+						break;
+					case WRITE_J: // Write from bus into program counter, ie a `JUMP`
+						programCounter = bus;
+						break;
+					case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
+						memoryIndex = bus;
+						break;
+					case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
+						BankReg = bus & 3;
+						break;
+					case WRITE_VBUF: // Swap the video front and back buffer.
+						VideoBufReg = !VideoBufReg;
+						videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+						//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
+						Draw();
+						//}
+						break;
+					}
+
+
+					// Standalone microinstructions (ungrouped)
+					if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
+						programCounter = programCounter == 65535 ? 0 : programCounter + 1;
+
+						if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
+							break;
 		}
 	// If in performance mode, execute instructions quickly
-	else{
+	else {
 		// Fetch
 		InstructionReg = memoryBytes[0][programCounter];
-		uint16_t inst = ((InstructionReg >> 6) & 0b11111100000);
-		uint16_t arg = InstructionReg & 0b11111111111);
-		programCounter += 1;
+		FullInstruction inst = ((InstructionReg >> 11) & 0b11111);
+		uint16_t arg = InstructionReg & 0b11111111111;
+		programCounter = programCounter == 65535 ? 0 : programCounter + 1;
+		int tempArithmetic = 0;
 
-		
+
 		switch (inst)
 		{
 		case NOP:
 			break;
 		case AIN:
-			AReg = memoryBytes[BankReg][arg];
+			AReg = GetMem(BankReg, arg);
 			break;
 		case BIN:
-			BReg = memoryBytes[BankReg][arg];
+			BReg = GetMem(BankReg, arg);
 			break;
 		case CIN:
-			CReg = memoryBytes[BankReg][arg];
+			CReg = GetMem(BankReg, arg);
 			break;
 		case LDIA:
 			AReg = arg;
 			break;
 		case LDIB:
-			AReg = arg;
+			BReg = arg;
+			if (verbose)
+				cout << "ldib  set BReg to " << BReg << endl;
 			break;
 		case STA:
-			memoryBytes[BankReg][arg] = AReg;
+			SetMem(BankReg, arg, AReg);
 			break;
 		case ADD:
-			AReg += BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			if (AReg + BReg == 0)
+				flags[0] = 1;
+			tempArithmetic = AReg + BReg;
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case SUB:
-			AReg -= BReg;
+			flags[0] = 0;
+			flags[1] = 1;
+			if (AReg - BReg == 0)
+				flags[0] = 1;
+			tempArithmetic = AReg - BReg;
+			if (tempArithmetic < 0)
+			{
+				tempArithmetic = 65535 - tempArithmetic;
+				flags[1] = 0;
+			}
+			AReg = tempArithmetic;
 			break;
 		case MULT:
-			AReg *= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			if (AReg * BReg == 0)
+				flags[0] = 1;
+			tempArithmetic = AReg * BReg;
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case DIV:
-			AReg /= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic;
+			// Dont divide by zero
+			if (BReg != 0) {
+				if (AReg / BReg == 0)
+					flags[0] = 1;
+				tempArithmetic = AReg / BReg;
+			}
+			else {
+				flags[0] = 1;
+				tempArithmetic = 0;
+			}
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case JMP:
-			programCounter = memoryBytes[0][programCounter+1];
+			programCounter = GetMem(0, programCounter);
+			if (verbose)
+				cout << "jmp  jump to " << programCounter << endl;
 			break;
 		case JMPZ:
-			if(flags[0] == 1)
-				programCounter = memoryBytes[0][programCounter+1];
+			if (flags[0] == 1)
+				programCounter = GetMem(0, programCounter);
 			else
 				programCounter++;
+			if (verbose)
+				cout << "jmpz  jump to " << programCounter << endl;
 			break;
 		case JMPC:
-			if(flags[1] == 1)
-				programCounter = memoryBytes[0][programCounter+1];
+			if (flags[1] == 1)
+				programCounter = GetMem(0, programCounter);
 			else
 				programCounter++;
+			if (verbose)
+				cout << "jmpc  jump to " << programCounter << endl;
 			break;
 		case JREG:
 			programCounter = AReg;
+			if (verbose)
+				cout << "jreg  jump to " << AReg << endl;
 			break;
 		case LDAIN:
-			AReg = memoryBytes[BankReg][AReg];
+			AReg = GetMem(BankReg, AReg);
+			if (verbose)
+				cout << "ldain  change AReg to " << GetMem(BankReg, AReg) << endl;
 			break;
 		case STAOUT:
-			memoryBytes[BankReg][AReg] = BReg;
+			SetMem(BankReg, AReg, BReg);
+			if (verbose)
+				cout << "staout  store BReg to " << AReg << endl;
 			break;
 		case LDLGE:
-			AReg = memoryBytes[BankReg][memoryBytes[0][programCounter+1]];
+			AReg = GetMem(BankReg, GetMem(0, programCounter));
 			programCounter++;
+			if (verbose)
+				cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
 			break;
 		case STLGE:
-			memoryBytes[BankReg][memoryBytes[0][programCounter+1]] = AReg;
+			SetMem(BankReg, GetMem(0, programCounter), AReg);
 			programCounter++;
+			if (verbose)
+				cout << "stlge  store AReg to " << GetMem(0, programCounter) << endl;
 			break;
 		case LDW:
-			AReg = memoryBytes[0][memoryBytes[0][programCounter+1]];
+			//AReg = memoryBytes[0][programCounter];
+			AReg = GetMem(0, programCounter);
 			programCounter++;
+			if (verbose)
+				cout << "ldw  change AReg to " << AReg << endl;
 			break;
 		case SWP:
 			CReg = AReg;
@@ -1457,62 +1531,176 @@ void Update()
 			AReg = BReg;
 			break;
 		case PCR:
-			AReg = programCounter;
+			AReg = programCounter - 1;
 			break;
 		case BSL:
-			AReg <<= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic = AReg << (BReg & 0b1111);
+
+			if (tempArithmetic == 0)
+				flags[0] = 1;
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case BSR:
-			AReg >>= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic = AReg >> (BReg & 0b1111);
+
+			if (tempArithmetic == 0)
+				flags[0] = 1;
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case AND:
-			AReg &= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic = AReg & BReg;
+
+			if (tempArithmetic == 0)
+				flags[0] = 1;
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case OR:
-			AReg |= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic = AReg | BReg;
+
+			if (tempArithmetic == 0)
+				flags[0] = 1;
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
 			break;
 		case NOT:
-			AReg ~= BReg;
+			flags[0] = 0;
+			flags[1] = 0;
+			tempArithmetic = ~AReg;
+
+			if (tempArithmetic == 0)
+				flags[0] = 1;
+
+			if (tempArithmetic >= 65535)
+			{
+				tempArithmetic = tempArithmetic - 65535;
+				flags[1] = 1;
+			}
+			AReg = tempArithmetic;
+			break;
+		case BNK:
+			BankReg = arg & 0b11;
+			if (verbose)
+				cout << "bnk  bank change to " << arg << endl;
+			break;
+		case VBUF:
+			VideoBufReg = !VideoBufReg;
+			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+			Draw();
+			if (verbose)
+				cout << "vbuf" << endl;
+			break;
+		case BNKC:
+			BankReg = CReg & 0b11;
+			if (verbose)
+				cout << "bnkc  bank change to " << CReg << endl;
+			break;
+		case LDWB:
+			BReg = GetMem(0, programCounter);
+			programCounter++;
+			if (verbose)
+				cout << "ldwb  change BReg to " << BReg << endl;
 			break;
 		}
 	}
-		
+
 }
 
-enum int {
-	NOP = 0,
-	AIN,
-	BIN,
-	CIN,
-	LDIA,
-	LDIB,
-	STA,
-	ADD,
-	SUB,
-	MULT,
-	DIV,
-	JMP,
-	JMPZ,
-	JMPC,
-	JREG,
-	LDAIN,
-	STAOUT,
-	LDLGE,
-	STLGE,
-	LDW,
-	SWP,
-	SWPC,
-	PCR,
-	BSL,
-	BSR,
-	AND,
-	OR,
-	NOT,
-	BNK,
-	VBUF,
-	BNKC,
-	LDWB,
-};
+
+void SetMem(uint16_t bank, uint16_t address, uint16_t data) {
+	// If the region of memory we are writing to is the expansion port mapped memory location for music
+	// Only play audio if writing to the dedicated audio expansion port
+	if (bank == 1 && address == 53502) {
+		if (verbose) {
+			PrintColored("	-- cout >> ", brightBlackFGColor, "");
+			PrintColored(to_string(bank) + " ", blueFGColor, "");
+			PrintColored(to_string(data) + " ", greenFGColor, "");
+			cout << "\n";
+		}
+		////////////
+		// Audio: //
+		////////////
+
+		//		Format:     XXXXX FFFFFFFFCCC
+		//		You can only toggle one channel at a time per expansion port write.
+		//		CCC is converted to the index of the channel that is toggled
+		//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+		//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+		//		is changed and the channel is turned ON if it isn't already
+		//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
+		//              This means the first channel is index 1, etc.
+
+
+		// Calculate target frequency from beginning 7-bits
+		float offset = 0.0f;
+		float targetSpeed = ConvertNoteIndexToFrequency((data & 0b1111111000) >> 3);
+		int targetChannel = data & 0b111;
+
+		if (targetChannel > 0 && targetChannel <= 4)
+			// If the channel is not playing and the selected frequency is not 0, start playing with frequency
+			if (isPlaying[targetChannel - 1] == false && targetSpeed > offset) {
+				isPlaying[targetChannel - 1] = true;
+				(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+				(*tone[targetChannel - 1]).playNote(targetSpeed);
+				lastFreq[targetChannel - 1] = targetSpeed;
+			}
+		// If the channel is playing and the selected frequency is not 0, change frequency
+			else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
+				(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+				(*tone[targetChannel - 1]).playNote(targetSpeed);
+				lastFreq[targetChannel - 1] = targetSpeed;
+			}
+		// If the channel is playing and the selected frequency is 0, stop channel
+			else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
+				isPlaying[targetChannel - 1] = false;
+				(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+				lastFreq[targetChannel - 1] = targetSpeed;
+			}
+
+	}
+	// Otherwise just set the memory value to the bus
+	else {
+		if (bank == 1 && address >= 53546) // If a video location
+			videoBuffer[(int)VideoBufReg][address - 53546] = data;
+		else // Else a normal memory location
+			memoryBytes[bank][address] = data;
+	}
+}
+
+uint16_t GetMem(uint16_t bank, uint16_t address) {
+	return ((bank == 1 && address >= 53547) ? videoBuffer[VideoBufReg][address - 53547] : memoryBytes[bank][address]);
+}
+
 void DrawNextPixel() {
 	int charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
 	int characterRamValue = charVal & 0b11111111;
@@ -1525,9 +1713,9 @@ void DrawNextPixel() {
 	if (charPixRomVal == true) {
 		// If the color is set to 0, then make it white, or vice versa.
 		// This is for compatibility with previous program versions, which default the color to 0.
-		if(colorValue == 0)
+		if (colorValue == 0)
 			colorValue = 0b11111111;
-		else if(colorValue == 0b11111111)
+		else if (colorValue == 0b11111111)
 			colorValue = 0;
 
 		r = BitRange(colorValue, 5, 3) * 36 + 0b11;
@@ -1598,7 +1786,7 @@ void Draw() {
 	if (imageOnlyMode) {
 		auto padded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
 		padded.insert(0, 5U - std::min<int>(std::string::size_type(5), padded.length()), '0');
-		
+
 		//uint8_t padd_amount = std::to_string(imageOnlyModeFrames).length();
 		//std::string unpadded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
 		//std::string paddedFrameNum = std::string(padd_amount - std::min<int>(padd_amount, unpadded.length()), '0') + unpadded;
@@ -1647,7 +1835,7 @@ std::string SimplifiedHertz(float input) {
 	if (input >= 1000.0) // KHz
 		return to_string(floor(input / 100.0f) / 10.0f) + " KHz";
 
-	return to_string(round(input * 10.0f) / 10.0f) + " KHz";
+	return to_string(round(input * 10.0f) / 10.0f) + " Hz";
 }
 
 int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale)
@@ -1694,7 +1882,7 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	//waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
 	//if (waveforms[3] == NULL)
 	//	cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	
+
 
 	return 0;
 }
@@ -1783,7 +1971,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			continue;
-		}
+	}
 
 		// Sets the specified memory location to a value:  set <addr> <val> <bank>
 		else if (splitBySpace[0] == "SET")
@@ -1795,7 +1983,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			continue;
-		}
+}
 
 		// Set the current location in memory equal to a value: here <value>
 		if (splitBySpace[0] == "HERE")
@@ -1851,7 +2039,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Print the output
@@ -1881,7 +2069,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-		}
+}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -1955,7 +2143,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2013,8 +2201,8 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
-		}
+					}
+				}
 
 			}
 
@@ -2087,9 +2275,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+				}
 			}
 		}
-			}
 
 	// Print the output
 	std::string processedOutput = "";
@@ -2120,14 +2308,14 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-		}
+	}
 
 vector<string> vars;
 vector<string> labels;
 vector<int> labelLineValues;
 vector<string> compiledLines;
 
-uint16_t ConvertNoteIndexToFrequency(uint8_t index){
+uint16_t ConvertNoteIndexToFrequency(uint8_t index) {
 	uint16_t conversionTable[96];
 	conversionTable[0] = 0;
 	conversionTable[1] = 16;
@@ -2214,7 +2402,7 @@ uint16_t ConvertNoteIndexToFrequency(uint8_t index){
 	conversionTable[82] = 1760;
 	conversionTable[83] = 1864;
 	conversionTable[84] = 1975;
-	
+
 	return conversionTable[index];
 }
 
