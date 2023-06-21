@@ -265,8 +265,8 @@ Usage: astro8 [options] <path>
 
 Options:
   -h, --help               Display this help menu
-  -c, --compile            Only compile and assemble Armstrong code. Will not
-                           start emulator.
+  -c, --compile            Only compile and assemble Armstrong code to .ASM.
+                           Will not start emulator.
   -a, --assemble           Only assemble assembly code into AEXE. Will not
                            start emulator.
   -r, --run                Run an already assembled program in AstroEXE format
@@ -354,10 +354,12 @@ class KeyPress {
 public:
 	uint16_t keyCode;
 	int uses = 1;
+	bool isDown = false; // Differ between sending down/up signal
 	friend bool operator== (const KeyPress& k1, const KeyPress& k2);
 
-	KeyPress(int key) {
+	KeyPress(int key, bool isPressed) {
 		keyCode = key;
+		isDown = isPressed;
 	}
 };
 bool operator== (const KeyPress& k1, const KeyPress& k2)
@@ -881,7 +883,7 @@ int main(int argc, char** argv)
 		double secondDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastSecond).count();
 		double frameDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastFrame).count();
 		double tickDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastTick).count();
-
+		
 		// Every second
 		if (secondDiff > 1000.0) {
 			lastSecond = startTime;
@@ -892,16 +894,7 @@ int main(int argc, char** argv)
 				<< std::flush;
 			updateCount = 0;
 			frameCount = 0;
-
-			//#if WINDOWS
-			//// Request webcam capture if on
-			//if (usingWebcam) {
-			//	doCapture(0);
-			//	//cout << endl << capture.mTargetBuf[webcamPixelLoc] << endl<<endl;
-			//}
-			//#endif
 		}
-
 
 
 		// CPU tick
@@ -986,10 +979,28 @@ int main(int argc, char** argv)
 					running = false;
 				// If using the keyboard in the expansion port
 				if (usingKeyboard) {
-					if (event.type == SDL_KEYDOWN)
+					/*if (event.type == SDL_KEYDOWN)
 						pressedKeys[(int)(event.key.keysym.scancode)] = true;
 					else if (event.type == SDL_KEYUP)
-						pressedKeys[(int)(event.key.keysym.scancode)] = false;
+						pressedKeys[(int)(event.key.keysym.scancode)] = false;*/
+
+					if (event.type == SDL_KEYDOWN) {
+						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), true));
+						// Ignore if the key is already in the rollover queue.
+						// Otherwise, add it to the queue
+						if (keyIt == keyRollover.end()) {
+							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), true));
+						}
+					}
+					else if (event.type == SDL_KEYUP) {
+						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), false));
+						// Ignore if the key is already in the rollover queue.
+						// Otherwise, add it to the queue
+						if (keyIt == keyRollover.end()) {
+							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), false));
+						}
+					}
+					
 					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
 						eventUses++;
 					}*/
@@ -1012,7 +1023,7 @@ int main(int argc, char** argv)
 						//mXRel = mXRel < 0 ? ((mXRel /4) << 6) & 0b111111000000 : (((~mXRel/4) + 1) << 6) & 0b111111000000;
 						//mYRel = -mYRel < 0 ? (-mYRel /4) & 0b111111 : ((~-mYRel /4) + 1) & 0b111111;
 
-						// This system sends the currrent coordinates of the mouse pointer,
+						// This system sends the current coordinates of the mouse pointer,
 						// which is different than how a mouse actually works I'm quite sure, 
 						// And instead they send the relative movement since the last data send, like the above code tried to implement.
 						memoryBytes[1][53501] = ((event.motion.x << 7) + event.motion.y) + (memoryBytes[1][53501] & 0b1100000000000000);
@@ -1033,31 +1044,31 @@ int main(int argc, char** argv)
 					}
 			}
 
-			// For all currently pressed keys, iterate and distribute sending key data
-			map<int, bool>::iterator itr;
-			int pressedcount = 0;
-			for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
-				// If the key is pressed/held down
-				if (itr->second == true) {
-					std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(itr->first)));
-					// Ignore if the key is already in the rollover queue.
-					// Otherwise, add it to the queue
-					if (keyIt == keyRollover.end()) {
-						keyRollover.push_back(KeyPress((int)(itr->first)));
-					}
-					pressedcount++;
-				}
-				//// If the key has recently been released, add 168 to queue and delete from map
-				//else{
-				//	keyRollover.push_back(KeyPress(168));
-				//	//pressedKeys[itr->first] = false;
-				//	pressedKeys.erase(itr);
-				//}
-			}
+			//// For all currently pressed keys, iterate and distribute sending key data
+			//map<int, bool>::iterator itr;
+			//int pressedcount = 0;
+			//for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
+			//	// If the key is pressed/held down
+			//	if (itr->second == true) {
+			//		std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(itr->first)));
+			//		// Ignore if the key is already in the rollover queue.
+			//		// Otherwise, add it to the queue
+			//		if (keyIt == keyRollover.end()) {
+			//			keyRollover.push_back(KeyPress((int)(itr->first)));
+			//		}
+			//		pressedcount++;
+			//	}
+			//	//// If the key has recently been released, add 168 to queue and delete from map
+			//	//else{
+			//	//	keyRollover.push_back(KeyPress(168));
+			//	//	//pressedKeys[itr->first] = false;
+			//	//	pressedKeys.erase(itr);
+			//	//}
+			//}
 			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
-			if (pressedcount > 0) {
-				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode);
+			if (keyRollover.size() > 0) {
+				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode) | (keyRollover[0].isDown << 15);
 				keyRollover[0].uses--;
 				// If this key has been fully used, remove from the queue
 				if (keyRollover[0].uses <= 0)
@@ -1068,8 +1079,8 @@ int main(int argc, char** argv)
 			if (verbose && memoryBytes[1][53500] != 168) {
 				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
-				PrintColored("	-- amount pressed: ", brightBlackFGColor, "");
-				PrintColored(to_string(pressedcount), greenFGColor, "");
+				//PrintColored("	-- amount pressed: ", brightBlackFGColor, "");
+				//PrintColored(to_string(pressedcount), greenFGColor, "");
 			}
 
 		}
@@ -2989,8 +3000,8 @@ string CompileCode(const string& inputcode) {
 	{
 		string command = trim(split(codelines[i], " ")[0]);
 
-		if (verbose)
-			PrintColored("Compiling: " + to_string((int)((float)i / (float)codelines.size() * 100)) + "%\n", "", "");
+		//if (verbose)
+		//	PrintColored("Compiling: " + to_string((int)((float)i / (float)codelines.size() * 100)) + "%\n", "", "");
 
 
 		// "#" label marker ex. #JumpToHere
@@ -3457,7 +3468,7 @@ string CompileCode(const string& inputcode) {
 		{
 			if (verbose) {
 				PrintColored("ok.	", greenFGColor, "");
-				cout << "asm:\n";
+				cout << "video buffer:\n";
 			}
 
 			compiledLines.push_back(",\n, " + string("present video buffer"));
