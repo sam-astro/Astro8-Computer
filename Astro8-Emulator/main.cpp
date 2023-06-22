@@ -12,6 +12,7 @@
 #include "processing.h"
 #include <filesystem>
 #include <map>
+#include <queue>
 
 #include "VSSynth/VSSynth.h"
 
@@ -353,8 +354,8 @@ int clamp(int x, int min, int max) {
 class KeyPress {
 public:
 	uint16_t keyCode;
-	int uses = 1;
-	bool isDown = false; // Differ between sending down/up signal
+	int uses = 2;
+	bool isDown = true; // Differ between sending down/up signal
 	friend bool operator== (const KeyPress& k1, const KeyPress& k2);
 
 	KeyPress(int key, bool isPressed) {
@@ -364,7 +365,11 @@ public:
 };
 bool operator== (const KeyPress& k1, const KeyPress& k2)
 {
-	return k1.keyCode == k2.keyCode;
+	return k1.keyCode == k2.keyCode && k1.isDown == k2.isDown;
+}
+bool operator!= (const KeyPress& k1, const KeyPress& k2)
+{
+	return !(k1.keyCode == k2.keyCode && k1.isDown == k2.isDown);
 }
 
 
@@ -805,7 +810,7 @@ int main(int argc, char** argv)
 #if WINDOWS
 	uint16_t webcamPixelLoc = 0;
 #endif
-	vector<KeyPress> keyRollover = {};
+	deque<KeyPress> keyRollover = {};
 	std::map<int, bool> pressedKeys;
 
 
@@ -883,7 +888,7 @@ int main(int argc, char** argv)
 		double secondDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastSecond).count();
 		double frameDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastFrame).count();
 		double tickDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastTick).count();
-		
+
 		// Every second
 		if (secondDiff > 1000.0) {
 			lastSecond = startTime;
@@ -985,30 +990,30 @@ int main(int argc, char** argv)
 						pressedKeys[(int)(event.key.keysym.scancode)] = false;*/
 
 					if (event.type == SDL_KEYDOWN) {
-						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), true));
+						int keyCode = (int)(event.key.keysym.scancode);
+						// If the key is already pressed, don't process this press
+						if (pressedKeys[keyCode] == true)
+							continue;
+						//std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), true));
 						// Ignore if the key is already in the rollover queue.
 						// Otherwise, add it to the queue
-						if (keyIt == keyRollover.end()) {
-							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), true));
+						deque<KeyPress>::iterator it = find(keyRollover.begin(), keyRollover.end(), KeyPress(keyCode, true));
+						if (it == keyRollover.end()) {
+							keyRollover.push_back(KeyPress(keyCode, true));
+							pressedKeys[keyCode] = true;
 						}
 					}
 					else if (event.type == SDL_KEYUP) {
-						std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(event.key.keysym.scancode), false));
-						// Ignore if the key is already in the rollover queue.
-						// Otherwise, add it to the queue
-						if (keyIt == keyRollover.end()) {
-							keyRollover.push_back(KeyPress((int)(event.key.keysym.scancode), false));
+						int keyCode = (int)(event.key.keysym.scancode);
+						// If the key is not pressed, don't process this un-press
+						if (pressedKeys[keyCode] == false)
+							continue;
+						deque<KeyPress>::iterator it = find(keyRollover.begin(), keyRollover.end(), KeyPress(keyCode, false));
+						if (it == keyRollover.end()) {
+							keyRollover.push_back(KeyPress(keyCode, false));
+							pressedKeys[keyCode] = false;
 						}
 					}
-					
-					/*else if (event.type == SDL_KEYDOWN && lastEvent.key.keysym.scancode == event.key.keysym.scancode && pendingEvent.key.keysym.scancode != lastEvent.key.keysym.scancode) {
-						eventUses++;
-					}*/
-					/*else if (event.type == SDL_KEYUP) {
-						//memoryBytes[1][53500] = 168;
-						//keyboardDecided = true;
-						lastEvent = event;
-					}*/
 				}
 				// If using the mouse in the expansion port
 				if (usingMouse)
@@ -1044,43 +1049,29 @@ int main(int argc, char** argv)
 					}
 			}
 
-			//// For all currently pressed keys, iterate and distribute sending key data
-			//map<int, bool>::iterator itr;
-			//int pressedcount = 0;
-			//for (itr = pressedKeys.begin(); itr != pressedKeys.end(); ++itr) {
-			//	// If the key is pressed/held down
-			//	if (itr->second == true) {
-			//		std::vector<KeyPress>::iterator keyIt = std::find(keyRollover.begin(), keyRollover.end(), KeyPress((int)(itr->first)));
-			//		// Ignore if the key is already in the rollover queue.
-			//		// Otherwise, add it to the queue
-			//		if (keyIt == keyRollover.end()) {
-			//			keyRollover.push_back(KeyPress((int)(itr->first)));
-			//		}
-			//		pressedcount++;
-			//	}
-			//	//// If the key has recently been released, add 168 to queue and delete from map
-			//	//else{
-			//	//	keyRollover.push_back(KeyPress(168));
-			//	//	//pressedKeys[itr->first] = false;
-			//	//	pressedKeys.erase(itr);
-			//	//}
-			//}
-			//lastKey = ConvertAsciiToSdcii(undecidedKey);
 			// If there are keys in the queue, use it and decrease the life
-			if (keyRollover.size() > 0) {
-				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover[0].keyCode) | (keyRollover[0].isDown << 15);
+			if (keyRollover.empty() == false) {
+				memoryBytes[1][53500] = ConvertAsciiToSdcii(keyRollover.front().keyCode) | (keyRollover.front().isDown << 15);
 				keyRollover[0].uses--;
 				// If this key has been fully used, remove from the queue
 				if (keyRollover[0].uses <= 0)
-					keyRollover.erase(keyRollover.begin());
+					keyRollover.pop_front();
+				else {
+					keyRollover.push_back(keyRollover.front());
+					keyRollover.pop_front();
+				}
 			}
 			else
 				memoryBytes[1][53500] = 168;
 			if (verbose && memoryBytes[1][53500] != 168) {
 				PrintColored("\n	-- keypress << ", brightBlackFGColor, "");
 				PrintColored(to_string(memoryBytes[1][53500]), greenFGColor, "");
-				//PrintColored("	-- amount pressed: ", brightBlackFGColor, "");
-				//PrintColored(to_string(pressedcount), greenFGColor, "");
+				uint8_t amountPressed = 0;
+				for (size_t i = 0; i < pressedKeys.size(); i++)
+					if (pressedKeys[i])
+						amountPressed++;
+				PrintColored("	-- total keys pressed: ", brightBlackFGColor, "");
+				PrintColored(to_string(amountPressed), greenFGColor, "");
 			}
 
 		}
@@ -1986,7 +1977,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			continue;
-	}
+		}
 
 		// Sets the specified memory location to a value:  set <addr> <val> <bank>
 		else if (splitBySpace[0] == "SET")
@@ -1998,7 +1989,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			continue;
-}
+		}
 
 		// Set the current location in memory equal to a value: here <value>
 		if (splitBySpace[0] == "HERE")
@@ -2032,7 +2023,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 			}
-		}
+}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
@@ -2084,7 +2075,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -2158,7 +2149,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-}
+	}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2216,10 +2207,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-					}
-				}
-
 			}
+		}
+
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2290,9 +2281,9 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-				}
 			}
 		}
+	}
 
 	// Print the output
 	std::string processedOutput = "";
@@ -2323,7 +2314,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-	}
+		}
 
 vector<string> vars;
 vector<string> labels;

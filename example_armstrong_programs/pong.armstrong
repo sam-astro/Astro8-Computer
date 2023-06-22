@@ -36,6 +36,9 @@ change $S = 31
 change $UP = 71
 change $DOWN = 72
 
+change $movingLeft = 0 // Move direction, 0 none, 1 down, 2 up
+change $movingRight = 0 // Move direction, 0 none, 1 down, 2 up
+
 // Temp vars
 change $pixelPosition = 0
 change $lcharPosition = 0
@@ -80,40 +83,77 @@ gotoif $temp<18, #netDrawLoop
 if $slowPaddleSpeed==14000:
     // Get keypress
     change $key = *[1]$expLoc
+    define $mask = 32768
+    and $key,$mask -> $pressed
+    define $big = 32767
+    and $key,$big -> $key
 
     change $slowPaddleSpeed = 0
 
+    // Change move direction
+    if $pressed==$mask:
+        if $key==$W: // Up
+            change $movingLeft = 2
+        endif
+        if $key==$S: // Down
+            change $movingLeft = 1
+        endif
+    endif
+    if $pressed!=$mask:
+        if $key==$W: // Up
+            change $movingLeft = 0
+        endif
+        if $key==$S: // Down
+            change $movingLeft = 0
+        endif
+    endif
+
     // Left paddle movement
-    if $key==$W: // Up
-        if $lPaddleY>0:
-            sub $lPaddleY,1 -> $lPaddleY
-            change *[1]$lcharPosition = 0
-        endif
+    if $movingLeft==2:
+        sub $lPaddleY,1 -> $lPaddleY
+        change *[1]$lcharPosition = 0
     endif
-    if $key==$S: // Down
-        if $lPaddleY<17:
-            add $lPaddleY,1 -> $lPaddleY
-            change *[1]$lcharPosition = 0
-        endif
+    if $movingLeft==1:
+        add $lPaddleY,1 -> $lPaddleY
+        change *[1]$lcharPosition = 0
     endif
 
 
-    // Get keypress
-    change $key = *[1]$expLoc
+    //// Get keypress
+    //change $key = *[1]$expLoc
+    
+    // Change move direction
+    if $pressed==$mask:
+        if $key==$UP: // Up
+            change $movingRight = 2
+        endif
+        if $key==$DOWN: // Down
+            change $movingRight = 1
+        endif
+    endif
+    if $pressed!=$mask:
+        if $key==$UP: // Up
+            change $movingRight = 0
+        endif
+        if $key==$DOWN: // Down
+            change $movingRight = 0
+        endif
+    endif
     
     // Right paddle movement
-    if $key==$UP: // Up
-        if $rPaddleY>0:
-            sub $rPaddleY,1 -> $rPaddleY
-            change *[1]$rcharPosition = 0
-        endif
+    if $movingRight==2:
+        sub $rPaddleY,1 -> $rPaddleY
+        change *[1]$rcharPosition = 0
     endif
-    if $key==$DOWN: // Down
-        if $rPaddleY<17:
-            add $rPaddleY,1 -> $rPaddleY
-            change *[1]$rcharPosition = 0
-        endif
+    if $movingRight==1:
+        add $rPaddleY,1 -> $rPaddleY
+        change *[1]$rcharPosition = 0
     endif
+
+    // if $key==168:
+    //     change $movingLeft = 0
+    //     change $movingRight = 0
+    // endif
 
 
     //////////////////////////////////////
