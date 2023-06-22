@@ -34,7 +34,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.0.0-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.1.0-alpha";
 
 
 #if UNIX
