@@ -48,7 +48,7 @@ using namespace std;
 
 bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode;
 
-bool usingKeyboard = true, usingMouse = true, performanceMode = true;
+bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;
 
 uint16_t imageOnlyModeFrames = 10;
 uint16_t imageOnlyModeFrameCount = 10;
@@ -81,6 +81,10 @@ uint32_t target_cpu_freq = 16000000;
 
 vector<vector<uint16_t>> memoryBytes;
 vector<vector<uint16_t>> videoBuffer;
+
+uint8_t asciiToSdcii[600];
+uint8_t ascToSdcii[600];
+uint8_t sdciiToAscii[600];
 
 std::string projectDirectory;
 std::string executableDirectory;
@@ -204,6 +208,8 @@ static void write_samples(int16_t* s_byteStream, long begin, long end, long leng
 uint16_t ConvertNoteIndexToFrequency(uint8_t index);
 uint16_t GetMem(uint16_t bank, uint16_t address);
 void SetMem(uint16_t bank, uint16_t address, uint16_t data);
+void GenerateAsciiSdciiTables();
+int ConvertSdciiToAscii(int sdciiCode);
 
 SDL_Texture* texture;
 std::vector< unsigned char > pixels(108 * 108 * 4, 0);
@@ -486,6 +492,8 @@ int main(int argc, char** argv)
 			runAstroExecutable = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
+		else if (argval == "-nfs" || argval == "--nofilesystem") // Disable the file access
+			usingFileSystem = false;
 		else if (argval == "-wb" || argval == "--webcam") { // Enable webcam (uses default, only works on Windows)
 			if (WINDOWS)
 				usingWebcam = true;
@@ -790,6 +798,8 @@ int main(int argc, char** argv)
 		cout << "Created Directory at: \"" + (projectDirectory + "./frames") + "\"" << endl;
 	}
 
+	GenerateAsciiSdciiTables();
+
 
 	bool keyPress = false;
 	bool running = true;
@@ -881,6 +891,14 @@ int main(int argc, char** argv)
 	for (size_t i = 0; i < 1000000000; i++) {}
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
+	std::string receivedPath;
+	std::string receivedData;
+	bool returningFileData = false;
+	uint16_t fileData[65535];
+	uint16_t fileIterator = 0;
+	uint16_t fileLength = 0;
+	ofstream outputProgramFileStream;
+
 
 	while (running)
 	{
@@ -968,6 +986,154 @@ int main(int argc, char** argv)
 				}
 			}
 #endif
+
+
+
+			if (usingFileSystem) {
+				if (returningFileData) {
+					if (memoryBytes[1][53505] == 0) {
+						memoryBytes[1][53505] = fileData[fileIterator] | 0b100000000000000;
+						if (fileIterator >= 65535 || fileIterator >= fileLength) {
+							fileIterator = 0;
+							returningFileData = false;
+							memoryBytes[1][53505] = 4095;
+						}
+						else {
+							fileIterator++;
+						}
+					}
+				}
+				else
+					if (memoryBytes[1][53505] >= 0b1111000000000000) { // Save raw data
+						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
+						if (ch == 85 && !outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
+							outputProgramFileStream.open(receivedPath);
+							receivedPath = "";
+						}
+						else if (ch == 78 && outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
+							outputProgramFileStream.close();
+						}
+						else {
+							if (outputProgramFileStream.is_open())
+								outputProgramFileStream << (char)(ConvertSdciiToAscii(ch));
+							else
+								receivedPath += (char)(ConvertSdciiToAscii(ch));
+						}
+						memoryBytes[1][53505] = 0;
+					}
+					else if (memoryBytes[1][53505] >= 0b1110000000000000) { // Save data
+						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
+						if (ch == 85 && !outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
+							outputProgramFileStream.open(receivedPath);
+							outputProgramFileStream << "Astro-8 Binary Text File Format\n";
+							outputProgramFileStream << "<settings>\n";
+							receivedPath = "";
+						}
+						else if (ch == 78 && outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
+							outputProgramFileStream.close();
+						}
+						else {
+							if (outputProgramFileStream.is_open())
+								outputProgramFileStream << DecToHexFilled(ch, 4) << "\n";
+							else
+								receivedPath += (char)(ConvertSdciiToAscii(ch));
+						}
+						memoryBytes[1][53505] = 0;
+					}
+					else if (memoryBytes[1][53505] >= 0b1101000000000000) { // Load raw text data
+						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
+						if (ch == 85) { // If newline character, attempt to load from file
+							cout << "\n\nLoading from file: " << receivedPath << endl << endl;
+							int it = 0;
+
+							fstream fin(receivedPath, fstream::in);
+							char cc;
+							while (fin >> noskipws >> cc) {
+								fileData[it] = ascToSdcii[cc];
+								it++;
+							}
+							fileLength = it;
+							cout << it << " characters read\n";
+							fin.close();
+							receivedPath = "";
+
+							memoryBytes[1][53505] = 0;
+							returningFileData = true;
+						}
+						else {
+							receivedPath += (char)(ConvertSdciiToAscii(ch));
+							memoryBytes[1][53505] = 0;
+						}
+					}
+					else if (memoryBytes[1][53505] >= 0b1100000000000000) { // Load data
+						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
+						if (ch == 85) { // If newline character, attempt to load from file
+							cout << "\n\nLoading from file: " << receivedPath << endl << endl;
+							ifstream hexFile;
+							hexFile.open(receivedPath);
+							receivedPath = "";
+							std::string tmp;
+							int it = 0;
+							if (hexFile.is_open()) {
+								getline(hexFile, tmp);
+								getline(hexFile, tmp);
+								while (getline(hexFile, tmp))
+								{
+									fileData[it] = HexToDec(tmp);
+
+									it++;
+								}
+								cout << it << " lines read\n";
+								fileLength = it;
+							}
+							hexFile.close();
+							memoryBytes[1][53505] = 0;
+							returningFileData = true;
+						}
+						else {
+							receivedPath += (char)(ConvertSdciiToAscii(ch));
+							memoryBytes[1][53505] = 0;
+						}
+					}
+					else if (memoryBytes[1][53505] >= 0b1000000000000000) { // Load data and run
+						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
+						if (ch == 85) { // If newline character, attempt to load from file
+							cout << "\n\nStarting from file: " << receivedPath << endl << endl;
+							ifstream hexFile;
+							hexFile.open(receivedPath);
+							receivedPath = "";
+							std::string tmp;
+							int it = 0;
+							if (hexFile.is_open()) {
+								// Clear memory before loading
+								for (int i = 0; i < memoryBytes.size(); i++) {
+									memoryBytes[0][i] = 0;
+									memoryBytes[1][i] = 0;
+								}
+								for (int i = 0; i < videoBuffer[0].size(); i++) {
+									videoBuffer[0][i] = 0;
+									videoBuffer[1][i] = 0;
+								}
+								getline(hexFile, tmp);
+								getline(hexFile, tmp);
+								while (getline(hexFile, tmp))
+								{
+									memoryBytes[0][it] = HexToDec(tmp);
+
+									it++;
+								}
+								programCounter = 0;
+								cout << it << " lines read\n";
+							}
+							hexFile.close();
+							memoryBytes[1][53505] = 0;
+						}
+						else {
+							receivedPath += (char)(ConvertSdciiToAscii(ch));
+							memoryBytes[1][53505] = 0;
+						}
+					}
+			}
 
 
 			// Poll all input events
@@ -1077,7 +1243,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	destroy(gRenderer, gWindow);
+	//destroy(gRenderer, gWindow);
 	SDL_Quit();
 #if WINDOWS
 	deinitCapture(0);
@@ -1158,7 +1324,7 @@ void Update()
 							if (AReg - BReg == 0)
 								flags[0] = 1;
 							bus = AReg - BReg;
-							if (bus < 0)
+							while (bus < 0)
 							{
 								bus = 65535 + bus;
 								flags[1] = 0;
@@ -1169,7 +1335,7 @@ void Update()
 							if (AReg * BReg == 0)
 								flags[0] = 1;
 							bus = AReg * BReg;
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1188,7 +1354,7 @@ void Update()
 								bus = 0;
 							}
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1201,7 +1367,7 @@ void Update()
 							if (bus == 0)
 								flags[0] = 1;
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1214,7 +1380,7 @@ void Update()
 							if (bus == 0)
 								flags[0] = 1;
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1227,7 +1393,7 @@ void Update()
 							if (bus == 0)
 								flags[0] = 1;
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1240,7 +1406,7 @@ void Update()
 							if (bus == 0)
 								flags[0] = 1;
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1253,7 +1419,7 @@ void Update()
 							if (bus == 0)
 								flags[0] = 1;
 
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1264,7 +1430,7 @@ void Update()
 							if (AReg + BReg == 0)
 								flags[0] = 1;
 							bus = AReg + BReg;
-							if (bus >= 65535)
+							while (bus > 65535)
 							{
 								bus = bus - 65535;
 								flags[1] = 1;
@@ -1416,7 +1582,7 @@ void Update()
 			if (AReg + BReg == 0)
 				flags[0] = 1;
 			tempArithmetic = AReg + BReg;
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1429,7 +1595,7 @@ void Update()
 			if (AReg - BReg == 0)
 				flags[0] = 1;
 			tempArithmetic = AReg - BReg;
-			if (tempArithmetic < 0)
+			while (tempArithmetic < 0)
 			{
 				tempArithmetic = 65535 - tempArithmetic;
 				flags[1] = 0;
@@ -1442,7 +1608,7 @@ void Update()
 			if (AReg * BReg == 0)
 				flags[0] = 1;
 			tempArithmetic = AReg * BReg;
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1464,7 +1630,7 @@ void Update()
 				tempArithmetic = 0;
 			}
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1547,7 +1713,7 @@ void Update()
 			if (tempArithmetic == 0)
 				flags[0] = 1;
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1562,7 +1728,7 @@ void Update()
 			if (tempArithmetic == 0)
 				flags[0] = 1;
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1577,7 +1743,7 @@ void Update()
 			if (tempArithmetic == 0)
 				flags[0] = 1;
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1592,7 +1758,7 @@ void Update()
 			if (tempArithmetic == 0)
 				flags[0] = 1;
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1607,7 +1773,7 @@ void Update()
 			if (tempArithmetic == 0)
 				flags[0] = 1;
 
-			if (tempArithmetic >= 65535)
+			while (tempArithmetic > 65535)
 			{
 				tempArithmetic = tempArithmetic - 65535;
 				flags[1] = 1;
@@ -1725,17 +1891,20 @@ void DrawNextPixel() {
 			colorValue = 0;
 
 		r = BitRange(colorValue, 5, 3) * 36 + 0b11;
-		g = BitRange(colorValue, 2, 3) * 36 + 0b11;
+		g = BitRange(colorValue, 2, 3) * 36 + 0b11; // 0b00011111
 		b = BitRange(colorValue, 0, 2) * 85;
-
-		//r = 255;
-		//g = 255;
-		//b = 255;
 	}
 	else {
-		r = BitRange(pixelVal, 10, 5) * 8; // Get first 5 bits
-		g = BitRange(pixelVal, 5, 5) * 8; // get middle bits
-		b = BitRange(pixelVal, 0, 5) * 8; // Gets last 5 bits
+		if (pixelVal == 65535) {
+			r = 255;
+			g = 255;
+			b = 255;
+		}
+		else {
+			r = (BitRange(pixelVal, 10, 5)) * 8; // Get first 5 bits
+			g = (BitRange(pixelVal, 5, 5)) * 8; // get middle bits
+			b = (BitRange(pixelVal, 0, 5)) * 8; // Gets last 5 bits
+		}
 	}
 
 	set_pixel(&pixels, imgX, imgY, 108, r, g, b, 255);
@@ -1868,27 +2037,6 @@ int InitGraphics(const std::string& windowTitle, int width, int height, int pixe
 	//Get window surface
 	gScreenSurface = SDL_GetWindowSurface(gWindow);
 
-	////Initialize SDL_mixer
-	//if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096) < 0)
-	//	printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-
-	////Mix_QuerySpec(&audioFrequency, &audioFormat, &audioChannelCount);  // query specs
-	//Mix_AllocateChannels(4);
-
-	//// Load waves
-	//waveforms[0] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
-	//if (waveforms[0] == NULL)
-	//	cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	//waveforms[1] = Mix_LoadWAV((executableDirectory + "/square.wav").c_str());
-	//if (waveforms[1] == NULL)
-	//	cout << ("Failed to load sound:" + executableDirectory + "/square.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	//waveforms[2] = Mix_LoadWAV((executableDirectory + "/triangle.wav").c_str());
-	//if (waveforms[2] == NULL)
-	//	cout << ("Failed to load sound:" + executableDirectory + "/triangle.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-	//waveforms[3] = Mix_LoadWAV((executableDirectory + "/noise.wav").c_str());
-	//if (waveforms[3] == NULL)
-	//	cout << ("Failed to load sound:" + executableDirectory + "/noise.wav" + " SDL_mixer Error: " + Mix_GetError() + "\n");
-
 
 	return 0;
 }
@@ -1925,11 +2073,11 @@ vector<std::string> explode(const std::string& str, const char& ch) {
 			// Accumulate the next character into the sequence
 			next += *it;
 		}
-	}
+			}
 	if (!next.empty())
 		result.push_back(next);
 	return result;
-}
+		}
 
 
 // Convert assembly into bytes
@@ -2023,7 +2171,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 			}
-}
+		}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
@@ -2075,7 +2223,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-	}
+		}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -2207,10 +2355,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+					}
 			}
-		}
 
-	}
+		}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2256,10 +2404,10 @@ void GenerateMicrocode()
 								else
 									endaddress[checkflag] = '1';
 								stepLocked[checkflag] = 1;
-							}
 						}
 					}
 				}
+			}
 				std::string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
@@ -2281,8 +2429,8 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-			}
 		}
+	}
 	}
 
 	// Print the output
@@ -2314,7 +2462,7 @@ void GenerateMicrocode()
 	fstream myStream;
 	myStream.open(projectDirectory + "logisim_mic.hex", ios::out);
 	myStream << processedOutput;
-		}
+}
 
 vector<string> vars;
 vector<string> labels;
@@ -2414,78 +2562,155 @@ uint16_t ConvertNoteIndexToFrequency(uint8_t index) {
 
 // This will convert ASCII/SDL2 key codes to their SDCII alternatives
 int ConvertAsciiToSdcii(int asciiCode) {
-	uint8_t conversionTable[600];  // [ascii] = sdcii
-	for (size_t i = 0; i < sizeof(conversionTable) / sizeof(conversionTable[0]); i++)
-		conversionTable[i] = -1;
 
-	// Special characters
-	conversionTable[44] = 0;	// space -> blank
-	conversionTable[58] = 1;	// f1 -> smaller solid square
-	conversionTable[59] = 2;	// f2 -> full solid square
-	conversionTable[87] = 3;	// num+ -> +
-	conversionTable[86] = 4;	// num- -> -
-	conversionTable[85] = 5;	// num* -> *
-	conversionTable[84] = 6;	// num/ -> /
-	conversionTable[60] = 7;	// f3 -> full hollow square
-	conversionTable[45] = 8;	// _ -> _
-	conversionTable[80] = 9;	// l-arr -> <
-	conversionTable[79] = 10;	// r-arr -> >
-	conversionTable[82] = 71;	// u-arr -> u-arr
-	conversionTable[81] = 72;	// d-arr -> d-arr
-	conversionTable[49] = 11;	// | -> vertical line |
-	conversionTable[66] = 12;	// f9 -> horizontal line --
-	conversionTable[54] = 54;	// , -> ,
-	conversionTable[55] = 55;	// . -> .
+	if (superVerbose)
+		cout << "Ascii code for that key is: " << to_string(asciiCode) << endl;
 
-	// Letters
-	conversionTable[4] = 13;	// a -> a
-	conversionTable[5] = 14;	// b -> b
-	conversionTable[6] = 15;	// c -> c
-	conversionTable[7] = 16;	// d -> d
-	conversionTable[8] = 17;	// e -> e
-	conversionTable[9] = 18;	// f -> f
-	conversionTable[10] = 19;	// g -> g
-	conversionTable[11] = 20;	// h -> h
-	conversionTable[12] = 21;	// i -> i
-	conversionTable[13] = 22;	// j -> j
-	conversionTable[14] = 23;	// k -> k
-	conversionTable[15] = 24;	// l -> l
-	conversionTable[16] = 25;	// m -> m
-	conversionTable[17] = 26;	// n -> n
-	conversionTable[18] = 27;	// o -> o
-	conversionTable[19] = 28;	// p -> p
-	conversionTable[20] = 29;	// q -> q
-	conversionTable[21] = 30;	// r -> r
-	conversionTable[22] = 31;	// s -> s
-	conversionTable[23] = 32;	// t -> t
-	conversionTable[24] = 33;	// u -> u
-	conversionTable[25] = 34;	// v -> v
-	conversionTable[26] = 35;	// w -> w
-	conversionTable[27] = 36;	// x -> x
-	conversionTable[28] = 37;	// y -> y
-	conversionTable[29] = 38;	// z -> z
-
-	// Numbers
-	conversionTable[39] = 39;	// 0 -> 0
-	conversionTable[30] = 40;	// 1 -> 1
-	conversionTable[31] = 41;	// 2 -> 2
-	conversionTable[32] = 42;	// 3 -> 3
-	conversionTable[33] = 43;	// 4 -> 4
-	conversionTable[34] = 44;	// 5 -> 5
-	conversionTable[35] = 45;	// 6 -> 6
-	conversionTable[36] = 46;	// 7 -> 7
-	conversionTable[37] = 47;	// 8 -> 8
-	conversionTable[38] = 48;	// 9 -> 9
-
-
-
-	conversionTable[42] = 70;	// backspace -> backspace
-
-	int actualVal = conversionTable[asciiCode];
+	int actualVal = asciiToSdcii[asciiCode];
 	if (actualVal == -1) // -1 Means unspecified value
 		actualVal = 168;
 
 	return actualVal;
+}
+
+// This will convert SDCII to ASCII alternatives
+int ConvertSdciiToAscii(int sdciiCode) {
+
+	if (superVerbose)
+		cout << "Sdcii code for that key is: " << to_string(sdciiCode) << endl;
+
+	int actualVal = sdciiToAscii[sdciiCode];
+	if (actualVal == -1) // -1 Means unspecified value
+		actualVal = 168;
+
+	return actualVal;
+}
+
+
+void GenerateAsciiSdciiTables() {
+	for (size_t i = 0; i < sizeof(asciiToSdcii) / sizeof(asciiToSdcii[0]); i++) {
+		asciiToSdcii[i] = -1;
+		sdciiToAscii[i] = -1;
+	}
+
+	// Special characters
+	asciiToSdcii[40] = 85;	// enter -> enter
+	asciiToSdcii[44] = 0;	// space -> blank
+	asciiToSdcii[58] = 1;	// f1 -> smaller solid square
+	asciiToSdcii[59] = 2;	// f2 -> full solid square
+	asciiToSdcii[87] = 3;	// num+ -> +
+	asciiToSdcii[86] = 4;	// num- -> -
+	asciiToSdcii[85] = 5;	// num* -> *
+	asciiToSdcii[84] = 6;	// num/ -> /
+	asciiToSdcii[60] = 7;	// f3 -> full hollow square
+	asciiToSdcii[45] = 8;	// _ -> _
+	asciiToSdcii[80] = 9;	// l-arr -> <
+	asciiToSdcii[79] = 10;	// r-arr -> >
+	asciiToSdcii[82] = 71;	// u-arr -> u-arr
+	asciiToSdcii[81] = 72;	// d-arr -> d-arr
+	asciiToSdcii[49] = 11;	// | -> vertical line |
+	asciiToSdcii[66] = 12;	// f9 -> horizontal line --
+	asciiToSdcii[55] = 54;	// , -> ,
+	asciiToSdcii[54] = 55;	// . -> .
+
+	// Letters
+	asciiToSdcii[4] = 13;	// a -> a
+	asciiToSdcii[5] = 14;	// b -> b
+	asciiToSdcii[6] = 15;	// c -> c
+	asciiToSdcii[7] = 16;	// d -> d
+	asciiToSdcii[8] = 17;	// e -> e
+	asciiToSdcii[9] = 18;	// f -> f
+	asciiToSdcii[10] = 19;	// g -> g
+	asciiToSdcii[11] = 20;	// h -> h
+	asciiToSdcii[12] = 21;	// i -> i
+	asciiToSdcii[13] = 22;	// j -> j
+	asciiToSdcii[14] = 23;	// k -> k
+	asciiToSdcii[15] = 24;	// l -> l
+	asciiToSdcii[16] = 25;	// m -> m
+	asciiToSdcii[17] = 26;	// n -> n
+	asciiToSdcii[18] = 27;	// o -> o
+	asciiToSdcii[19] = 28;	// p -> p
+	asciiToSdcii[20] = 29;	// q -> q
+	asciiToSdcii[21] = 30;	// r -> r
+	asciiToSdcii[22] = 31;	// s -> s
+	asciiToSdcii[23] = 32;	// t -> t
+	asciiToSdcii[24] = 33;	// u -> u
+	asciiToSdcii[25] = 34;	// v -> v
+	asciiToSdcii[26] = 35;	// w -> w
+	asciiToSdcii[27] = 36;	// x -> x
+	asciiToSdcii[28] = 37;	// y -> y
+	asciiToSdcii[29] = 38;	// z -> z
+
+	// Numbers
+	asciiToSdcii[39] = 39;	// 0 -> 0
+	asciiToSdcii[30] = 40;	// 1 -> 1
+	asciiToSdcii[31] = 41;	// 2 -> 2
+	asciiToSdcii[32] = 42;	// 3 -> 3
+	asciiToSdcii[33] = 43;	// 4 -> 4
+	asciiToSdcii[34] = 44;	// 5 -> 5
+	asciiToSdcii[35] = 45;	// 6 -> 6
+	asciiToSdcii[36] = 46;	// 7 -> 7
+	asciiToSdcii[37] = 47;	// 8 -> 8
+	asciiToSdcii[38] = 48;	// 9 -> 9
+
+
+	asciiToSdcii[42] = 70;	// backspace -> backspace
+
+
+
+
+
+	// Letters
+	sdciiToAscii[13] = 97;	    // a -> a
+	sdciiToAscii[14] = 98;   	// b -> b
+	sdciiToAscii[15] = 99;  	// c -> c
+	sdciiToAscii[16] = 100;	// d -> d
+	sdciiToAscii[17] = 101;	// e -> e
+	sdciiToAscii[18] = 102;	// f -> f
+	sdciiToAscii[19] = 103;	// g -> g
+	sdciiToAscii[20] = 104;	// h -> h
+	sdciiToAscii[21] = 105;	// i -> i
+	sdciiToAscii[22] = 106;	// j -> j
+	sdciiToAscii[23] = 107;	// k -> k
+	sdciiToAscii[24] = 108;	// l -> l
+	sdciiToAscii[25] = 109;	// m -> m
+	sdciiToAscii[26] = 110;	// n -> n
+	sdciiToAscii[27] = 111;	// o -> o
+	sdciiToAscii[28] = 112;	// p -> p
+	sdciiToAscii[29] = 113;	// q -> q
+	sdciiToAscii[30] = 114;	// r -> r
+	sdciiToAscii[31] = 115;	// s -> s
+	sdciiToAscii[32] = 116;	// t -> t
+	sdciiToAscii[33] = 117;	// u -> u
+	sdciiToAscii[34] = 118;	// v -> v
+	sdciiToAscii[35] = 119;	// w -> w
+	sdciiToAscii[36] = 120;	// x -> x
+	sdciiToAscii[37] = 121;	// y -> y
+	sdciiToAscii[38] = 122;	// z -> z
+
+
+	sdciiToAscii[0] = 32;	// space -> space
+
+
+	sdciiToAscii[85] = 10;	// newline -> newline
+
+	// Numbers
+	sdciiToAscii[39] = 48;	// 0 -> 0 
+	sdciiToAscii[40] = 49;	// 1 -> 1 
+	sdciiToAscii[41] = 50;	// 2 -> 2 
+	sdciiToAscii[42] = 51;	// 3 -> 3 
+	sdciiToAscii[43] = 52;	// 4 -> 4 
+	sdciiToAscii[44] = 53;	// 5 -> 5 
+	sdciiToAscii[45] = 54;	// 6 -> 6 
+	sdciiToAscii[46] = 55;	// 7 -> 7 
+	sdciiToAscii[47] = 56;	// 8 -> 8 
+	sdciiToAscii[48] = 57;	// 9 -> 9 
+
+	sdciiToAscii[54] = 46;	// . -> . 
+
+	for (size_t i = 0; i < sizeof(asciiToSdcii) / sizeof(asciiToSdcii[0]); i++)
+		if(sdciiToAscii[i] != -1)
+			ascToSdcii[sdciiToAscii[i]] = i;
 }
 
 // Convert Decimal int to Hexadecimal string, padded with <desiredSize>
