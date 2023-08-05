@@ -10,6 +10,20 @@ There are many demos created for the Astro-8. This page shows previews and contr
 
 <br>
 
+## 3D Triangle Renderer
+
+Contributed by @sam-astro, ***supported in version v3.1.0-alpha and newer***
+
+### Code
+[Source Code](https://github.com/sam-astro/A8-Programs-written-in-Yabal/blob/main/triangle.yabal)
+
+### Controls:
+You can use the mouse button to rotate the 3D cube
+
+<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/perspectiveCube.gif"/>
+
+<br>
+
 ## Pong
 
 Contributed by @sam-astro, ***supported in all versions***
