@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <map>
 #include <queue>
+#include <time.h>
 
 #include "VSSynth/VSSynth.h"
 
@@ -34,7 +35,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.1.0-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.2.0-alpha";
 
 
 #if UNIX
@@ -434,9 +435,9 @@ int main(int argc, char** argv)
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	//// Fill video buffers with random data to emulate real ram chip
-	//std::srand(sizeof(argv));
-	//std::generate(videoBuffer[0].begin(), videoBuffer[0].end(), std::rand);
-	//std::generate(videoBuffer[1].begin(), videoBuffer[1].end(), std::rand);
+	std::srand(time(0));
+	std::generate(videoBuffer[0].begin(), videoBuffer[0].end(), std::rand);
+	std::generate(videoBuffer[1].begin(), videoBuffer[1].end(), std::rand);
 	videoBuffer[1][148] = 14;
 	videoBuffer[1][149] = 27;
 	videoBuffer[1][150] = 27;
@@ -575,7 +576,7 @@ int main(int argc, char** argv)
 	}
 
 
-	// Determine if the file is an AstroExecutable AEXE
+	// Determine if the file is an AstroExecutable - AEXE
 	if (trim(split(code, "\n")[0]) == "ASTRO-8 AEXE Executable file")
 		runAstroExecutable = true;
 
@@ -699,6 +700,7 @@ int main(int argc, char** argv)
 			f << (usingWebcam == true ? "1" : "0");
 			f << (usingMouse == true ? "1" : "0");
 			f << (verbose == true ? "1" : "0");
+			f << "," << std::to_string(target_cpu_freq);
 			f << '\n';
 			for (vector<string>::const_iterator i = mbytes[0].begin(); i != mbytes[0].end(); ++i) {
 				f << *i << '\n';
@@ -729,6 +731,7 @@ int main(int argc, char** argv)
 				usingWebcam = trim(filelines[1])[1] == '1';
 				usingMouse = trim(filelines[1])[2] == '1';
 				verbose = trim(filelines[1])[3] == '1';
+				target_cpu_freq = std::stoi(trim(split(filelines[1], ",")[1]));
 			}
 
 			// Skip two lines to begin reading AEXE data
@@ -793,7 +796,7 @@ int main(int argc, char** argv)
 
 	if (!imageOnlyMode) // No need to initialize graphics if no rendering is taking place
 		InitGraphics("Astro-8 Emulator", 108, 108, 5);
-	else { // Create required directory if outputting images
+	else { // Otherwise create required directory if outputting images
 		std::filesystem::create_directory(projectDirectory + "./frames");
 		cout << "Created Directory at: \"" + (projectDirectory + "./frames") + "\"" << endl;
 	}
@@ -888,7 +891,7 @@ int main(int argc, char** argv)
 
 	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
 	Draw();
-	for (size_t i = 0; i < 1000000000; i++) {}
+	for (size_t i = 0; i < 10000000; i++) {videoBuffer[0][0] = 0;}
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	std::string receivedPath;
@@ -2094,6 +2097,8 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 	vector<std::string> splitcode = explode(icopy, '\n');
 
+	std::map<std::string, int> labelMap;
+
 #if DEV_MODE
 	cout << endl;
 #endif
@@ -2152,6 +2157,17 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			continue;
 		}
 
+		// Name a constant variable: const @var <value>
+		if (splitBySpace[0] == "CONST")
+		{
+			variableMap[splitBySpace[1]] = stoi(splitBySpace[2]);
+#if DEV_MODE
+			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
+#endif
+			//memaddr += 1;
+			continue;
+		}
+
 		// Memory address is already used, skip.
 		if (outputBytes[0][memaddr] != "0000") {
 			memaddr += 1;
@@ -2170,16 +2186,30 @@ vector<vector<std::string>> parseCode(const std::string& input)
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
+				break;
+			}
+			if(f == instructions.size()-1) // if the instruction was not found
+			{
+				// Create a label: <labelname>:
+				variableMap[split(splitBySpace[0], ":")[0]] = memaddr;
+				//memaddr++;
 			}
 		}
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
 		{
+			int argValue;
+			try{
+				argValue = stoi(splitBySpace[1]);
+			}
+			catch{ // If the argument is not an integer, it is a variable
+				argValue = variableMap[splitBySpace[1]];
+			}
 #if DEV_MODE
-			cout << DecToBinFilled(stoi(splitBySpace[1]), 11);
+			cout << DecToBinFilled(argValue, 11);
 #endif
-			outputBytes[0][memaddr] += DecToBinFilled(stoi(splitBySpace[1]), 11);
+			outputBytes[0][memaddr] += DecToBinFilled(argValue, 11);
 		}
 		else
 		{
@@ -2193,7 +2223,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-		}
+	}
 
 
 	// Print the output
@@ -2223,7 +2253,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-		}
+}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
