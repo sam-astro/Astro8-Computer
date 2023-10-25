@@ -2097,7 +2097,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 	vector<std::string> splitcode = explode(icopy, '\n');
 
-	std::map<std::string, int> labelMap;
+	std::map<std::string, int> variableMap;
 
 #if DEV_MODE
 	cout << endl;
@@ -2203,7 +2203,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			try{
 				argValue = stoi(splitBySpace[1]);
 			}
-			catch{ // If the argument is not an integer, it is a variable
+			catch(exception){ // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
 #if DEV_MODE
