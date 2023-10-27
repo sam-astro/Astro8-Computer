@@ -35,7 +35,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.2.0-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.3.1-alpha";
 
 
 #if UNIX
@@ -245,15 +245,15 @@ std::string instructioncodes[] = {
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
-		"jmp( 2=cr,aw & 3=rm,j & 4=ei", // Jump to address following instruction
-		"jmpz( 2=cr,aw & 3=ce,rm & 4=j | zeroflag & 5=ei", // Jump if zero to address following instruction
-		"jmpc( 2=cr,aw & 3=ce,rm & 4=j | carryflag & 5=ei", // Jump if carry to address following instruction
+		"jmp( 2=bnk,ir & 3=cr,aw & 4=rm,j & 5=ei", // Jump to address following instruction
+		"jmpz( 2=bnk,ir & 3=cr,aw & 4=ce,rm & 5=j | zeroflag & 6=ei", // Jump if zero to address following instruction
+		"jmpc( 2=bnk,ir & 3=cr,aw & 4=ce,rm & 5=j | carryflag & 6=ei", // Jump if carry to address following instruction
 		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
-		"ldlge( 2=cr,aw & 3=ce,rm,aw & 4=rm,wa & 5=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
-		"stlge( 2=cr,aw & 3=ce,rm,aw & 4=ra,wm & 5=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
-		"ldw( 2=cr,aw & 3=ce,rm,wa & 4=ei", // Load value directly after counter into A, and advance counter by 2
+		"ldlge( 2=bnk,ir & 3=cr,aw & 4=ce,rm,aw & 5=rm,wa & 6=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+		"stlge( 2=bnk,ir & 3=cr,aw & 4=ce,rm,aw & 5=ra,wm & 6=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+		"ldw( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wa & 5=ei", // Load value directly after counter into A, and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
 		"pcr( 2=cr,wa & 3=ei", // Program counter read, get the current program counter value and put it into register A
@@ -265,31 +265,34 @@ std::string instructioncodes[] = {
 		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
 		"vbuf( 2=vbf & 3=ei", // Swap the video buffer
 		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
-		"ldwb( 2=cr,aw & 3=ce,rm,wb & 4=ei", // Load value directly after counter into B, and advance counter by 2
+		"ldwb( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wb & 5=ei", // Load value directly after counter into B, and advance counter by 2
 };
 
 std::string helpDialog = R"V0G0N(
 Usage: astro8 [options] <path>
 
 Options:
-  -h, --help               Display this help menu
-  -c, --compile            Only compile and assemble Armstrong code to .ASM.
-                           Will not start emulator.
-  -a, --assemble           Only assemble assembly code into AEXE. Will not
-                           start emulator.
-  -r, --run                Run an already assembled program in AstroEXE format
-                           (program.AEXE)
-  -nk, --nokeyboard        Disable the keyboard input
-  -wb, --webcam            Enable webcam (uses default, only works on Windows)
-  -nm, --nomouse           Disable the mouse input
-  -v, --verbose            Write extra data to console for better debugging
-  -vv, --superverbose      Write a lot of extra data to console for even better
-                           debugging
-  -f, --freq <value>       Override the default CPU target frequency with your
-                           own.      Default = 16    higher = faster
-                           High frequencies may be too hard to reach for some cpus
-  --imagemode [frames]     Don't render anything, instead capture [frames] number
-                           of frames, which is 10 by default, and save to disk
+    -h, --help               Display this help menu
+    --version                Display the current version
+    -c, --compile            Only compile and assemble Armstrong code to .ASM.
+                             Will not start emulator.
+    -a, --assemble           Only assemble assembly code into AEXE. Will not
+                             start emulator.
+    -r, --run                Run an already assembled program in AstroEXE format
+                             (program.AEXE)
+    -nk, --nokeyboard        Disable the keyboard input
+    -wb, --webcam            Enable webcam (uses default, only works on Windows)
+    -nm, --nomouse           Disable the mouse input
+    -v, --verbose            Write extra data to console for better debugging
+    -vv, --superverbose      Write a lot of extra data to console for even better
+                             debugging
+    -cm, --classicmode       Run Emulator in classic mode, using slow but
+                             realistic microcode instead of high performance
+    -f, --freq <value>       Override the default CPU target frequency with your
+                             own.      Default = 16    higher = faster
+                             High frequencies may be too hard to reach for some cpus
+    --imagemode [frames]     Don't render anything, instead capture [frames] number
+                             of frames, which is 10 by default, and save to disk
 )V0G0N";
 
 
@@ -431,7 +434,7 @@ int main(int argc, char** argv)
 		verbose = true;
 
 	// Fill the memory
-	memoryBytes = vector<vector<uint16_t>>(4, vector<uint16_t>(65535, 0));
+	memoryBytes = vector<vector<uint16_t>>(6, vector<uint16_t>(65535, 0));
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	//// Fill video buffers with random data to emulate real ram chip
@@ -485,6 +488,10 @@ int main(int argc, char** argv)
 			cout << "\n" << helpDialog << "\n";
 			exit(1);
 		}
+		else if (argval == "--version") { // Print version
+			PrintColored(VERSION, blackFGColor, whiteBGColor);
+			exit(1);
+		}
 		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
 			compileOnly = true;
 		else if (argval == "-a" || argval == "--assemble") // Only assemble code. Will not start emulator.
@@ -507,6 +514,8 @@ int main(int argc, char** argv)
 			verbose = true;
 		else if (argval == "-vv" || argval == "--superverbose") // Write extra data to console for better debugging
 			superVerbose = true;
+		else if (argval == "-cm" || argval == "--classicmode") // Run Emulator in classic mode
+			performanceMode = false;
 		else if (argval == "--imagemode") { // Don't render anything, instead capture <frames> number of frames and save to disk
 			try
 			{
@@ -670,6 +679,14 @@ int main(int argc, char** argv)
 		cout << "* Begin Compiling Armstrong...\n";
 		code = CompileCode(code);
 
+		if (compileOnly) {
+			// Store asm into an Astrisc Assembly *.ASM file
+			std::ofstream f(projectDirectory + programName + ".asm");
+			f << code;
+			f.close();
+			PrintColored("Assembly file written to " + projectDirectory + programName + ".asm\n", whiteFGColor, "");
+		}
+
 		if (code != "") {
 			if (verbose) {
 				cout << "   -  Output:\n";
@@ -708,8 +725,9 @@ int main(int argc, char** argv)
 			f.close();
 			PrintColored("Binary executable written to " + projectDirectory + programName + ".aexe\n", whiteFGColor, "");
 		}
-		catch (const std::exception&)
+		catch (const std::exception& e)
 		{
+			cout << e.what() << endl;
 			PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
@@ -1526,7 +1544,7 @@ void Update()
 						memoryIndex = bus;
 						break;
 					case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
-						BankReg = bus & 3;
+						BankReg = bus & 0b111;
 						break;
 					case WRITE_VBUF: // Swap the video front and back buffer.
 						VideoBufReg = !VideoBufReg;
@@ -1677,12 +1695,14 @@ void Update()
 				cout << "staout  store BReg to " << AReg << endl;
 			break;
 		case LDLGE:
+			BankReg = arg & 0b111;
 			AReg = GetMem(BankReg, GetMem(0, programCounter));
 			programCounter++;
 			if (superVerbose)
 				cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
 			break;
 		case STLGE:
+			BankReg = arg & 0b111;
 			SetMem(BankReg, GetMem(0, programCounter), AReg);
 			programCounter++;
 			if (superVerbose)
@@ -1690,7 +1710,8 @@ void Update()
 			break;
 		case LDW:
 			//AReg = memoryBytes[0][programCounter];
-			AReg = GetMem(0, programCounter);
+			BankReg = arg & 0b111;
+			AReg = GetMem(BankReg, programCounter);
 			programCounter++;
 			if (superVerbose)
 				cout << "ldw  change AReg to " << AReg << endl;
@@ -1784,7 +1805,7 @@ void Update()
 			AReg = tempArithmetic;
 			break;
 		case BNK:
-			BankReg = arg & 0b11;
+			BankReg = arg & 0b111;
 			if (superVerbose)
 				cout << "bnk  bank change to " << arg << endl;
 			break;
@@ -1796,12 +1817,13 @@ void Update()
 				cout << "vbuf" << endl;
 			break;
 		case BNKC:
-			BankReg = CReg & 0b11;
+			BankReg = CReg & 0b111;
 			if (superVerbose)
 				cout << "bnkc  bank change to " << CReg << endl;
 			break;
 		case LDWB:
-			BReg = GetMem(0, programCounter);
+			BankReg = arg & 0b111;
+			BReg = GetMem(BankReg, programCounter);
 			programCounter++;
 			if (superVerbose)
 				cout << "ldwb  change BReg to " << BReg << endl;
@@ -2123,8 +2145,21 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		// Sets the specified memory location to a value:  set <addr> <val>
 		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3)
 		{
-			int addr = stoi(splitBySpace[1]);
-			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
+			int addr;
+			int argValue;
+			try {
+				addr = stoi(splitBySpace[1]);
+		}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				addr = variableMap[splitBySpace[1]];
+			}
+			try {
+				argValue = stoi(splitBySpace[2]);
+			}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				argValue = variableMap[splitBySpace[2]];
+			}
+			std::string hVal = DecToHexFilled(argValue, 4);
 			outputBytes[0][addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
@@ -2135,8 +2170,21 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		// Sets the specified memory location to a value:  set <addr> <val> <bank>
 		else if (splitBySpace[0] == "SET")
 		{
-			int addr = stoi(splitBySpace[1]);
-			std::string hVal = DecToHexFilled(stoi(splitBySpace[2]), 4);
+			int addr;
+			int argValue;
+			try {
+				addr = stoi(splitBySpace[1]);
+			}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				addr = variableMap[splitBySpace[1]];
+			}
+			try {
+				argValue = stoi(splitBySpace[2]);
+			}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				argValue = variableMap[splitBySpace[2]];
+			}
+			std::string hVal = DecToHexFilled(argValue, 4);
 			outputBytes[stoi(splitBySpace[3])][addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
@@ -2148,7 +2196,14 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		if (splitBySpace[0] == "HERE")
 		{
 			int addr = memaddr;
-			std::string hVal = DecToHexFilled(stoi(splitBySpace[1]), 4);
+			int argValue;
+			try {
+				argValue = stoi(splitBySpace[1]);
+			}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				argValue = variableMap[splitBySpace[1]];
+			}
+			std::string hVal = DecToHexFilled(argValue, 4);
 			outputBytes[0][addr] = hVal;
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
@@ -2178,6 +2233,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 
 		// Find index of instruction
+		bool notFound = false;
 		for (int f = 0; f < instructions.size(); f++)
 		{
 			if (instructions[f] == splitBySpace[0])
@@ -2192,9 +2248,12 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			{
 				// Create a label: <labelname>:
 				variableMap[split(splitBySpace[0], ":")[0]] = memaddr;
+				notFound = true;
 				//memaddr++;
 			}
 		}
+		if (notFound)
+			continue;
 
 		// Check if any args are after the command
 		if (splitcode[i] != splitBySpace[0])
@@ -2226,7 +2285,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	}
 
 
-	// Print the output
+	// Save the output
 	std::string processedOutput = "";
 	processedOutput += "\nv3.0 hex words addressed\n";
 	processedOutput += "000: ";
