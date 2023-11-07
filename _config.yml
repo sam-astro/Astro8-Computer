@@ -13,6 +13,9 @@ enable_dark_theme: true
 
 home: /README.md
 
+favicon:
+  source: favicon.ico
+
 search:
 
     # Split pages into sections that 
