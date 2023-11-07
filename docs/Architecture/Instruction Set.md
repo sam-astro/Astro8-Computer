@@ -3,6 +3,7 @@ layout : default
 parent : Architecture
 title : Instruction Set
 category: Architecture
+nav_order : 3
 ---
 
 # Instruction Set
