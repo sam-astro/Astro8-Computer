@@ -47,13 +47,17 @@ In this case, `#firstlabel` would contain the value `0`, and `#secondlabel` woul
 
 ## Constants
 
-You can use the `const` keyword to define a constant integer variable in your code.
+You can use the `const` keyword to define a constant integer variable in your code. It follows the format:
 
 ```c
-const $xVar 5
+const <name> <integer>
+```
+
+```c
+const @xVar 5
     lda $xVar
     add
-const $yVar 7
+const @yVar 7
     ldib $yVar
 ```
 
