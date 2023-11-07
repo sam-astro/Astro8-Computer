@@ -10,6 +10,7 @@ nav_categories : ["Home", "Architecture", "Programming"]
 search_enabled : true
 
 enable_dark_theme: true
+enable_custom: true
 
 home: /README.md
 
