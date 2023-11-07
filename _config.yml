@@ -9,6 +9,8 @@ nav_categories : ["Architecture", "Programming"]
 
 search_enabled : true
 
+enable_dark_theme: true
+
 search:
 
     # Split pages into sections that 
