@@ -1,5 +1,5 @@
 
-remote_theme: alexander-heimbuch/millidocs
+remote_theme: fernandopasik/jekyll-theme-material-docs
 
 markdown: kramdown
 
