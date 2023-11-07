@@ -1,5 +1,5 @@
 
-remote_theme: fernandopasik/jekyll-theme-material-docs
+remote_theme: laurencee9/jekyll-flat-api
 
 markdown: kramdown
 
