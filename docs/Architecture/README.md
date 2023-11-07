@@ -1,8 +1,9 @@
 ---
 has_children : true
-nav_order : 7
+nav_order : 0
 layout : default
 title : Architecture
+category: Architecture
 ---
 
 # Architecture
