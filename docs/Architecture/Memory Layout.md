@@ -11,7 +11,8 @@ The memory layout was changed as of version **v2.0.0-alpha**. If you have an ear
 
 # Memory Layout v2.0.0-alpha +
 
-> This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
+{: .caution .caps}
+This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
 
 <br>
 
