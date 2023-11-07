@@ -3,7 +3,7 @@ remote_theme: sporeball/lifeblood
 
 markdown: kramdown
 
-nav_categories : ["Architecture", "Programming"]
+nav_categories : ["Home", "Architecture", "Programming"]
 
 # Search Settings
 
