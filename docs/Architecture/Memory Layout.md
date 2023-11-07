@@ -6,7 +6,8 @@ category: Architecture
 nav_order : 2
 ---
 
-> The memory layout was changed as of version **v2.0.0-alpha**. If you have an earlier version less than **v2.0.0-alpha**, [click here](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Memory%20Layout.html#memory-layout-v100-alpha-to-v101-alpha) to view the old memory layout.
+{: .caution .caps}
+The memory layout was changed as of version **v2.0.0-alpha**. If you have an earlier version less than **v2.0.0-alpha**, [click here](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Memory%20Layout.html#memory-layout-v100-alpha-to-v101-alpha) to view the old memory layout.
 
 # Memory Layout v2.0.0-alpha +
 
