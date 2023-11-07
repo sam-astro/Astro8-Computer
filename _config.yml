@@ -11,6 +11,8 @@ search_enabled : true
 
 enable_dark_theme: true
 
+home: /README.md
+
 search:
 
     # Split pages into sections that 
