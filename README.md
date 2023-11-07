@@ -6,7 +6,7 @@ layout : default
 title : Home
 ---
 
-<img src="https://github.com/sam-astro/Astro8-Computer/blob/Documentation/images/Astro8-Docs-Logo-Small.png?raw=true"/>
+<img src="https://github.com/sam-astro/Astro8-Computer/blob/Documentation/images/Astro8-Docs-Logo-Small.png?raw=true"  align = center/>
 
 [![Badge License]][License]   [![Button Discord]][Discord Server]
 
