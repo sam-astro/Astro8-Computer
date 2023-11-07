@@ -17,7 +17,7 @@ There are a variety of ways to create programs for the Astro-8.
 
 ## Yabal
 
-See Documentation and use: [https://github.com/GerardSmit/Astro8](https://github.com/GerardSmit/Astro8)
+See Documentation and use: [https://yabal.dev/docs](https://yabal.dev/docs)
 
 <br>
 
