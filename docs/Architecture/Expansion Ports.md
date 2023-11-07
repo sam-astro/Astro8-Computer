@@ -2,7 +2,7 @@
 layout : default
 parent : Architecture
 title : Expansion Ports
-nav_order : 3
+category: Architecture
 ---
 
 # Expansion Ports
