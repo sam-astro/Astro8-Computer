@@ -8,7 +8,8 @@ nav_order : 3
 
 # Instruction Set
 
-> The Instruction Set is also called by it's name, `Astrisc`, and also sometimes called Assembly
+{: .tip .caps}
+The Instruction Set is also called by it's name, `Astrisc`, and also sometimes called Assembly
 
 ## Unindexed:
 * [SET](#set)
