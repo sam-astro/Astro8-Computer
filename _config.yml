@@ -3,7 +3,7 @@ remote_theme: sam-astro/lifeblood
 
 markdown: kramdown
 
-nav_categories : ["Home", "Architecture", "Programming"]
+nav_categories : ["Getting Started", "Architecture", "Programming"]
 
 # Search Settings
 
