@@ -33,6 +33,7 @@ Usage: astro8 [options] <path>
 ```
 
 List of options:
+
 | **_Option_** | **_Description_** |
 |----|---|
 |`-h, --help`|               Display this help menu|
