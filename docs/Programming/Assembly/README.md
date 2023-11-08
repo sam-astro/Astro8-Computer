@@ -4,6 +4,7 @@ nav_order : 5
 layout : default
 title : Assembly
 parent: Programming
+category: Programming
 ---
 
 # Assembly
