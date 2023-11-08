@@ -4,7 +4,7 @@ parent: Armstrong
 grand_parent: Programming
 title : Armstrong Commands
 category: Programming
-nav_order: 3
+nav_order: 4
 indent: 1
 ---
 
