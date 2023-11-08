@@ -25,7 +25,9 @@ I created a video about the creation of this and how it works, [which you can vi
 ## Demos
 There are some demos for the Astro-8, such as the pong game and a typing program. You can see more demos [on the dedicated page](https://sam-astro.github.io/Astro8-Computer/docs/Demos.html)
 
-<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/pong.gif"/>
+<div align="center">
+<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/perspectiveCube.gif"/>
+</div>
 
 
 ## Programming
