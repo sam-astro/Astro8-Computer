@@ -12,12 +12,6 @@ category: Programming
 Armstrong is a higher level language created to make programming for the Astro-8 a better experience. Here are the syntax and rules of the language.
 
 <br>
-<br>
-
-[![Button Commands]][Commands]
-
-<br>
-<br>
 
 ## Hex
 
@@ -32,7 +26,7 @@ Use hexadecimal values for **Addresses**.
 
 ## Decimal
 
-Use decimal values for **Immediate Integers**.
+Use decimal values for **Constant Integers**.
 
 ```
 213
@@ -43,7 +37,7 @@ Use decimal values for **Immediate Integers**.
 
 ## Comments
 
-*How to add comment to your code.*
+Use two forward slashes (`//`) to comment
 
 <br>
 
@@ -113,7 +107,7 @@ A label is a place in the program you can jump to. <br>
 
 ## Variables
 
-Variable can contain an an integers only. <br>
+Variable can contain integers only. <br>
 *You can think of them as addresses in memory.*
 
 <br>
@@ -137,9 +131,7 @@ $ballVelocity
 
 ## Pointers
 
-Pointers can be placed in front of any variable or int. <br>
-They use the value stored in the variable or int as an <br>
-address to get the actual value.
+Pointers can be placed in front of any variable or int. They use the value stored in the variable or int as an address to get or set the actual value.
 
 <br>
 
