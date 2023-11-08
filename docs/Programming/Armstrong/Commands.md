@@ -2,7 +2,7 @@
 layout : default
 parent: Armstrong
 grand_parent: Programming
-title : Armstrong Commands
+title : Commands
 category: Programming
 nav_order: 4
 indent: 1
