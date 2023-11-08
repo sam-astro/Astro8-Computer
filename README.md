@@ -16,7 +16,7 @@ title : Home
 
 <br>
 
-The Astro-8 is a 16-bit computer design. It has a working **[Logisim Evolution]** circuit, along with an emulator on Windows, Mac, and Linux, for running code at full speed. There is an assembly language, along with a higher level language called Armstrong, plus more which are actively being built by the community.
+The Astro-8 Computer is a 16-bit computer design. It has a working **[Logisim Evolution]** circuit, along with an emulator on Windows, Mac, and Linux, for running code at full speed. There is an assembly language, along with a higher level language called Armstrong, plus more which are actively being built by the community.
 
 I created a video about the creation of this and how it works, which you can view here:
 
