@@ -12,7 +12,7 @@ search_enabled : true
 enable_dark_theme: true
 enable_custom: true
 
-home: /README.md
+home: /
 
 favicon:
   source: favicon.ico
