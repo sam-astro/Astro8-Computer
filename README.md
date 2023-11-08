@@ -1,5 +1,5 @@
 ---
-category: Home
+category: Getting Started
 permalink : /
 nav_order : 1
 layout : default
