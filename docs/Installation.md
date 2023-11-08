@@ -1,5 +1,5 @@
 ---
-category: Home
+category: Getting Started
 nav_order : 2
 layout : default
 title : Installation
