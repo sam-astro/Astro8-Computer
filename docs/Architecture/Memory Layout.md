@@ -11,15 +11,15 @@ The memory layout was changed as of version **v2.0.0-alpha**. If you have an ear
 
 # Memory Layout v2.0.0-alpha +
 
-{: .caution .caps}
+{: .note .caps}
 This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
 
 <br>
 
 ```
-          |                   |                                                          |
-Bank 0    | ░░░░░░░░░░░░░░░░░ | ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ | word 65535
-          | Program mem.      |      General mem.                                        |
+          |                                                                              |
+Bank 0    | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | word 65535
+          | Program mem.                                                                 |
           
           
           |                                                          |    |              |
@@ -34,37 +34,22 @@ Bank 1    | ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓�
 ## Program Memory
 
 Bank: `0`<br>
-Percent: `0 - 25%` <br>
-Range: `0 - 16381` <br>
-Words: `16382`
+Percent: `0 - 100%` <br>
+Range: `0 - 65534` (inclusive) <br>
+Words: `65535`
 
 Area reserved for program instructions (can be used like general purpose, though).
 
 <br>
 
-## Variable and General Purpose Memory 0
-
-Bank: `0`<br>
-Percent: `25-100%` <br>
-Range: `16382 - 65535` <br>
-Words: `49153`
-
-Memory that the compiler automatically <br>
-allocates as needed for variables, or you <br>
-can use for other general purposes.
-
-<br>
-
-## General Purpose Memory 1
+## Variable and General Purpose Memory
 
 Bank: `1`<br>
 Percent: `0-81%` <br>
-Range: `0 - 53500` <br>
+Range: `0 - 53499` (inclusive) <br>
 Words: `53500`
 
-Memory that the compiler automatically <br>
-allocates as needed for variables, or you <br>
-can use for other general purposes.
+Memory that the compiler automatically allocates as needed for variables, or you can use for other general purposes.
 
 <br>
 
@@ -72,11 +57,10 @@ can use for other general purposes.
 
 Bank: `1`<br>
 Percent: `81-81%` <br>
-Range: `53500 - 53546` <br>
-Words: `46`
+Range: `53500 - 53544` (inclusive) <br>
+Words: `44`
 
-Dedicated memory locations mapped to the<br>
-expansion ports
+Dedicated memory locations mapped to the expansion ports
 
 <br>
 
@@ -84,11 +68,10 @@ expansion ports
 
 Bank: `1`<br>
 Percent: `81-82%` <br>
-Range: `53546 - 53871` <br>
-Words: `325`
+Range: `53545 - 53869` (inclusive) <br>
+Words: `324`
 
-Contains the character codes to be<br>
-displayed at the corresponding location.
+Contains the character codes to be displayed at the corresponding location.
 
 <br>
 
@@ -96,11 +79,10 @@ displayed at the corresponding location.
 
 Bank: `1`<br>
 Percent: `82-100%` <br>
-Range: `53871 - 65535` <br>
+Range: `53870 - 65534` (inclusive) <br>
 Words: `11664`
 
-Contains the pixel's color data to be <br>
-displayed at the corresponding location.
+Contains the pixel's color data to be displayed at the corresponding location.
 
 <br>
 <br>
