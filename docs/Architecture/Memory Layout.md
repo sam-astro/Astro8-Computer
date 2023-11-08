@@ -2,14 +2,17 @@
 layout : default
 parent : Architecture
 title : Memory Layout
-nav_order : 1
+category: Architecture
+nav_order : 2
 ---
 
-> The memory layout was changed as of version **v2.0.0-alpha**. If you have an earlier version less than **v2.0.0-alpha**, [click here](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Memory%20Layout.html#memory-layout-v100-alpha-to-v101-alpha) to view the old memory layout.
+{: .caution .caps}
+The memory layout was changed as of version **v2.0.0-alpha**. If you have an earlier version less than **v2.0.0-alpha**, [click here](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Memory%20Layout.html#memory-layout-v100-alpha-to-v101-alpha) to view the old memory layout.
 
 # Memory Layout v2.0.0-alpha +
 
-> This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
+{: .caution .caps}
+This new memory layout came with the introduction of multiple banks, [see docs](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html#bnk), and moved all graphics related memory (character and video) to the second bank. It also had a resolution increase, meaning the previous addresses for characters and pixels no longer apply. *This change only affected Character Memory **and** Video Memory addressing.*
 
 <br>
 

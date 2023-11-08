@@ -2,7 +2,8 @@
 layout : default
 parent : Architecture
 title : Micro Instructions
-nav_order : 3
+category: Architecture
+nav_order : 4
 ---
 
 # Micro Instructions

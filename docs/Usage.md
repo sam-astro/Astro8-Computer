@@ -1,5 +1,6 @@
 ---
-nav_order : 3
+category: Home
+nav_order : 5
 layout : default
 title : Usage
 ---

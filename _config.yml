@@ -1,11 +1,21 @@
 
-remote_theme : just-the-docs/just-the-docs
+remote_theme: sam-astro/lifeblood
 
 markdown: kramdown
+
+nav_categories : ["Home", "Architecture", "Programming"]
 
 # Search Settings
 
 search_enabled : true
+
+enable_dark_theme: true
+enable_custom: true
+
+home: /README.md
+
+favicon:
+  source: favicon.ico
 
 search:
 

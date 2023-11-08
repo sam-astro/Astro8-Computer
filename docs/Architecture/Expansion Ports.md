@@ -2,11 +2,13 @@
 layout : default
 parent : Architecture
 title : Expansion Ports
-nav_order : 3
+category: Architecture
+nav_order : 5
 ---
 
 # Expansion Ports
 
+{: .note .caps}
 There are currently 3 hardware expansions built into the emulator. There are plans to allow for custom ones but that hasn't been implemented yet.
 
 ## Types
@@ -61,6 +63,8 @@ The frequency is a value between 0 and 32. The channel is a value 0 through 4.
 
 To change the frequency of a channel, send a value to the expansion port like: `0b00001001`, which would set the second channel (squarewave B) to play at a frequency of 1 (not in Hz, see conversion table). If a channel is not playing when you change it's frequency, it will begin playing. To stop the playback of a channel, send a second value to the expansion port with a frequency of 0, like: `0b00000001` which would turn off the second channel.
 
+
+{: .note .caps}
 Due to only 5 bits of precision, frequencies are approximated, and you can [see the conversion table](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Expansion%20Ports.html#conversion-table) to compare values sent to the expansion port with their corresponding actual frequencies.
 
 #### Conversion table

@@ -2,7 +2,8 @@
 layout : default
 parent: Armstrong
 grand_parent: Programming
-title : Commands
+title : Armstrong Commands
+category: Programming
 ---
 
 # Commands
