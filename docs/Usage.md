@@ -1,6 +1,6 @@
 ---
-category: Home
-nav_order : 5
+category: Getting Started
+nav_order : 4
 layout : default
 title : Usage
 ---

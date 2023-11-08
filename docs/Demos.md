@@ -1,8 +1,9 @@
 ---
-category: Home
-nav_order : 3
+category: Getting Started
+nav_order : 5
 layout : default
 title : Demos
+indent: 1
 ---
 
 # Demos
