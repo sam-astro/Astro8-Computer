@@ -90,7 +90,8 @@ Contains the pixel's color data to be displayed at the corresponding location.
 
 # Memory Layout v1.0.0-alpha to v1.0.1-alpha
 
-> This memory layout moved the Character Memory section next to the Video Memory, and shifted the General Memory to be next to Program Memory. *This change only affected General Memory **and** Character Memory addressing.*
+{: .note .caps}
+This memory layout moved the Character Memory section next to the Video Memory, and shifted the General Memory to be next to Program Memory. *This change only affected General Memory **and** Character Memory addressing.*
 
 <br>
 
