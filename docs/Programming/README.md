@@ -2,17 +2,20 @@
 has_children : true
 nav_order : 1
 layout : default
-title : Programming
+title : Overview
 category: Programming
 ---
 
-# Programming
+# Programming Overview and Options
 
 There are a variety of ways to create programs for the Astro-8. 
 
 * The lowest level way is through Astrisc, the assembly language. This is the most difficult way to make a program, but you have the most control.
 * A level higher is Armstrong, which is essentially an abstraction layer upon the Assembly. It is easier to use, but still lacks many features.
 * The highest level language is called Yabal (**Y**et **A**nother **B**asic **A**stro-8 **L**anguage). This is very easy to use, and can be compared to C in it's syntax.
+
+{: .tip}
+The easiest starting point is Yabal! It is very similar to many other modern languages
 
 <br>
 
