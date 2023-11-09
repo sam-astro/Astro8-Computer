@@ -9,7 +9,6 @@ indent: 1
 # Demos
 
 There are many demos created for the Astro-8. This page shows previews and controls if applicable.
-
 <br>
 
 ## 3D Triangle Renderer
