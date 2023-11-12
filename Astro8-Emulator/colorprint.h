@@ -197,7 +197,7 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 			}
 
 			// If a valid instruction, print normally
-			if (matchesCommand || instruction == "SET" || instruction == "HERE")
+			if (matchesCommand || instruction == "SET" || instruction == "HERE" || instruction == "ALLOC")
 				if (split(nstr[i], " ").size() > 1) {
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 					PrintColored("\t" + split(nstr[i], " ")[0], cyanFGColor, "");

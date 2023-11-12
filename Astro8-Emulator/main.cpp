@@ -35,7 +35,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.3.1-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.4.0-alpha";
 
 
 #if UNIX
@@ -245,14 +245,14 @@ std::string instructioncodes[] = {
 		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
 		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
 		"div( 2=wa,eo,di,fl & 3=ei", // Divide
-		"jmp( 2=bnk,ir & 3=cr,aw & 4=rm,j & 5=ei", // Jump to address following instruction
-		"jmpz( 2=bnk,ir & 3=cr,aw & 4=ce,rm & 5=j | zeroflag & 6=ei", // Jump if zero to address following instruction
-		"jmpc( 2=bnk,ir & 3=cr,aw & 4=ce,rm & 5=j | carryflag & 6=ei", // Jump if carry to address following instruction
+		"jmp( 2=bnk & 3=cr,aw & 4=rm,j & 5=ei", // Jump to address following instruction
+		"jmpz( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | zeroflag & 6=ei", // Jump if zero to address following instruction
+		"jmpc( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | carryflag & 6=ei", // Jump if carry to address following instruction
 		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
 		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
 		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
-		"ldlge( 2=bnk,ir & 3=cr,aw & 4=ce,rm,aw & 5=rm,wa & 6=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
-		"stlge( 2=bnk,ir & 3=cr,aw & 4=ce,rm,aw & 5=ra,wm & 6=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+		"ldlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=rm,wa & 7=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+		"stlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=ra,wm & 7=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
 		"ldw( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wa & 5=ei", // Load value directly after counter into A, and advance counter by 2
 		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
 		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
@@ -463,20 +463,9 @@ int main(int argc, char** argv)
 	// If no arguments are provided, ask for a path
 	if (argc == 1)
 	{
-		PrintColored("No arguments detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
+		PrintColored("No arguments or path detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
 		cout << "\n" << helpDialog << "\n";
-		cout << ("OR, enter path to file (No options allowed >:| ) >  ");
-		std::string line;
-		while (true) {
-			getline(cin, line);
-			if (line.empty()) {
-				continue;
-			}
-			else {
-				filePath = line;
-				break;
-			}
-		}
+		SYS_PAUSE;
 	}
 
 	// Search for options in arguments
@@ -1277,30 +1266,27 @@ bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
 	// If performanceMode is turned off, execute in classic mode
-	if (!performanceMode)
-		// For all steps in the instruction, execute it's corresponding microinstruction
-		for (int step = 0; step < 8; step++)
-		{
+	if (!performanceMode){
 
-			// Execute fetch in single step (normally this process is done in multiple clock cycles,
-			// but since it is required for every instruction this emulator speeds it up a little bit.
-			// This does not change a program's functionality.)
-			if (step == 0)
-			{
-				// CR
-				// AW
-				// RM
-				// IW
-				InstructionReg = memoryBytes[0][programCounter];
-				// CE
-				programCounter += 1;
-				step = 2;
-			}
+		// Execute fetch in single step (normally this process is done in multiple clock cycles,
+		// but since it is required for every instruction this emulator speeds it up a little bit.
+		// This does not change a program's functionality.)
+		
+		// CR
+		// AW
+		// RM
+		// IW
+		InstructionReg = memoryBytes[0][programCounter];
+		// CE
+		programCounter += 1;
+
+		// For all steps in the instruction, execute it's corresponding microinstruction
+		for (int step = 2; step < 10; step++)
+		{
 
 			// Access the microcode of the current instruction from the rom
 			int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
 			MicroInstruction mcode = microinstructionData[microcodeLocation];
-
 
 			// Check for any reads and execute if applicable
 			MicroInstruction readInstr = mcode & READ_MASK;
@@ -1319,7 +1305,7 @@ void Update()
 				bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
 				break;
 			case READ_IR: // Read from the instruction register onto bus
-				bus = InstructionReg & 0b1111111111;
+				bus = InstructionReg & 0b11111111111;
 				break;
 			case READ_CR: // Read from the program counter onto bus
 				bus = programCounter;
@@ -1556,12 +1542,15 @@ void Update()
 					}
 
 
+					bus = 0;
+
 					// Standalone microinstructions (ungrouped)
 					if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
 						programCounter = programCounter == 65535 ? 0 : programCounter + 1;
 
 						if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
 							break;
+		}
 		}
 	// If in performance mode, execute instructions quickly
 	else {
@@ -1571,7 +1560,6 @@ void Update()
 		uint16_t arg = InstructionReg & 0b11111111111;
 		programCounter = programCounter == 65535 ? 0 : programCounter + 1;
 		int tempArithmetic = 0;
-
 
 		switch (inst)
 		{
@@ -1984,6 +1972,11 @@ void Draw() {
 		}
 	}
 	if (imageOnlyMode) {
+		if (imageOnlyModeFrames - imageOnlyModeFrameCount == 0) {
+			imageOnlyModeFrameCount -= 1;
+			return;
+		}
+
 		auto padded = std::to_string(imageOnlyModeFrames - imageOnlyModeFrameCount);
 		padded.insert(0, 5U - std::min<int>(std::string::size_type(5), padded.length()), '0');
 
@@ -2149,7 +2142,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			int argValue;
 			try {
 				addr = stoi(splitBySpace[1]);
-		}
+			}
 			catch (exception) { // If the argument is not an integer, it is a variable
 				addr = variableMap[splitBySpace[1]];
 			}
@@ -2167,7 +2160,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			continue;
 		}
 
-		// Sets the specified memory location to a value:  set <addr> <val> <bank>
+		// Sets the specified memory location to a value with bank:  set <addr> <val> <bank>
 		else if (splitBySpace[0] == "SET")
 		{
 			int addr;
@@ -2220,6 +2213,29 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
 #endif
 			//memaddr += 1;
+			continue;
+		}
+
+		// Allocate the current location in memory for a given range: alloc <value>
+		// ex:   `alloc 2`
+		// is:   here 0
+		//       here 0
+		if (splitBySpace[0] == "ALLOC")
+		{
+			int addr = memaddr;
+			int argValue;
+			try {
+				argValue = stoi(splitBySpace[1]);
+			}
+			catch (exception) { // If the argument is not an integer, it is a variable
+				argValue = variableMap[splitBySpace[1]];
+			}
+			/*std::string hVal = DecToHexFilled(argValue, 4);
+			outputBytes[0][addr] = hVal;*/
+#if DEV_MODE
+			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
+#endif
+			memaddr += argValue;
 			continue;
 		}
 
