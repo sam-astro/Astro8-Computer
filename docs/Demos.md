@@ -11,6 +11,23 @@ indent: 1
 There are many demos created for the Astro-8. This page shows previews and controls if applicable.
 <br>
 
+## Raytracer
+
+Contributed by @sam-astro, ***supported in version v3.1.0-alpha and newer***
+
+### Code
+[Source Code](https://github.com/sam-astro/A8-Programs-written-in-Yabal/blob/main/raytracer.yabal)
+
+### Controls:
+There are no controls
+
+{: .note .caps}
+This is a very performance-intensive program! You should run it in fast mode, and even then it will still take minutes to render frames. Performance improvements coming in the future.
+
+<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/raytracer.gif"/>
+
+<br>
+
 ## 3D Triangle Renderer
 
 Contributed by @sam-astro, ***supported in version v3.1.0-alpha and newer***
