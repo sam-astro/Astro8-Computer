@@ -1,4 +1,6 @@
 *.ipch
+*.pdb
+*.db
 Astro8-Emulator/.vs/Astro8-Emulator/v17/Preview/ipch/AutoPCH/98c65cbb6cc9a3d3/ASTRO8-EMULATOR.ipch
 Astro8-Emulator/.vs/Astro8-Emulator/v17/Preview/Browse.VC.opendb
 Astro8-Emulator/.vs/Astro8-Emulator/v17/Preview/Browse.VC.db-shm
