@@ -64,6 +64,8 @@ endif
 div $xActual,3 -> $xPos
 div $yActual,3 -> $yPos
 
+presentvbuff
+
 goto #MainLoop
 
 

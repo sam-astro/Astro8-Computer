@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 project(astro8)
 
 SET(programName astro8)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeFiles/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h )
 
@@ -20,11 +20,11 @@ target_link_libraries(astro8 m ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../char_set_memtape
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/x64/Release/noise.wav
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Releases/Astro8-Linux/high.wav
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/x64/Release/square.wav
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Releases/Astro8-Linux/medium.wav
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/x64/Release/triangle.wav
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Releases/Astro8-Linux/low.wav
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

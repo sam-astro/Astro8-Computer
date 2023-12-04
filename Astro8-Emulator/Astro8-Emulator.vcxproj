@@ -76,7 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>D:\Code\SDL2-2.0.18\include;D:\Code\SDL2_mixer-2.6.2\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Code\SDL2-2.0.18\lib\x64;D:\CodeSDL2_mixer-2.6.2\lib\x64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\Code\Astro8-Computer\Astro8-Emulator\VSSynth.lib;D:\Code\SDL2-2.0.18\lib\x64;D:\CodeSDL2_mixer-2.6.2\lib\x64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)$(LibraryPath)</LibraryPath>
     <TargetName>astro8</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -137,23 +137,27 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Code\SDL2-2.0.18\lib\x64;D:\Code\SDL2_mixer-2.6.2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_mixer.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Code\Astro8-Computer\Astro8-Emulator\VSSynth.lib;D:\Code\SDL2-2.0.18\lib\x64;D:\Code\SDL2_mixer-2.6.2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>VSSynth.lib;SDL2.lib;SDL2main.lib;SDL2_mixer.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)astro8$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="armstrong-compiler.cpp" />
     <ClCompile Include="assembler.cpp" />
+    <ClCompile Include="escapi.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="armstrong-compiler.h" />
     <ClInclude Include="assembler.h" />
+    <ClInclude Include="audio.h" />
     <ClInclude Include="color.hpp" />
     <ClInclude Include="colorprint.h" />
+    <ClInclude Include="escapi.h" />
     <ClInclude Include="processing.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="VSSynth\VSSynth.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\char_set_memtape">

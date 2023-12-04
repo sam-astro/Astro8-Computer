@@ -23,6 +23,8 @@ change *[1]$actualAddress = $cursorChar
 // Get any key press
 change $key = *[1]$expLoc
 
+change $randColor = 27389
+
 // If the user is pressing a key
 if $key!=168:
 	// Only get 1 key press if the user holds it down
@@ -45,7 +47,13 @@ if $key!=168:
 		if $key!=70: // If backspace key is NOT pressed
 			// Put character into memory
 			add $chMemOffset,$charCount -> $actualAddress
-			change *[1]$actualAddress = $key
+			and $randColor,0b11111111 -> $randColor
+			bsl $randColor,8 -> $randColor
+			add $key,$randColor -> $coloredKey // Set the color using new system.
+			change *[1]$actualAddress = $coloredKey
+
+			add $randColor,$coloredKey -> $randColor
+			mult $randColor,$charCount -> $randColor
 			
 			// Increment character position
 			add $charCount,1 -> $charCount
@@ -62,6 +70,10 @@ if $key!=168:
 
 		change $lastKey = $key
 		change *[1]$expLoc2 = 23424
+
+		asm"
+		vbuf
+		"
 	endif
 endif
 
