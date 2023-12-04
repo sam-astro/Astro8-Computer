@@ -12,11 +12,36 @@ category: Programming
 The assembly language, also named **Astrisc** (For Astro RISC), is the lowest-level way to code programs for the Astro-8. This document covers how to use it.
 
 <br>
+
+[The total list of instructions can be found here](https://sam-astro.github.io/Astro8-Computer/docs/Architecture/Instruction%20Set.html)
+
 <br>
 
-The total list of commands can be found here:
 
-[![Button Commands]][Commands]
+## Set command
+
+Sets the specified memory location to a value during assembly, uses following format:
+
+```c
+set <Address> <Value>
+```
+
+{: .note .caps}
+This command itself does not occupy a memory location, and following code will collapse to take it's place.
+
+<br>
+<br>
+
+## Here command
+
+Set the location of the `HERE` in memory equal to a value during assembly, uses following format:
+
+```c
+here <Value>
+```
+
+{: .note .caps}
+This command itself does not occupy a memory location, and following code will collapse to take it's place.
 
 <br>
 <br>
@@ -94,6 +119,39 @@ You can add single-line comments to your code using the comma symbol `,` followe
 add
 ldia 5 , This is another comment
 ```
+
+<br>
+<br>
+
+## Alloc
+
+You can use the `alloc` keyword to allocate an area in memory. It follows the format:
+
+```c
+alloc <size>
+```
+
+Example:
+
+```c
+alloc 5
+lda 3
+add
+```
+
+This becomes:
+
+```c
+0    here 0
+1    here 0
+2    here 0
+3    here 0
+4    here 0
+5    lda 3
+6    add
+```
+
+The `alloc` simply clears that area of memory for `<size>` memory locations
 
 <br>
 <br>

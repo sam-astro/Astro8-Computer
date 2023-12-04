@@ -11,10 +11,6 @@ nav_order : 3
 {: .tip .caps}
 The Instruction Set is also called by it's name, `Astrisc`, and also sometimes called Assembly
 
-## Unindexed:
-* [SET](#set)
-* [HERE](#here)
-
 ## Indexed:
 0. [NOP](#nop)
 1. [AIN](#ain)
@@ -51,28 +47,6 @@ The Instruction Set is also called by it's name, `Astrisc`, and also sometimes c
 29. [VBUF](#vbuf)
 30. [BNKC](#bnkc)
 31. [LDWB](#ldwb)
-
-<br>
-
-## SET
-*Set the specified memory location to a value during assembly*
-
-#### Syntax:
-
-```
-SET <Address> <Value>
-```
-
-<br>
-
-## HERE
-*Set the location of the `HERE` in memory equal to a value during assembly*
-
-#### Syntax:
-
-```
-HERE <Value>
-```
 
 <br>
 

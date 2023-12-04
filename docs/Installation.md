@@ -36,5 +36,5 @@ title : Installation
 <!----------------------------------------------------------------------------->
 
 [SDL2 installed]: https://wiki.libsdl.org/Installation#supported_platforms
-[the most recent release]: https://github.com/sam-astro/Astro8-Computer/releases
+[the most recent release]: https://github.com/sam-astro/Astro8-Computer/releases/latest
 [Usage]: Usage.md

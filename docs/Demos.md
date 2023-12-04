@@ -33,7 +33,7 @@ This is a very performance-intensive program! You should run it in fast mode, an
 Contributed by @sam-astro, ***supported in version v3.1.0-alpha and newer***
 
 ### Code
-[Source Code](https://github.com/sam-astro/A8-Programs-written-in-Yabal/blob/main/triangle.yabal)
+[**Source Code**](https://github.com/sam-astro/A8-Programs-written-in-Yabal/blob/main/triangle.yabal)
 
 ### Controls:
 You can use the mouse button to rotate the 3D cube
@@ -47,7 +47,7 @@ You can use the mouse button to rotate the 3D cube
 Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
-[Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/pong.armstrong)
+[**Source Code**](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/pong.armstrong)
 
 ### Controls:
 You can use the `W` and `S` keys to move the left paddle, and the `Up` and `Down` arrow keys for moving the right paddle.
@@ -61,7 +61,7 @@ You can use the `W` and `S` keys to move the left paddle, and the `Up` and `Down
 Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
-[Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/powder-sim.arm)
+[**Source Code**](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/powder-sim.arm)
 
 ### Controls:
 You can use the mouse for moving the crosshair, and spawn your selected material with the Left Mouse Button. You can also use the `O` key to cycle which material you are using, either `water`, `sand`, or `none`.
@@ -75,7 +75,7 @@ You can use the mouse for moving the crosshair, and spawn your selected material
 Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
-[Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/the-game-of-life.arm)
+[**Source Code**](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/the-game-of-life.arm)
 
 ### Controls:
 You can use the `W`,`S`,`A`,`D` keys for moving the crosshair. You can also use the `O` key to toggle if you are drawing cells. ***By default the game is paused***, press the `spacebar` when you want to play/pause the game.
@@ -89,7 +89,7 @@ You can use the `W`,`S`,`A`,`D` keys for moving the crosshair. You can also use 
 Contributed by @sam-astro, ***supported in all versions***
 
 ### Code
-[Source Code](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/typing.armstrong)
+[**Source Code**](https://github.com/sam-astro/Astro8-Computer/blob/main/example_armstrong_programs/typing.armstrong)
 
 ### Controls:
 The typing program supports all letters and some characters. Upon typing a character, the cursor will advance by 1. You can also press the `backspace` key to remove the previous character.
@@ -103,7 +103,7 @@ The typing program supports all letters and some characters. Upon typing a chara
 Contributed by Calion, ***supported in versions v1.0.1-alpha and older***
 
 ### Code
-[Source Code](https://github.com/ZakChrom/ArmStrong-Programs)
+[**Source Code**](https://github.com/ZakChrom/ArmStrong-Programs)
 
 ### Controls:
 You can use the `W`,`S`,`A`,`D` keys for changing the snakes' direction, and the goal is to eat all of the apples.
@@ -117,7 +117,7 @@ You can use the `W`,`S`,`A`,`D` keys for changing the snakes' direction, and the
 Contributed by Calion, ***supported in versions v1.0.1-alpha and older***
 
 ### Code
-[Source Code](https://github.com/ZakChrom/ArmStrong-Programs)
+[**Source Code**](https://github.com/ZakChrom/ArmStrong-Programs)
 
 ### Controls:
 You can use the `W`,`S`,`A`,`D` keys for moving, and the `spacebar` key to shoot.

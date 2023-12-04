@@ -58,7 +58,7 @@ Along with the emulator, you can look at the actual circuit design for the syste
 Currently a work in progress due to recent major upgrades
 
 1. Compile/Assemble your program using `Astro8-Emulator`. It will save the machine code to a file called `program_machine_code` automatically. This file is located directly next to the `Astro8-Emulator` executable.
-2. Open the file called `cpu-circuit.circ` in the newest version of [Logisim Evolution](https://github.com/logisim-evolution/logisim-evolution/releases)
+2. Open the file called `cpu-circuit.circ` in the newest version of [**Logisim Evolution**](https://github.com/logisim-evolution/logisim-evolution/releases)
 3. Locate the RAM area, and find the one called `MEMORY`
 4. Right-click on it, and click `Load Image...`
 5. In the file view that just appeared, locate your compiled program file directly next to the `Astro8-Emulator` executable, and click `Open`
