@@ -8,7 +8,18 @@ project(astro8)
 SET(programName astro8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h )
+file(GLOB VSSynth_SRC
+     "VSSynth/*.h"
+     "VSSynth/*.cpp"
+     "VSSynth/utils/*.h"
+     "VSSynth/utils/*.cpp"
+     "VSSynth/middleware/*.h"
+     "VSSynth/middleware/*.cpp"
+     "VSSynth/generators/*.h"
+     "VSSynth/generators/*.cpp"
+)
+
+add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h ${VSSynth_SRC})
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_mixer REQUIRED)
