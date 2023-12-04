@@ -18,12 +18,12 @@ title : Home
 
 The Astro-8 Computer is a 16-bit computer design. It has a working **[Logisim Evolution]** circuit, along with an emulator on Windows, Mac, and Linux, for running code at full speed. There is an assembly language, along with a higher level language called Armstrong, plus more which are actively being built by the community.
 
-I created a video about the creation of this and how it works, [which you can view here.](https://www.youtube.com/watch?v=Zt0JfmV7CyI)
+I created a video about the creation of this and how it works, [**which you can view here.**](https://www.youtube.com/watch?v=Zt0JfmV7CyI)
 
 <br>
 
 ## Demos
-There are some demos for the Astro-8, such as the pong game and a typing program. You can see more demos [on the dedicated page](https://sam-astro.github.io/Astro8-Computer/docs/Demos.html)
+There are some demos for the Astro-8, such as the pong game and a typing program. You can see more demos [**on the dedicated page**](https://sam-astro.github.io/Astro8-Computer/docs/Demos.html)
 
 <div align="center">
 <img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/perspectiveCube.gif"/>
@@ -31,10 +31,10 @@ There are some demos for the Astro-8, such as the pong game and a typing program
 
 
 ## Programming
-There are a variety of ways to create programs for the Astro-8. [You can see an overview here](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html)
+There are a variety of ways to create programs for the Astro-8. [**You can see an overview here**](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html)
 
-{: .tip}
-The easiest starting point is [Yabal](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html#yabal)! It is very similar to many other modern languages
+{: .tip .caps}
+The easiest starting point is [**Yabal**](https://sam-astro.github.io/Astro8-Computer/docs/Programming/README.html#yabal)! It is very similar to many other modern languages
 
 <br>
 
