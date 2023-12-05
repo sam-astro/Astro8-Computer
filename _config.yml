@@ -12,7 +12,7 @@ search_enabled : true
 enable_dark_theme: true
 enable_custom: true
 
-footer_left: "<a href=\"https://github.com/sam-astro/Astro8-Computer\">Astro-8 on GitHub</a>"
+footer_left: "<a href=\"https://github.com/sam-astro/Astro8-Computer/tree/Documentation\">See something wrong? Edit here!</a>"
 footer_right: "<a id=\"last-modified\" href=\"\"></a>"
 
 home: /
