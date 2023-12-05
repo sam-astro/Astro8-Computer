@@ -26,8 +26,7 @@ find_package(SDL2_mixer REQUIRED)
 
 include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS})
 
-target_link_libraries(astro8 m ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARIES})
+target_link_libraries(astro8 m ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/libVSSynth.a -lpthread)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../char_set_memtape
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
