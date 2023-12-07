@@ -269,7 +269,7 @@ Jump to the value stored in register A
 JREG
 ```
 
-{.note .caps}
+{: .note .caps}
 All jump instructions reset the bank to `0`.
 
 <br>
@@ -352,7 +352,7 @@ LDW
 HERE <Value>
 ```
 
-{.note .caps}
+{: .note .caps}
 This instruction resets the bank to `0`.
 
 <br>
@@ -532,7 +532,7 @@ ID: 31
 Load value directly after counter into <br>
 register **B** and advance program counter by 2
 
-{.note .caps}
+{: .note .caps}
 This instruction resets the bank to `0`.
 
 #### Syntax

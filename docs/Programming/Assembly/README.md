@@ -21,7 +21,7 @@ The assembly language, also named **Astrisc** (For Astro RISC), is the lowest-le
 
 Astrisc is case-insensitive, meaning it does not matter if you capitalize commands or not. For style purposes, it is recommended to use `lowercase` when you are programming for all characters (it is easier to type and read). Programs that are compiled from another language (such as Armstrong or Yabal) will often output in `UPPERCASE`, which is standard practice for Astrisc that is computer-generated.
 
-{.warn .caps}
+{: .warn .caps}
 Due to the case-insensitivity, this also means variables and labels will not be seen as different with just differently capitlized letters. For example, `#THISISALABEL` will be seen the same as `#ThisIsALabel`.
 
 
@@ -73,7 +73,7 @@ Labels are simply constants that store the address of the following instruction.
 
 In this case, `#firstlabel` would contain the value `0`, and `#secondlabel` would contain the value `2`.
 
-{.note .caps}
+{: .note .caps}
 If there is a clear section of code the label is defined for, rather than a simple jump, it is better to make that syntactically clear by indenting with a tab or 4 spaces, as in the above syntax example.
 
 <br>
@@ -86,7 +86,7 @@ You can use the `const` keyword to define a constant integer variable in your co
 const <name> <integer>
 ```
 
-{.note .caps}
+{: .note .caps}
 In modern Astrisc, it is best practice to use constants and labels if at all possible, and to avoid hard-coding line numbers and such into your program.
 
 ```c
@@ -130,7 +130,7 @@ add
 ldia 5  ,This is another comment
 ```
 
-{.note .caps}
+{: .note .caps}
 Due to the fact the comma `,` character us used here, and is often used in other languages to separate values, the best way to use these is by placing the comment *directly after* the character like `,<comment>`, and to place ***2*** space characters `  ` before it if there is already a command. Such as `add  ,Comment`.
 
 <br>
@@ -165,7 +165,7 @@ This becomes:
 
 The `alloc` simply clears that area of memory for `<size>` memory locations
 
-{.note .caps}
+{: .note .caps}
 `alloc 0` would remove the command, and not place any `here 0` commands.
 
 <br>
