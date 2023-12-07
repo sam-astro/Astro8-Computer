@@ -31,7 +31,7 @@ title : Installation
 
 <br>
 
-### ***[Now that the emulator is installed, check out how to start making and running things][Usage]***
+### [Now that the emulator is installed, check out how to start making and running things][Usage]
 
 <!----------------------------------------------------------------------------->
 
