@@ -15,7 +15,7 @@ Yabal is a high level language which provides a simpler programming interface fo
 
 ## Documentation
 
-The documentation is hosted by the developer here: [https://yabal.dev/docs](https://yabal.dev/docs)
+The documentation is hosted by the developer here: [https://yaballang.github.io/docs](https://yaballang.github.io/docs)
 
 <br>
 
