@@ -22,7 +22,7 @@ The easiest starting point is Yabal! It is very similar to many other modern lan
 
 ## Yabal
 
-See Documentation and use: [https://yabal.dev/docs](https://yabal.dev/docs)
+See Documentation and use: [https://yaballang.github.io/docs](https://yaballang.github.io/docs)
 
 <br>
 
