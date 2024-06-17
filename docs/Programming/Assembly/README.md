@@ -47,7 +47,7 @@ here <Value>
 ```
 
 {: .note .caps}
-This command itself does not occupy a memory location, and following code will collapse to take it's place.
+This command itself *does*  occupy a memory location.
 
 <br>
 
