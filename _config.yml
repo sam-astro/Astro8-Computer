@@ -16,6 +16,7 @@ footer_left: "<a id=\"footer_edit_button\" href=\"\">See something wrong? Contri
 footer_right: "<a id=\"last-modified\" href=\"\"></a>"
 
 home: /
+small_logo_path: images/Astro8-Docs-Logo-Small.png
 
 favicon:
   source: favicon.ico
