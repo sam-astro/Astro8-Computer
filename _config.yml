@@ -21,7 +21,7 @@ github:
   branch: Documentation
 
 home: /
-small_logo_path: images/Astro8-Docs-Logo-Small.png
+small_logo_path: https://github.com/sam-astro/Astro8-Computer/blob/Documentation/images/Astro8-Docs-Logo-Small.png
 
 favicon:
   source: favicon.ico
