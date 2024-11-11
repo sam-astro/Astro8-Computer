@@ -15,6 +15,11 @@ enable_custom: true
 footer_left: "<a id=\"footer_edit_button\" href=\"\">See something wrong? Contribute to this page here</a>"
 footer_right: "<a id=\"last-modified\" href=\"\"></a>"
 
+github:
+  owner_name: sam-astro
+  repository_name: Astro8-Computer
+  branch: Documentation
+
 home: /
 small_logo_path: images/Astro8-Docs-Logo-Small.png
 
