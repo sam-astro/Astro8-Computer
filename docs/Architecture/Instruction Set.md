@@ -282,7 +282,7 @@ Use register **A**s value as memory address <br>
 to load a value from RAM into register **A**
 
 #### Syntax
-**Memory  🠖  A**
+**Memory[A]  🠖  A**
 ```
 LDAIN
 ```
@@ -299,7 +299,7 @@ store the value inside of register **B** into RAM
 <br>
 
 #### Syntax
-**B  🠖  Memory**
+**B  🠖  Memory[A]**
 ```
 STAOUT
 ```
