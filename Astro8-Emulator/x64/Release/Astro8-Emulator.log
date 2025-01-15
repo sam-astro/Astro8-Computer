@@ -1,7 +1,4 @@
-﻿  armstrong-compiler.cpp
-  assembler.cpp
-  escapi.cpp
-  main.cpp
+﻿  main.cpp
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(68,13): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(131,24): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\processing.h(132,24): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
@@ -32,7 +29,8 @@ D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2902,28): warning C4244: '+=': 
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2905,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(3115,29): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  Previous IPDB not found, fall back to full compilation.
-  All 2193 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  1 of 2193 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Astro8-Emulator.vcxproj -> D:\Code\Astro8-Computer\Astro8-Emulator\x64\Release\astro8.exe
