@@ -10,26 +10,26 @@ D:\Code\Astro8-Computer\Astro8-Emulator\colorprint.h(205,11): warning C4834: dis
 D:\Code\Astro8-Computer\Astro8-Emulator\colorprint.h(213,12): warning C4834: discarding return value of function with [[nodiscard]] attribute
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(428,22): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
 D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(442,17): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(925,36): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1248,22): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1294,24): warning C5051: attribute [[likely]] requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1324,33): warning C5051: attribute [[unlikely]] requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1455,7): warning C5051: attribute [[likely]] requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1549,34): warning C5051: attribute [[unlikely]] requires at least '/std:c++20'; ignored
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1982,79): warning C4267: 'argument': conversion from 'size_t' to 'const _Ty', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1982,79): warning C4267:         with
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1982,79): warning C4267:         [
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1982,79): warning C4267:             _Ty=int
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1982,79): warning C4267:         ]
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2047,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2047,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2819,34): warning C4267: '=': conversion from 'size_t' to 'uint8_t', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2900,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2903,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2906,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
-D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(3116,29): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(926,36): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1249,22): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1295,24): warning C5051: attribute [[likely]] requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1325,33): warning C5051: attribute [[unlikely]] requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1456,7): warning C5051: attribute [[likely]] requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1550,34): warning C5051: attribute [[unlikely]] requires at least '/std:c++20'; ignored
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1983,79): warning C4267: 'argument': conversion from 'size_t' to 'const _Ty', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1983,79): warning C4267:         with
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1983,79): warning C4267:         [
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1983,79): warning C4267:             _Ty=int
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(1983,79): warning C4267:         ]
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2048,45): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2048,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2820,34): warning C4267: '=': conversion from 'size_t' to 'uint8_t', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2901,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2904,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(2907,28): warning C4244: '+=': conversion from 'double' to 'unsigned long', possible loss of data
+D:\Code\Astro8-Computer\Astro8-Emulator\main.cpp(3117,29): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  132 of 2168 functions ( 6.1%) were compiled, the rest were copied from previous compilation.
+  134 of 2170 functions ( 6.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code

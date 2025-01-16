@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Astro-8"
-#define MyAppVersion "v3.4.1-alpha"
+#define MyAppVersion "v3.4.3-alpha"
 #define MyAppPublisher "AstroSam"
 #define MyAppURL "https://github.com/sam-astro/Astro8-Computer"
 #define MyAppExeName "astro8.exe"

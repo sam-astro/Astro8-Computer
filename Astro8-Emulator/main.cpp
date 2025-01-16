@@ -35,7 +35,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.4.2-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";
 
 
 #if UNIX
@@ -695,6 +695,7 @@ int main(int argc, char** argv)
 		try
 		{
 			// Generate memory from code and convert from hex to decimal
+			parseCode(code);
 			vector<vector<std::string>> mbytes = parseCode(code);
 			for (int membank = 0; membank < mbytes.size(); membank++)
 				for (int memindex = 0; memindex < mbytes[membank].size(); memindex++)
@@ -2100,6 +2101,7 @@ vector<std::string> explode(const std::string& str, const char& ch) {
 
 
 // Convert assembly into bytes
+std::map<std::string, int> variableMap;
 vector<vector<std::string>> parseCode(const std::string& input)
 {
 	vector<vector<std::string>> outputBytes;
@@ -2113,7 +2115,6 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 	vector<std::string> splitcode = explode(icopy, '\n');
 
-	std::map<std::string, int> variableMap;
 
 #if DEV_MODE
 	cout << endl;
