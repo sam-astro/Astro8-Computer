@@ -47,7 +47,7 @@ std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode, optimizeAssembly;
 
 bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;
 
@@ -431,7 +431,7 @@ int GenerateCharacterROM() {
 int main(int argc, char** argv)
 {
 #if DEV_MODE
-		verbose = true;
+	verbose = true;
 #endif
 
 	// Fill the memory
@@ -488,6 +488,8 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
+		else if (argval == "-o" || argval == "--optimize") // Optimize assembly
+			optimizeAssembly = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
 		else if (argval == "-nfs" || argval == "--nofilesystem") // Disable the file access
@@ -539,31 +541,31 @@ int main(int argc, char** argv)
 
 	// Open and read the file from the path
 	//if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
-		std::string path = trim(split(filePath, "\n")[0]);
-		path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
-		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
-		programName = path.substr(path.find_last_of("/\\") + 1, path.size());
+	std::string path = trim(split(filePath, "\n")[0]);
+	path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
+	path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
+	programName = path.substr(path.find_last_of("/\\") + 1, path.size());
 
-		// Open and read file
-		std::string li;
-		ifstream fileStr(path);
-		if (fileStr.is_open())
-		{
-			while (getline(fileStr, li)) {
-				code += trim(li) + "\n";
-			}
-			fileStr.close();
+	// Open and read file
+	std::string li;
+	ifstream fileStr(path);
+	if (fileStr.is_open())
+	{
+		while (getline(fileStr, li)) {
+			code += trim(li) + "\n";
 		}
-		else {
-			PrintColored("\nError: could not open file ", redFGColor, "");
-			PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
-			cout << "\n\nPress Enter to Exit...";
-			cin.ignore();
-			exit(1);
-		}
+		fileStr.close();
+	}
+	else {
+		PrintColored("\nError: could not open file ", redFGColor, "");
+		PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
+		exit(1);
+	}
 
-		projectDirectory = path.substr(0, path.find_last_of("/\\"));
-		projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
+	projectDirectory = path.substr(0, path.find_last_of("/\\"));
+	projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
 
 	/*}
 	else if (argc != 1) {
@@ -900,13 +902,13 @@ int main(int argc, char** argv)
 
 	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
 	Draw();
-	for (size_t i = 0; i < 10000000; i++) {videoBuffer[0][0] = 0;}
+	for (size_t i = 0; i < 10000000; i++) { videoBuffer[0][0] = 0; }
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	std::string receivedPath;
 	std::string receivedData;
 	bool returningFileData = false;
-	uint16_t fileData[65535*4];
+	uint16_t fileData[65535 * 4];
 	int fileIterator = 0;
 	uint16_t fileLength = 0;
 	ofstream outputProgramFileStream;
@@ -1268,12 +1270,12 @@ bool channelsPlaying[] = { false, false, false, false };
 void Update()
 {
 	// If performanceMode is turned off, execute in classic mode
-	if (!performanceMode){
+	if (!performanceMode) {
 
 		// Execute fetch in single step (normally this process is done in multiple clock cycles,
 		// but since it is required for every instruction this emulator speeds it up a little bit.
 		// This does not change a program's functionality.)
-		
+
 		// CR
 		// AW
 		// RM
@@ -1553,7 +1555,7 @@ void Update()
 						if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
 							break;
 		}
-		}
+	}
 	// If in performance mode, execute instructions quickly
 	else {
 		// Fetch
@@ -2093,11 +2095,11 @@ vector<std::string> explode(const std::string& str, const char& ch) {
 			// Accumulate the next character into the sequence
 			next += *it;
 		}
-			}
+	}
 	if (!next.empty())
 		result.push_back(next);
 	return result;
-		}
+}
 
 
 // Convert assembly into bytes
@@ -2135,7 +2137,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\n");
 #endif
 			continue;
-		}
+	}
 
 		// Sets the specified memory location to a value:  set <addr> <val>
 		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3)
@@ -2216,7 +2218,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 			//memaddr += 1;
 			continue;
-		}
+}
 
 		// Allocate the current location in memory for a given range: alloc <value>
 		// ex:   `alloc 2`
@@ -2261,8 +2263,8 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 				break;
-			}
-			if(f == instructions.size()-1) // if the instruction was not found
+		}
+			if (f == instructions.size() - 1) // if the instruction was not found
 			{
 				// Create a label: <labelname>:
 				variableMap[split(splitBySpace[0], ":")[0]] = memaddr;
@@ -2277,17 +2279,17 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		if (splitcode[i] != splitBySpace[0])
 		{
 			int argValue;
-			try{
+			try {
 				argValue = stoi(splitBySpace[1]);
 			}
-			catch(exception){ // If the argument is not an integer, it is a variable
+			catch (exception) { // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
 #if DEV_MODE
 			cout << DecToBinFilled(argValue, 11);
 #endif
 			outputBytes[0][memaddr] += DecToBinFilled(argValue, 11);
-		}
+			}
 		else
 		{
 #if DEV_MODE
@@ -2300,7 +2302,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4); // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Save the output
@@ -2330,7 +2332,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
 
@@ -2404,7 +2406,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 	// Special process fetch instruction
 #if DEV_MODE
@@ -2462,10 +2464,10 @@ void GenerateMicrocode()
 				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4) + "\n");
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
-					}
 			}
-
 		}
+
+	}
 
 	// Do actual processing
 #if DEV_MODE
@@ -2511,10 +2513,10 @@ void GenerateMicrocode()
 								else
 									endaddress[checkflag] = '1';
 								stepLocked[checkflag] = 1;
+							}
 						}
 					}
 				}
-			}
 				std::string tmpFlagCombos = DecToBinFilled(flagcombinations, 2);
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
@@ -2536,8 +2538,8 @@ void GenerateMicrocode()
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
+			}
 		}
-	}
 	}
 
 	// Print the output
@@ -2816,7 +2818,7 @@ void GenerateAsciiSdciiTables() {
 	sdciiToAscii[54] = 46;	// . -> . 
 
 	for (size_t i = 0; i < sizeof(asciiToSdcii) / sizeof(asciiToSdcii[0]); i++)
-		if(sdciiToAscii[i] != -1)
+		if (sdciiToAscii[i] != -1)
 			ascToSdcii[sdciiToAscii[i]] = i;
 }
 
