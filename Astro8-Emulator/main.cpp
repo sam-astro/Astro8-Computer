@@ -1706,14 +1706,14 @@ void Update()
 				cout << "ldw  change AReg to " << AReg << endl;
 			break;
 		case SWP:
-			CReg = AReg;
-			AReg = BReg;
-			BReg = CReg;
+			AReg = AReg ^ BReg;
+			BReg = AReg ^ BReg;
+			AReg = AReg ^ BReg;
 			break;
 		case SWPC:
-			BReg = CReg;
-			CReg = AReg;
-			AReg = BReg;
+			AReg = AReg ^ CReg;
+			CReg = AReg ^ CReg;
+			AReg = AReg ^ CReg;
 			break;
 		case PCR:
 			AReg = programCounter - 1;
