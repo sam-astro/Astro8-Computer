@@ -19,7 +19,7 @@ file(GLOB VSSynth_SRC
      "VSSynth/generators/*.cpp"
 )
 
-add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h ${VSSynth_SRC})
+add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h strops.cpp strops.h ${VSSynth_SRC})
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_mixer REQUIRED)
