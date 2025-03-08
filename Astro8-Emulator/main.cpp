@@ -37,7 +37,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.4.0-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.4.2-alpha";
 
 
 #if UNIX
@@ -435,8 +435,9 @@ int GenerateCharacterROM()
 
 int main(int argc, char** argv)
 {
-	if (DEV_MODE)
-		verbose = true;
+#if DEV_MODE
+	verbose = true;
+#endif
 
 	// Fill the memory
 	memoryBytes = vector<vector<uint16_t>>(6, vector<uint16_t>(65535, 0));
@@ -538,39 +539,40 @@ int main(int argc, char** argv)
 
 
 	// Open and read the file from the path
-	if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
-		std::string path = trim(split(filePath, "\n")[0]);
-		path.erase(std::remove(path.begin(), path.end(), '\''), path.end());  // Remove all single quotes
-		path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());  // Remove all double quotes
-		programName = path.substr(path.find_last_of("/\\") + 1, path.size());
+	//if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
+	std::string path = trim(split(filePath, "\n")[0]);
+	path.erase(std::remove(path.begin(), path.end(), '\''), path.end());  // Remove all single quotes
+	path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());  // Remove all double quotes
+	programName = path.substr(path.find_last_of("/\\") + 1, path.size());
 
-		// Open and read file
-		std::string li;
-		ifstream fileStr(path);
-		if (fileStr.is_open()) {
-			while (getline(fileStr, li)) {
-				code += trim(li) + "\n";
-			}
-			fileStr.close();
+	// Open and read file
+	std::string li;
+	ifstream fileStr(path);
+	if (fileStr.is_open()) {
+		while (getline(fileStr, li)) {
+			code += trim(li) + "\n";
 		}
-		else {
-			PrintColored("\nError: could not open file ", redFGColor, "");
-			PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
-			cout << "\n\nPress Enter to Exit...";
-			cin.ignore();
-			exit(1);
-		}
-
-		projectDirectory = path.substr(0, path.find_last_of("/\\"));
-		projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
+		fileStr.close();
 	}
+	else {
+		PrintColored("\nError: could not open file ", redFGColor, "");
+		PrintColored("\"" + path + "\"\n", brightBlueFGColor, "");
+		cout << "\n\nPress Enter to Exit...";
+		cin.ignore();
+		exit(1);
+	}
+
+	projectDirectory = path.substr(0, path.find_last_of("/\\"));
+	projectDirectory = std::filesystem::canonical(projectDirectory).string() + (WINDOWS ? "\\" : "/");
+
+	/*}
 	else if (argc != 1) {
 		PrintColored("\nError: could not open file ", redFGColor, "");
 		PrintColored("\"" + code + "\"\n", brightBlueFGColor, "");
 		cout << "\n\nPress Enter to Exit...";
 		cin.ignore();
 		exit(1);
-	}
+	}*/
 
 
 	// Determine if the file is an AstroExecutable - AEXE
@@ -896,8 +898,8 @@ int main(int argc, char** argv)
 	std::string receivedPath;
 	std::string receivedData;
 	bool returningFileData = false;
-	uint16_t fileData[65535];
-	uint16_t fileIterator = 0;
+	uint16_t fileData[65535 * 4];
+	int fileIterator = 0;
 	uint16_t fileLength = 0;
 	ofstream outputProgramFileStream;
 
@@ -993,7 +995,7 @@ int main(int argc, char** argv)
 				if (returningFileData) {
 					if (memoryBytes[1][53505] == 0) {
 						memoryBytes[1][53505] = fileData[fileIterator] | 0b100000000000000;
-						if (fileIterator >= 65535 || fileIterator >= fileLength) {
+						if (fileIterator >= fileLength) {
 							fileIterator = 0;
 							returningFileData = false;
 							memoryBytes[1][53505] = 4095;
@@ -1653,16 +1655,16 @@ void Update()
 			case LDLGE:
 				BankReg = arg & 0b111;
 				AReg = GetMem(BankReg, GetMem(0, programCounter));
-				programCounter++;
 				if (superVerbose)
 					cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
+				programCounter++;
 				break;
 			case STLGE:
 				BankReg = arg & 0b111;
 				SetMem(BankReg, GetMem(0, programCounter), AReg);
-				programCounter++;
 				if (superVerbose)
 					cout << "stlge  store AReg to " << GetMem(0, programCounter) << endl;
+				programCounter++;
 				break;
 			case LDW:
 				//AReg = memoryBytes[0][programCounter];
@@ -2349,7 +2351,7 @@ void GenerateMicrocode()
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
 	}
 
-	// Special process fetch instruction
+// Special process fetch instruction
 #if DEV_MODE
 	cout << "\n\ngenerate fetch... \n";
 #endif
@@ -2405,7 +2407,7 @@ void GenerateMicrocode()
 		}
 	}
 
-	// Do actual processing
+// Do actual processing
 #if DEV_MODE
 	cout << "\n\ngenerate general... \n";
 #endif
