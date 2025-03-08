@@ -7,12 +7,12 @@
       "RelativeMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|D:\\Code\\Astro8-Computer\\Astro8-Emulator\\VSSynth\\VSSynth.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|solutionrelative:VSSynth\\VSSynth.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|D:\\Code\\Astro8-Computer\\Astro8-Emulator\\colorprint.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|solutionrelative:colorprint.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|D:\\Code\\Astro8-Computer\\Astro8-Emulator\\VSSynth\\VSSynth.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|solutionrelative:VSSynth\\VSSynth.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{029D76C8-CA1A-4BAC-A1C5-9D9F600A5041}|Astro8-Emulator.vcxproj|D:\\Code\\Astro8-Computer\\Astro8-Emulator\\color.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -54,7 +54,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "VSSynth.h",
               "DocumentMoniker": "D:\\Code\\Astro8-Computer\\Astro8-Emulator\\VSSynth\\VSSynth.h",
               "RelativeDocumentMoniker": "VSSynth\\VSSynth.h",
@@ -72,7 +72,7 @@
               "RelativeDocumentMoniker": "main.cpp",
               "ToolTip": "D:\\Code\\Astro8-Computer\\Astro8-Emulator\\main.cpp",
               "RelativeToolTip": "main.cpp",
-              "ViewState": "AQIAABIAAAAAAAAAAAAAACQAAAAAAAAA",
+              "ViewState": "AQIAABMCAAAAAAAAAAAAACcCAAAXAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2022-08-11T16:44:18.922Z",
               "EditorCaption": ""
@@ -139,13 +139,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "colorprint.h",
               "DocumentMoniker": "D:\\Code\\Astro8-Computer\\Astro8-Emulator\\colorprint.h",
               "RelativeDocumentMoniker": "colorprint.h",
               "ToolTip": "D:\\Code\\Astro8-Computer\\Astro8-Emulator\\colorprint.h",
               "RelativeToolTip": "colorprint.h",
-              "ViewState": "AQIAAMEAAAAAAAAAAAAQwMcAAABfAAAA",
+              "ViewState": "AQIAAJ4AAAAAAAAAAAAnwK4AAAAZAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2022-08-12T19:45:54.265Z"
             },

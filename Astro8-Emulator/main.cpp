@@ -37,7 +37,7 @@ using namespace Generators;
 
 #define DEV_MODE false
 
-std::string VERSION = "Astro-8 VERSION: v3.4.2-alpha";
+std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";
 
 
 #if UNIX
@@ -49,7 +49,7 @@ std::string VERSION = "Astro-8 VERSION: v3.4.2-alpha";
 
 using namespace std;
 
-bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode;
+bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnlyMode, optimizeAssembly;
 
 bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;
 
@@ -493,7 +493,9 @@ int main(int argc, char** argv)
 			assembleOnly = true;
 		else if (argval == "-r" || argval == "--run")  // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
-		else if (argval == "-nk" || argval == "--nokeyboard")  // Disable the keyboard input
+		else if (argval == "-o" || argval == "--optimize") // Optimize assembly
+			optimizeAssembly = true;
+		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
 		else if (argval == "-nfs" || argval == "--nofilesystem")  // Disable the file access
 			usingFileSystem = false;
@@ -541,14 +543,16 @@ int main(int argc, char** argv)
 	// Open and read the file from the path
 	//if (split(filePath, "\n")[0].find('/') != std::string::npos || split(filePath, "\n")[0].find('\\') != std::string::npos) {
 	std::string path = trim(split(filePath, "\n")[0]);
-	path.erase(std::remove(path.begin(), path.end(), '\''), path.end());  // Remove all single quotes
-	path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());  // Remove all double quotes
+	path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
+	path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
 	programName = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 	// Open and read file
 	std::string li;
 	ifstream fileStr(path);
-	if (fileStr.is_open()) {
+
+	if (fileStr.is_open())
+	{
 		while (getline(fileStr, li)) {
 			code += trim(li) + "\n";
 		}
@@ -691,6 +695,7 @@ int main(int argc, char** argv)
 	if (!runAstroExecutable) {
 		try {
 			// Generate memory from code and convert from hex to decimal
+			parseCode(code);
 			vector<vector<std::string>> mbytes = parseCode(code);
 			for (int membank = 0; membank < mbytes.size(); membank++)
 				for (int memindex = 0; memindex < mbytes[membank].size(); memindex++)
@@ -890,9 +895,8 @@ int main(int argc, char** argv)
 
 	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
 	Draw();
-	for (size_t i = 0; i < 10000000; i++) {
-		videoBuffer[0][0] = 0;
-	}
+
+	for (size_t i = 0; i < 10000000; i++) { videoBuffer[0][0] = 0; }
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	std::string receivedPath;
@@ -1523,8 +1527,9 @@ void Update()
 			if (mcode & STANDALONE_CE) [[unlikely]]	 // Counter enable microinstruction, increment program counter by 1
 				programCounter = programCounter == 65535 ? 0 : programCounter + 1;
 
-			if (mcode & STANDALONE_EI)	// End instruction microinstruction, stop executing the current instruction because it is done
-				break;
+
+						if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
+							break;
 		}
 	}
 	// If in performance mode, execute instructions quickly
@@ -2069,6 +2074,7 @@ vector<std::string> explode(const std::string& str, const char& ch)
 
 
 // Convert assembly into bytes
+std::map<std::string, int> variableMap;
 vector<vector<std::string>> parseCode(const std::string& input)
 {
 	vector<vector<std::string>> outputBytes;
@@ -2082,7 +2088,6 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	transform(icopy.begin(), icopy.end(), icopy.begin(), ::toupper);
 	vector<std::string> splitcode = explode(icopy, '\n');
 
-	std::map<std::string, int> variableMap;
 
 #if DEV_MODE
 	cout << endl;
@@ -2101,7 +2106,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << ("-\t" + splitcode[i] + "\n");
 #endif
 			continue;
-		}
+	}
 
 		// Sets the specified memory location to a value:  set <addr> <val>
 		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3) {
@@ -2178,7 +2183,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 			//memaddr += 1;
 			continue;
-		}
+}
 
 		// Allocate the current location in memory for a given range: alloc <value>
 		// ex:   `alloc 2`
@@ -2220,8 +2225,9 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 				break;
-			}
-			if (f == instructions.size() - 1)  // if the instruction was not found
+
+		}
+			if (f == instructions.size() - 1) // if the instruction was not found
 			{
 				// Create a label: <labelname>:
 				variableMap[split(splitBySpace[0], ":")[0]] = memaddr;
@@ -2238,15 +2244,18 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			try {
 				argValue = stoi(splitBySpace[1]);
 			}
-			catch (exception) {	 // If the argument is not an integer, it is a variable
+
+			catch (exception) { // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
 #if DEV_MODE
 			cout << DecToBinFilled(argValue, 11);
 #endif
 			outputBytes[0][memaddr] += DecToBinFilled(argValue, 11);
-		}
-		else {
+
+			}
+		else
+		{
 #if DEV_MODE
 			cout << " 00000000000";
 #endif
@@ -2257,7 +2266,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4);  // Convert from binary to hex
 		memaddr += 1;
-	}
+		}
 
 
 	// Save the output
@@ -2285,7 +2294,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	myStream << processedOutput;
 
 	return outputBytes;
-}
+	}
 
 void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction)
 {
@@ -2349,7 +2358,7 @@ void GenerateMicrocode()
 #endif
 		instructioncodes[cl] = newStr;
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
-	}
+		}
 
 // Special process fetch instruction
 #if DEV_MODE
@@ -2407,7 +2416,10 @@ void GenerateMicrocode()
 		}
 	}
 
-// Do actual processing
+
+	}
+
+	// Do actual processing
 #if DEV_MODE
 	cout << "\n\ngenerate general... \n";
 #endif
