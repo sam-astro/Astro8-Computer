@@ -482,7 +482,7 @@ VC_LIB_PATH_SUFFIX	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^  set(VC_LIB_PAT
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x86)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x64)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x86)$/;"	v
-VERSION	Astro8-Emulator/main.cpp	/^std::string VERSION = "Astro-8 VERSION: v3.4.0-alpha";$/;"	v	typeref:typename:std::string
+VERSION	Astro8-Emulator/main.cpp	/^std::string VERSION = "Astro-8 VERSION: v3.4.2-alpha";$/;"	v	typeref:typename:std::string
 VSSynth	Astro8-Emulator/VSSynth/SoundGenerator.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/SynthMiddleware.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/Synthesizer.h	/^namespace VSSynth$/;"	n
@@ -543,10 +543,12 @@ __anon7dac1c170802	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch
 __anoncb9bb8270102	Astro8-Emulator/strops.cpp	/^	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {$/;"	f	function:ltrim	file:
 __anoncb9bb8270202	Astro8-Emulator/strops.cpp	/^	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {$/;"	f	function:rtrim	file:
 action	ResourceGenerator/Program.cs	/^    static string action = "";$/;"	f	class:Program	file:
+add	example_armstrong_programs/pong.armstrong.asm	/^add$/;"	l
 addOneToHexStr	Astro8-Emulator/strops.cpp	/^void addOneToHexStr(char* num, int len)$/;"	f	typeref:typename:void
 addOneToHexStrInRange	Astro8-Emulator/strops.cpp	/^void addOneToHexStrInRange(char* num, int start, int len)$/;"	f	typeref:typename:void
 all	Astro8-Emulator/linux-build/Makefile	/^all: cmake_check_build_system$/;"	t
 aluInstructionSpecialAddress	Astro8-Emulator/main.cpp	/^std::string aluInstructionSpecialAddress[] = {"SU", "MU", "DI", "SL", "SR", "AND", "OR", "NOT"};$/;"	v	typeref:typename:std::string[]
+and	example_armstrong_programs/pong.armstrong.asm	/^and$/;"	l
 apply_pixels	Astro8-Emulator/main.cpp	/^void apply_pixels($/;"	f	typeref:typename:void
 aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& aqua(std::ostream& os) { set_text("a");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 aqua	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> aqua(T t) { return R<T> { S<T>(t, "a") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
@@ -669,6 +671,8 @@ blue_on_white	Astro8-Emulator/color.hpp	/^    static std::ostream& blue_on_white
 blue_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> blue_on_white(T t) { return R<T> { S<T>(t, "b", "w") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 blue_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& blue_on_yellow(std::ostream& os) { set("b", "y");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 blue_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> blue_on_yellow(T t) { return R<T> { S<T>(t, "b", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
+bnk	example_armstrong_programs/pong.armstrong.asm	/^bnk 0$/;"	l
+bnk	example_armstrong_programs/pong.armstrong.asm	/^bnk 1$/;"	l
 brightBlackBGColor	Astro8-Emulator/colorprint.h	/^static const std::string brightBlackBGColor = "\\x1B[100m";$/;"	v	typeref:typename:const std::string
 brightBlackFGColor	Astro8-Emulator/colorprint.h	/^static const std::string brightBlackFGColor = "\\x1B[90m";$/;"	v	typeref:typename:const std::string
 brightBlueBGColor	Astro8-Emulator/colorprint.h	/^static const std::string brightBlueBGColor = "\\x1B[104m";$/;"	v	typeref:typename:const std::string
@@ -860,6 +864,103 @@ grey_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& grey_on_yell
 grey_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> grey_on_yellow(T t) { return R<T> { S<T>(t, "e", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 help	Astro8-Emulator/linux-build/Makefile	/^help:$/;"	t
 helpDialog	Astro8-Emulator/main.cpp	/^std::string helpDialog = R"V0G0N($/;"	v	typeref:typename:std::string
+here	example_armstrong_programs/pong.armstrong.asm	/^here 100$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 10000$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 14000$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 145$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 155$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16382$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16383$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16384$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16385$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16386$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16387$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16388$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16389$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16390$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16391$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16392$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16393$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16394$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16395$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16396$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16397$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16398$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16399$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16400$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16401$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16402$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16403$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16404$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16405$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16406$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16407$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16408$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16409$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16410$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16411$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16412$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16413$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16414$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 16415$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 191$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 201$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 204$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 214$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 217$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 235$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 238$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 248$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 251$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 259$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 271$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 279$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 291$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 301$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 311$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 314$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 324$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 327$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 345$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 348$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 358$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 361$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 369$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 381$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 389$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 401$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 453$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 463$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 474$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 480$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 488$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 494$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 502$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 508$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 516$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 522$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 530$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 53546$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 53568$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 53578$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 53871$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 553$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 555$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 563$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 586$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 588$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 596$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 599$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 607$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 610$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 652$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 655$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 65535$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 665$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 699$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 702$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 741$/;"	l
+here	example_armstrong_programs/pong.armstrong.asm	/^here 76$/;"	l
 here	example_armstrong_programs/stack.arm.asm	/^here #main$/;"	l
 here	example_armstrong_programs/stack.arm.asm	/^here 0$/;"	l
 hexCharacterToBinary	ResourceGenerator/Program.cs	/^    private static readonly Dictionary<char, string> hexCharacterToBinary = new Dictionary<char,/;"	f	class:Program	file:
@@ -894,11 +995,42 @@ item	Astro8-Emulator/color.hpp	/^        item(T t, std::string a, std::string b)
 item	Astro8-Emulator/color.hpp	/^    class item$/;"	c	namespace:dye
 itoc	Astro8-Emulator/color.hpp	/^    static inline int itoc(int a, int b)$/;"	f	namespace:hue	typeref:typename:int
 itoc	Astro8-Emulator/color.hpp	/^    static inline int itoc(int c)$/;"	f	namespace:hue	typeref:typename:int
+jmp	example_armstrong_programs/pong.armstrong.asm	/^jmp$/;"	l
 jmp	example_armstrong_programs/stack.arm.asm	/^jmp$/;"	l
+jmpc	example_armstrong_programs/pong.armstrong.asm	/^jmpc$/;"	l
+jmpz	example_armstrong_programs/pong.armstrong.asm	/^jmpz$/;"	l
 keyCode	Astro8-Emulator/main.cpp	/^	uint16_t keyCode;$/;"	m	class:KeyPress	typeref:typename:uint16_t	file:
 labelLineValues	Astro8-Emulator/main.cpp	/^vector<int> labelLineValues;$/;"	v	typeref:typename:vector<int>
 labels	Astro8-Emulator/main.cpp	/^vector<string> labels;$/;"	v	typeref:typename:vector<string>
 lastFreq	Astro8-Emulator/main.cpp	/^float lastFreq[4] = {440, 440, 440, 440};$/;"	v	typeref:typename:float[4]
+ldain	example_armstrong_programs/pong.armstrong.asm	/^ldain$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 0$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 1$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 108$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 11$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 168$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 17$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 2$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 31$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 35$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 54$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 65$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 71$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 72$/;"	l
+ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 9$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 0$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 1$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 10$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 107$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 168$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 18$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 2$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 39$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 5$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 6$/;"	l
+ldib	example_armstrong_programs/pong.armstrong.asm	/^ldib 98$/;"	l
+ldlge	example_armstrong_programs/pong.armstrong.asm	/^ldlge$/;"	l
+ldw	example_armstrong_programs/pong.armstrong.asm	/^ldw$/;"	l
 light_aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& light_aqua(std::ostream& os) { set_text("la");         return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 light_aqua	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> light_aqua(T t) { return R<T> { S<T>(t, "la") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 light_aqua_on_aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& light_aqua_on_aqua(std::ostream& os) { set("la", "a");  return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -1154,6 +1286,7 @@ microinstructionData	Astro8-Emulator/main.cpp	/^MicroInstruction microinstructio
 microinstructionData	ResourceGenerator/Program.cs	/^    static string[] microinstructionData = new string[2048];$/;"	f	class:Program	file:
 microinstructions	Astro8-Emulator/main.cpp	/^std::string microinstructions[] = {"EO", "CE", "ST", "EI", "FL"};$/;"	v	typeref:typename:std::string[]
 middleware	Astro8-Emulator/VSSynth/Synthesizer.h	/^        std::vector<SynthMiddleware *> middleware;$/;"	m	struct:VSSynth::SynthData	typeref:typename:std::vector<SynthMiddleware * >
+mult	example_armstrong_programs/pong.armstrong.asm	/^mult$/;"	l
 multiplyHexByInteger	Astro8-Emulator/strops.cpp	/^std::string multiplyHexByInteger(const std::string& hexNumber, int multiplier)$/;"	f	typeref:typename:std::string
 note	Astro8-Emulator/VSSynth/generators/Sequencer.h	/^                double note;$/;"	m	struct:VSSynth::Generators::Sequencer::NoteEvent	typeref:typename:double
 on_aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& on_aqua(std::ostream& os) { set_background("a");    return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -1314,7 +1447,9 @@ shiftHexNumber	Astro8-Emulator/strops.cpp	/^std::string shiftHexNumber(const std
 soundGenerators	Astro8-Emulator/VSSynth/Synthesizer.h	/^        std::vector<SoundGenerator *> soundGenerators;$/;"	m	struct:VSSynth::SynthData	typeref:typename:std::vector<SoundGenerator * >
 split	Astro8-Emulator/processing.h	/^std::vector<std::string> split(std::string str, std::string token)$/;"	f	typeref:typename:std::vector<std::string>
 splitByComparator	Astro8-Emulator/processing.h	/^static std::vector<std::string> splitByComparator(std::string str)$/;"	f	typeref:typename:std::vector<std::string>
+staout	example_armstrong_programs/pong.armstrong.asm	/^staout$/;"	l
 start_level	Astro8-Emulator/audio.h	/^		double start_level;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:double
+stlge	example_armstrong_programs/pong.armstrong.asm	/^stlge$/;"	l
 stoc	Astro8-Emulator/color.hpp	/^    static int stoc(std::string a)$/;"	f	namespace:hue	typeref:typename:int
 stoc	Astro8-Emulator/color.hpp	/^    static int stoc(std::string a, std::string b)$/;"	f	namespace:hue	typeref:typename:int
 stringToHex	Astro8-Emulator/strops.cpp	/^void stringToHex(char* input, char* output, int len)$/;"	f	typeref:typename:void
@@ -1325,11 +1460,13 @@ strops.i	Astro8-Emulator/linux-build/Makefile	/^strops.i: strops.cpp.i$/;"	t
 strops.o	Astro8-Emulator/linux-build/Makefile	/^strops.o: strops.cpp.o$/;"	t
 strops.s	Astro8-Emulator/linux-build/Makefile	/^strops.s: strops.cpp.s$/;"	t
 strops_h	Astro8-Emulator/strops.h	/^#define strops_h$/;"	d
+sub	example_armstrong_programs/pong.armstrong.asm	/^sub$/;"	l
 subOneFromHex	Astro8-Emulator/strops.cpp	/^void subOneFromHex(std::string& hexNumber, int index)$/;"	f	typeref:typename:void
 superVerbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 sustain	Astro8-Emulator/VSSynth/utils/Envelope.h	/^        double attack, sustain;                    \/\/ Amplitudes$/;"	m	struct:VSSynth::ADSREnvelope	typeref:typename:double
 sustain_level	Astro8-Emulator/audio.h	/^		double sustain_level;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:double
 sustainable	Astro8-Emulator/VSSynth/utils/Envelope.h	/^        bool sustainable;$/;"	m	struct:VSSynth::ADSREnvelope	typeref:typename:bool
+swp	example_armstrong_programs/pong.armstrong.asm	/^swp$/;"	l
 target_cpu_freq	Astro8-Emulator/main.cpp	/^uint32_t target_cpu_freq = 16000000;$/;"	v	typeref:typename:uint32_t
 texture	Astro8-Emulator/main.cpp	/^SDL_Texture* texture;$/;"	v	typeref:typename:SDL_Texture *
 thing	Astro8-Emulator/color.hpp	/^        T thing;$/;"	m	class:dye::item	typeref:typename:T
@@ -1346,6 +1483,7 @@ usingMouse	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = tr
 usingWebcam	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 vanilla	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> vanilla(T t) { return R<T> { S<T>(t) }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 vars	Astro8-Emulator/main.cpp	/^vector<string> vars;$/;"	v	typeref:typename:vector<string>
+vbuf	example_armstrong_programs/pong.armstrong.asm	/^vbuf$/;"	l
 verbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 videoBuffer	Astro8-Emulator/main.cpp	/^vector<vector<uint16_t>> videoBuffer;$/;"	v	typeref:typename:vector<vector<uint16_t>>
 voice_list	Astro8-Emulator/audio.h	/^		} voice_list[voices];$/;"	m	class:Hyper_BandCHIP::SampleAudio	typeref:struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108[]
