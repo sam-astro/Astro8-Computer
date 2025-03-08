@@ -3150,7 +3150,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If B is variable
 	else if (IsVar(valB)) {
-		LoadAddress("@B", to_string(GetVariableAddress(valB)));
+		LoadAddress("@B", valB);
 	}
 	// If B is decimal
 	else if (IsDec(valB)) {
@@ -3174,7 +3174,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If A is variable
 	else if (IsVar(valA)) {
-		LoadAddress("@A", to_string(GetVariableAddress(valA)));
+		LoadAddress("@A", valA);
 	}
 	// If A is decimal
 	else if (IsDec(valA)) {
@@ -3411,7 +3411,7 @@ string CompileCode(const string& inputcode)
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
 				LoadAddress("@A", to_string(value));
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -3435,8 +3435,8 @@ string CompileCode(const string& inputcode)
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				LoadAddress("@A", valuePre);
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -3459,7 +3459,7 @@ string CompileCode(const string& inputcode)
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
+				StoreAddress(valuePre, addrPre);
 			}
 
 
@@ -3486,7 +3486,7 @@ string CompileCode(const string& inputcode)
 			// If changing a variable value and setting equal to a pointer
 			else if (IsVar(addrPre) && IsPointer(valuePre)) {
 				LoadPointer(valuePre);	// Load pointer val to change TO into A
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				StoreAddress("@A", addrPre);
 			}
 
 
