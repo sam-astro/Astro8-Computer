@@ -1,36 +1,38 @@
 ﻿
-#include <vector>
-#include <algorithm> 
-#include <string> 
-#include <chrono>
 #include <limits.h>
+
+#include <algorithm>
+#include <chrono>
+#include <string>
+#include <vector>
 //#include <SDL.h>
 //#include <SDL_mixer.h>
-#include <sstream>
-#include <fstream>
-#include <codecvt>
-#include "processing.h"
-#include <filesystem>
-#include <map>
-#include <queue>
 #include <time.h>
 
-#include "VSSynth/VSSynth.h"
+#include <codecvt>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <queue>
+#include <sstream>
 
+#include "VSSynth/VSSynth.h"
 #include "armstrong-compiler.h"
+#include "processing.h"
+//#include "strops.h"
 //#include "synth.cpp"
 
 using namespace VSSynth;
 using namespace Generators;
 
 #ifdef _WIN32
-#define SYS_PAUSE system("pause")
+	#define SYS_PAUSE system("pause")
 #else
-#define SYS_PAUSE system(                            \
-	"echo \"Press any key to continue . . .\";"      \
-	"(   trap \"stty $(stty -g;stty -icanon)\" EXIT" \
-	"    LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1"   \
-	")   </dev/tty")
+	#define SYS_PAUSE system(                            \
+		"echo \"Press any key to continue . . .\";"      \
+		"(   trap \"stty $(stty -g;stty -icanon)\" EXIT" \
+		"    LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1"   \
+		")   </dev/tty")
 #endif
 
 #define DEV_MODE false
@@ -39,10 +41,10 @@ std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";
 
 
 #if UNIX
-#include <unistd.h>
+	#include <unistd.h>
 #elif WINDOWS
-//#include <windows.h>
-#include "escapi.h"
+	//#include <windows.h>
+	#include "escapi.h"
 #endif
 
 using namespace std;
@@ -59,7 +61,7 @@ uint16_t BReg = 0;
 uint16_t CReg = 0;
 uint8_t BankReg = 0;
 uint16_t InstructionReg = 0;
-uint8_t flags[2] = { 0, 0 };
+uint8_t flags[2] = {0, 0};
 int bus = 0;
 uint16_t outputReg = 0;
 uint16_t memoryIndex = 0;
@@ -71,6 +73,8 @@ uint8_t charPixX = 0;
 uint8_t charPixY = 0;
 uint16_t characterRamIndex = 0;
 uint16_t pixelRamIndex = 0;
+
+#define AS_VARIABLE_OFFSET 60000
 
 // The register which stores the index of video buffer getting written to, and the video card reads and uses the opposite one.
 bool VideoBufReg = false;
@@ -213,59 +217,59 @@ void GenerateAsciiSdciiTables();
 int ConvertSdciiToAscii(int sdciiCode);
 
 SDL_Texture* texture;
-std::vector< unsigned char > pixels(108 * 108 * 4, 0);
+std::vector<unsigned char> pixels(108 * 108 * 4, 0);
 
 
 //Mix_Chunk* waveforms[4];
 
-float lastFreq[4] = { 440, 440, 440, 440 };
-bool isPlaying[4] = { false, false, false, false };
+float lastFreq[4] = {440, 440, 440, 440};
+bool isPlaying[4] = {false, false, false, false};
 Tone* tone[4];
 
 
-vector<std::string> instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ","JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB" };
+vector<std::string> instructions = {"NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "SUB", "MULT", "DIV", "JMP", "JMPZ", "JMPC", "JREG", "LDAIN", "STAOUT", "LDLGE", "STLGE", "LDW", "SWP", "SWPC", "PCR", "BSL", "BSR", "AND", "OR", "NOT", "BNK", "VBUF", "BNKC", "LDWB"};
 
-std::string microinstructions[] = { "EO", "CE", "ST", "EI", "FL" };
-std::string writeInstructionSpecialAddress[] = { "WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK", "VBF" };
-std::string readInstructionSpecialAddress[] = { "RA", "RB", "RC", "RM", "IR", "CR" };
-std::string aluInstructionSpecialAddress[] = { "SU", "MU", "DI", "SL", "SR", "AND","OR","NOT" };
-std::string flagtypes[] = { "ZEROFLAG", "CARRYFLAG" };
+std::string microinstructions[] = {"EO", "CE", "ST", "EI", "FL"};
+std::string writeInstructionSpecialAddress[] = {"WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "BNK", "VBF"};
+std::string readInstructionSpecialAddress[] = {"RA", "RB", "RC", "RM", "IR", "CR"};
+std::string aluInstructionSpecialAddress[] = {"SU", "MU", "DI", "SL", "SR", "AND", "OR", "NOT"};
+std::string flagtypes[] = {"ZEROFLAG", "CARRYFLAG"};
 
 std::string instructioncodes[] = {
-		"fetch( 0=cr,aw & 1=rm,iw,ce & 2=ei", // Fetch
-		"ain( 2=aw,ir & 3=wa,rm & 4=ei", // LoadA
-		"bin( 2=aw,ir & 3=wb,rm & 4=ei", // LoadB
-		"cin( 2=aw,ir & 3=wc,rm & 4=ei", // LoadC
-		"ldia( 2=wa,ir & 3=ei", // Load immediate A <val>
-		"ldib( 2=wb,ir & 3=ei", // Load immediate B <val>
-		//"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
-		//"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
-		"sta( 2=aw,ir & 3=ra,wm & 4=ei", // Store A <addr>
-		"add( 2=wa,eo,fl & 3=ei", // Add
-		"sub( 2=wa,eo,su,fl & 3=ei", // Subtract
-		"mult( 2=wa,eo,mu,fl & 3=ei", // Multiply
-		"div( 2=wa,eo,di,fl & 3=ei", // Divide
-		"jmp( 2=bnk & 3=cr,aw & 4=rm,j & 5=ei", // Jump to address following instruction
-		"jmpz( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | zeroflag & 6=ei", // Jump if zero to address following instruction
-		"jmpc( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | carryflag & 6=ei", // Jump if carry to address following instruction
-		"jreg( 2=ra,j & 3=ei", // Jump to the address stored in Reg A
-		"ldain( 2=ra,aw & 3=wa,rm & 4=ei", // Use reg A as memory address, then copy value from memory into A
-		"staout( 2=ra,aw & 3=rb,wm & 4=ei", // Use reg A as memory address, then copy value from B into memory
-		"ldlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=rm,wa & 7=ei", // Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
-		"stlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=ra,wm & 7=ei", // Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
-		"ldw( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wa & 5=ei", // Load value directly after counter into A, and advance counter by 2
-		"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei", // Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
-		"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei", // Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
-		"pcr( 2=cr,wa & 3=ei", // Program counter read, get the current program counter value and put it into register A
-		"bsl( 2=sl,wa,eo,fl & 3=ei", // Bit shift left A register, the number of bits to shift determined by the value in register B
-		"bsr( 2=sr,wa,eo,fl & 3=ei", // Bit shift right A register, the number of bits to shift determined by the value in register B
-		"and( 2=and,wa,eo,fl & 3=ei", // Logical AND operation on register A and register B, with result put back into register A
-		"or( 2=or,wa,eo,fl & 3=ei", // Logical OR operation on register A and register B, with result put back into register A
-		"not( 2=not,wa,eo,fl & 3=ei", // Logical NOT operation on register A, with result put back into register A
-		"bnk( 2=bnk,ir & 3=ei", // Change bank, changes the memory bank register to the value specified <val>
-		"vbuf( 2=vbf & 3=ei", // Swap the video buffer
-		"bnkc( 2=rc,bnk & 3=ei", // Change bank to C register
-		"ldwb( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wb & 5=ei", // Load value directly after counter into B, and advance counter by 2
+	"fetch( 0=cr,aw & 1=rm,iw,ce & 2=ei",  // Fetch
+	"ain( 2=aw,ir & 3=wa,rm & 4=ei",	   // LoadA
+	"bin( 2=aw,ir & 3=wb,rm & 4=ei",	   // LoadB
+	"cin( 2=aw,ir & 3=wc,rm & 4=ei",	   // LoadC
+	"ldia( 2=wa,ir & 3=ei",				   // Load immediate A <val>
+	"ldib( 2=wb,ir & 3=ei",				   // Load immediate B <val>
+	//"rdexp( 2=ir,exi & 3=wa,re & 4=ei", // Read from expansion port <index> to register A
+	//"wrexp( 2=ir,exi & 3=ra,we & 4=ei", // Write from reg A to expansion port <index>
+	"sta( 2=aw,ir & 3=ra,wm & 4=ei",									// Store A <addr>
+	"add( 2=wa,eo,fl & 3=ei",											// Add
+	"sub( 2=wa,eo,su,fl & 3=ei",										// Subtract
+	"mult( 2=wa,eo,mu,fl & 3=ei",										// Multiply
+	"div( 2=wa,eo,di,fl & 3=ei",										// Divide
+	"jmp( 2=bnk & 3=cr,aw & 4=rm,j & 5=ei",								// Jump to address following instruction
+	"jmpz( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | zeroflag & 6=ei",			// Jump if zero to address following instruction
+	"jmpc( 2=bnk & 3=cr,aw & 4=ce,rm & 5=j | carryflag & 6=ei",			// Jump if carry to address following instruction
+	"jreg( 2=ra,j & 3=ei",												// Jump to the address stored in Reg A
+	"ldain( 2=ra,aw & 3=wa,rm & 4=ei",									// Use reg A as memory address, then copy value from memory into A
+	"staout( 2=ra,aw & 3=rb,wm & 4=ei",									// Use reg A as memory address, then copy value from B into memory
+	"ldlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=rm,wa & 7=ei",	// Use value directly after counter as address, then copy value from memory to reg A and advance counter by 2
+	"stlge( 2=bnk & 3=cr,aw & 4=bnk,ir & 5=ce,rm,aw & 6=ra,wm & 7=ei",	// Use value directly after counter as address, then copy value from reg A to memory and advance counter by 2
+	"ldw( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wa & 5=ei",						// Load value directly after counter into A, and advance counter by 2
+	"swp( 2=ra,wc & 3=wa,rb & 4=rc,wb & 5=ei",							// Swap register A and register B (this will overwrite the contents of register C, using it as a temporary swap area)
+	"swpc( 2=ra,wb & 3=wa,rc & 4=rb,wc & 5=ei",							// Swap register A and register C (this will overwrite the contents of register B, using it as a temporary swap area)
+	"pcr( 2=cr,wa & 3=ei",												// Program counter read, get the current program counter value and put it into register A
+	"bsl( 2=sl,wa,eo,fl & 3=ei",										// Bit shift left A register, the number of bits to shift determined by the value in register B
+	"bsr( 2=sr,wa,eo,fl & 3=ei",										// Bit shift right A register, the number of bits to shift determined by the value in register B
+	"and( 2=and,wa,eo,fl & 3=ei",										// Logical AND operation on register A and register B, with result put back into register A
+	"or( 2=or,wa,eo,fl & 3=ei",											// Logical OR operation on register A and register B, with result put back into register A
+	"not( 2=not,wa,eo,fl & 3=ei",										// Logical NOT operation on register A, with result put back into register A
+	"bnk( 2=bnk,ir & 3=ei",												// Change bank, changes the memory bank register to the value specified <val>
+	"vbuf( 2=vbf & 3=ei",												// Swap the video buffer
+	"bnkc( 2=rc,bnk & 3=ei",											// Change bank to C register
+	"ldwb( 2=bnk,ir & 3=cr,aw & 4=ce,rm,wb & 5=ei",						// Load value directly after counter into B, and advance counter by 2
 };
 
 std::string helpDialog = R"V0G0N(
@@ -301,13 +305,11 @@ void apply_pixels(
 	SDL_Texture* texture,
 	unsigned int screen_width)
 {
-	SDL_UpdateTexture
-	(
+	SDL_UpdateTexture(
 		texture,
 		NULL,
 		pixels.data(),
-		screen_width * 4
-	);
+		screen_width * 4);
 }
 
 void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)
@@ -324,9 +326,13 @@ void clear_buffers(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 
 void set_pixel(
 	std::vector<unsigned char>* pixels,
-	int x, int y, int screen_width,
-	Uint8 r, Uint8 g, Uint8 b, Uint8 a
-)
+	int x,
+	int y,
+	int screen_width,
+	Uint8 r,
+	Uint8 g,
+	Uint8 b,
+	Uint8 a)
 {
 	const unsigned int offset = (y * 4 * screen_width) + x * 4;
 	(*pixels)[offset + 0] = r;
@@ -350,7 +356,8 @@ void destroy(SDL_Renderer* renderer, SDL_Window* window)
 	//Mix_Quit();
 }
 
-int clamp(int x, int min, int max) {
+int clamp(int x, int min, int max)
+{
 	if (x < min)
 		return min;
 	if (x > max)
@@ -365,32 +372,31 @@ class KeyPress {
 public:
 	uint16_t keyCode;
 	int uses = 2;
-	bool isDown = true; // Differ between sending down/up signal
-	friend bool operator== (const KeyPress& k1, const KeyPress& k2);
+	bool isDown = true;	 // Differ between sending down/up signal
+	friend bool operator==(const KeyPress& k1, const KeyPress& k2);
 
-	KeyPress(int key, bool isPressed) {
+	KeyPress(int key, bool isPressed)
+	{
 		keyCode = key;
 		isDown = isPressed;
 	}
 };
-bool operator== (const KeyPress& k1, const KeyPress& k2)
+bool operator==(const KeyPress& k1, const KeyPress& k2)
 {
 	return k1.keyCode == k2.keyCode && k1.isDown == k2.isDown;
 }
-bool operator!= (const KeyPress& k1, const KeyPress& k2)
+bool operator!=(const KeyPress& k1, const KeyPress& k2)
 {
 	return !(k1.keyCode == k2.keyCode && k1.isDown == k2.isDown);
 }
 
 
-
-
 // Convert vector of strings into single std::string separated by \n character
-std::string VecToString(const vector<std::string>& vec) {
+std::string VecToString(const vector<std::string>& vec)
+{
 	std::string newStr;
 
-	for (int i = 0; i < (int)vec.size(); i++)
-	{
+	for (int i = 0; i < (int)vec.size(); i++) {
 		newStr += vec[i];
 		if (i != (int)vec.size() - 1)
 			newStr += "\n";
@@ -399,7 +405,8 @@ std::string VecToString(const vector<std::string>& vec) {
 	return newStr;
 }
 
-int GenerateCharacterROM() {
+int GenerateCharacterROM()
+{
 
 	// Generate character rom from existing generated file (generate first using C# assembler)
 	std::string chline;
@@ -407,12 +414,10 @@ int GenerateCharacterROM() {
 	const std::string charsetFilename = executableDirectory + "/char_set_memtape";
 	ifstream charset(charsetFilename);
 
-	if (charset.is_open())
-	{
+	if (charset.is_open()) {
 		getline(charset, chline);
 		chline.erase(chline.find_last_not_of(" \n\r\t") + 1);
-		for (int i = 0; i < chline.length(); i++)
-		{
+		for (int i = 0; i < chline.length(); i++) {
 			characterRom.push_back(chline[i] == '1');
 		}
 		charset.close();
@@ -462,79 +467,75 @@ int main(int argc, char** argv)
 	std::string programName = "program";
 
 	// If no arguments are provided, ask for a path
-	if (argc == 1)
-	{
+	if (argc == 1) {
 		PrintColored("No arguments or path detected. If this is your first time using this program,\nhere is the help menu for assistance:", yellowFGColor, "");
-		cout << "\n" << helpDialog << "\n";
+		cout << "\n"
+			 << helpDialog << "\n";
 		SYS_PAUSE;
 	}
 
 	// Search for options in arguments
-	for (int i = 1; i < argc; i++)
-	{
+	for (int i = 1; i < argc; i++) {
 		string argval = trim(argv[i]);
-		if (argval == "-h" || argval == "--help") { // Print help dialog
+		if (argval == "-h" || argval == "--help") {	 // Print help dialog
 			PrintColored(VERSION, blackFGColor, whiteBGColor);
-			cout << "\n" << helpDialog << "\n";
+			cout << "\n"
+				 << helpDialog << "\n";
 			exit(1);
 		}
-		else if (argval == "--version") { // Print version
+		else if (argval == "--version") {  // Print version
 			PrintColored(VERSION, blackFGColor, whiteBGColor);
 			exit(1);
 		}
-		else if (argval == "-c" || argval == "--compile") // Only compile and assemble code. Will not start emulator.
+		else if (argval == "-c" || argval == "--compile")  // Only compile and assemble code. Will not start emulator.
 			compileOnly = true;
-		else if (argval == "-a" || argval == "--assemble") // Only assemble code. Will not start emulator.
+		else if (argval == "-a" || argval == "--assemble")	// Only assemble code. Will not start emulator.
 			assembleOnly = true;
-		else if (argval == "-r" || argval == "--run") // Run an already assembled program in AstroEXE format
+		else if (argval == "-r" || argval == "--run")  // Run an already assembled program in AstroEXE format
 			runAstroExecutable = true;
 		else if (argval == "-o" || argval == "--optimize") // Optimize assembly
 			optimizeAssembly = true;
 		else if (argval == "-nk" || argval == "--nokeyboard") // Disable the keyboard input
 			usingKeyboard = false;
-		else if (argval == "-nfs" || argval == "--nofilesystem") // Disable the file access
+		else if (argval == "-nfs" || argval == "--nofilesystem")  // Disable the file access
 			usingFileSystem = false;
-		else if (argval == "-wb" || argval == "--webcam") { // Enable webcam (uses default, only works on Windows)
+		else if (argval == "-wb" || argval == "--webcam") {	 // Enable webcam (uses default, only works on Windows)
 			if (WINDOWS)
 				usingWebcam = true;
 			else
 				PrintColored("\n! Could not enable Webcam, only works on Windows devices. !\n", yellowFGColor, "");
 		}
-		else if (argval == "-nm" || argval == "--nomouse") // Disable the mouse input
+		else if (argval == "-nm" || argval == "--nomouse")	// Disable the mouse input
 			usingMouse = false;
-		else if (argval == "-v" || argval == "--verbose") // Write extra data to console for better debugging
+		else if (argval == "-v" || argval == "--verbose")  // Write extra data to console for better debugging
 			verbose = true;
-		else if (argval == "-vv" || argval == "--superverbose") // Write extra data to console for better debugging
+		else if (argval == "-vv" || argval == "--superverbose")	 // Write extra data to console for better debugging
 			superVerbose = true;
-		else if (argval == "-cm" || argval == "--classicmode") // Run Emulator in classic mode
+		else if (argval == "-cm" || argval == "--classicmode")	// Run Emulator in classic mode
 			performanceMode = false;
-		else if (argval == "--imagemode") { // Don't render anything, instead capture <frames> number of frames and save to disk
-			try
-			{
+		else if (argval == "--imagemode") {	 // Don't render anything, instead capture <frames> number of frames and save to disk
+			try {
 				imageOnlyMode = true;
 				imageOnlyModeFrames = stoi(argv[i + 1]);
 				imageOnlyModeFrameCount = imageOnlyModeFrames;
 				i++;
 			}
-			catch (const std::exception&)
-			{
+			catch (const std::exception&) {
 			}
 		}
-		else if (argval == "-f" || argval == "--freq") { // Override the default CPU frequency with your own.
-			try
-			{
+		else if (argval == "-f" || argval == "--freq") {  // Override the default CPU frequency with your own.
+			try {
 				target_cpu_freq = stoi(argv[i + 1]) * 1000000;
 				i++;
 			}
-			catch (const std::exception&)
-			{
+			catch (const std::exception&) {
 				PrintColored("\nError: specify a valid integer frequency after -f/--freq option ", redFGColor, "");
 				cout << "\n\nPress Enter to Exit...";
 				cin.ignore();
 				exit(1);
 			}
 		}
-		else // If not an option, then it should be a path
+		else  // If not an option, then it should be a path
 			filePath = argval;
 	}
 
@@ -549,6 +550,7 @@ int main(int argc, char** argv)
 	// Open and read file
 	std::string li;
 	ifstream fileStr(path);
+
 	if (fileStr.is_open())
 	{
 		while (getline(fileStr, li)) {
@@ -605,23 +607,21 @@ int main(int argc, char** argv)
 
 	// If the code inputted is marked as written in armstrong with #AS,
 	// or the user has used the "--compile" option
-	if ((split(code, "\n")[0] == "#AS" || compileOnly) && !assembleOnly && !runAstroExecutable)
-	{
+	if ((split(code, "\n")[0] == "#AS" || compileOnly) && !assembleOnly && !runAstroExecutable) {
 		cout << "* Preprocessing raw...";
 		vector<std::string> codelines = PreProcess(code);
 		PrintColored("  Done!\n", brightGreenFGColor, "");
 
-		for (int i = 0; i < codelines.size(); i++)
-		{
+		for (int i = 0; i < codelines.size(); i++) {
 			// If including another file:    #include "./path/to/file.arm"
 			if (split(codelines[i], " ")[0] == "#include") {
 				std::string clCpy = codelines[i];
 
-				codelines.erase(codelines.begin() + i); // Remove the #include
+				codelines.erase(codelines.begin() + i);	 // Remove the #include
 
 				std::string path = trim(split(clCpy, " ")[1]);
-				path.erase(std::remove(path.begin(), path.end(), '\''), path.end()); // Remove all single quotes
-				path.erase(std::remove(path.begin(), path.end(), '\"'), path.end()); // Remove all double quotes
+				path.erase(std::remove(path.begin(), path.end(), '\''), path.end());  // Remove all single quotes
+				path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());  // Remove all double quotes
 				path = path.substr(path.find_last_of("/\\") + 1, path.size());
 
 				// If the path is relative, append the known project path to make it absolute.
@@ -633,15 +633,14 @@ int main(int argc, char** argv)
 				std::string codeTmp = "";
 				std::string li;
 				ifstream fileStr(path);
-				if (fileStr.is_open())
-				{
+				if (fileStr.is_open()) {
 					// Add jump to end (this prevents this code from executing accidentally)
 					int randNum = rand() % 9999;
 					codeTmp += "\ngoto #" + path + to_string(randNum) + "\n";
 
 					// Get all lines of file
 					while (getline(fileStr, li)) {
-						if (li != "#AS") // We don't need another Armstrong label, so we can remove it
+						if (li != "#AS")  // We don't need another Armstrong label, so we can remove it
 							codeTmp += li + "\n";
 					}
 
@@ -694,8 +693,7 @@ int main(int argc, char** argv)
 
 	// Attempt to parse assembly, will throw error if not proper assembly
 	if (!runAstroExecutable) {
-		try
-		{
+		try {
 			// Generate memory from code and convert from hex to decimal
 			parseCode(code);
 			vector<vector<std::string>> mbytes = parseCode(code);
@@ -718,8 +716,7 @@ int main(int argc, char** argv)
 			f.close();
 			PrintColored("Binary executable written to " + projectDirectory + programName + ".aexe\n", whiteFGColor, "");
 		}
-		catch (const std::exception& e)
-		{
+		catch (const std::exception& e) {
 			cout << e.what() << endl;
 			PrintColored("\nError: failed to parse code. if you are trying to run Armstrong, make sure the first line of code contains  \"#AS\" ", redFGColor, "");
 			cout << "\n\nPress Enter to Exit...";
@@ -749,8 +746,7 @@ int main(int argc, char** argv)
 			for (int memindex = 2; memindex < filelines.size(); memindex++)
 				memoryBytes[0][memindex - 2] = HexToDec(filelines[memindex]);
 		}
-		else
-		{
+		else {
 			PrintColored("\nInvalid Executable file. Possibly it is out of date or corrupted, or may simply be missing the header:  \"ASTRO-8 AEXE Executable file\"", redFGColor, "");
 			cout << "\n\nPress Enter to Exit...";
 			cin.ignore();
@@ -772,8 +768,7 @@ int main(int argc, char** argv)
 		int devices = setupESCAPI();
 
 
-		if (devices == 0)
-		{
+		if (devices == 0) {
 			PrintColored("\n! Webcam initialization failure or no devices found. !\n", yellowFGColor, "");
 			usingWebcam = false;
 			break;
@@ -783,8 +778,7 @@ int main(int argc, char** argv)
 		capture.mHeight = 108;
 		capture.mTargetBuf = new int[108 * 108];
 
-		if (initCapture(0, &capture) == 0)
-		{
+		if (initCapture(0, &capture) == 0) {
 			PrintColored("\n! Webcam capture failure. !\n", yellowFGColor, "");
 			usingWebcam = false;
 			break;
@@ -805,9 +799,9 @@ int main(int argc, char** argv)
 	PrintColored("Starting Emulation...", blackFGColor, whiteBGColor);
 	cout << "\n\n";
 
-	if (!imageOnlyMode) // No need to initialize graphics if no rendering is taking place
+	if (!imageOnlyMode)	 // No need to initialize graphics if no rendering is taking place
 		InitGraphics("Astro-8 Emulator", 108, 108, 5);
-	else { // Otherwise create required directory if outputting images
+	else {	// Otherwise create required directory if outputting images
 		std::filesystem::create_directory(projectDirectory + "./frames");
 		cout << "Created Directory at: \"" + (projectDirectory + "./frames") + "\"" << endl;
 	}
@@ -838,14 +832,13 @@ int main(int argc, char** argv)
 	std::map<int, bool> pressedKeys;
 
 
-
 	// Channel A
 	Tone t0(
 		[](double frequency, double time) {
 			return Waveforms::square(
 				frequency,
 				time,
-				0); // LFO
+				0);	 // LFO
 		});
 	tone[0] = &t0;
 	(*tone[0]).setVolume(30);
@@ -855,7 +848,7 @@ int main(int argc, char** argv)
 			return Waveforms::square(
 				frequency,
 				time,
-				0); // LFO
+				0);	 // LFO
 		});
 	tone[1] = &t1;
 	(*tone[1]).setVolume(30);
@@ -865,7 +858,7 @@ int main(int argc, char** argv)
 			return Waveforms::triangle(
 				frequency,
 				time,
-				0); // LFO
+				0);	 // LFO
 		});
 	tone[2] = &t2;
 	(*tone[2]).setVolume(30);
@@ -902,6 +895,7 @@ int main(int argc, char** argv)
 
 	// Draw the initial random data in the buffer, then clear it which would be done by the BIOS
 	Draw();
+
 	for (size_t i = 0; i < 10000000; i++) { videoBuffer[0][0] = 0; }
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
@@ -914,8 +908,7 @@ int main(int argc, char** argv)
 	ofstream outputProgramFileStream;
 
 
-	while (running)
-	{
+	while (running) {
 		auto startTime = std::chrono::high_resolution_clock::now();
 		double secondDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastSecond).count();
 		double frameDiff = std::chrono::duration<double, std::chrono::milliseconds::period>(startTime - lastFrame).count();
@@ -925,10 +918,10 @@ int main(int argc, char** argv)
 		if (secondDiff > 1000.0) {
 			lastSecond = startTime;
 			cout << "\r                                                       \r"
-				<< "Freq: " << SimplifiedHertz(updateCount)
-				<< "\tFPS: " << to_string(frameCount)
-				<< "  programCounter: " << to_string(programCounter)
-				<< std::flush;
+				 << "Freq: " << SimplifiedHertz(updateCount)
+				 << "\tFPS: " << to_string(frameCount)
+				 << "  programCounter: " << to_string(programCounter)
+				 << std::flush;
 			updateCount = 0;
 			frameCount = 0;
 		}
@@ -980,8 +973,7 @@ int main(int argc, char** argv)
 					memoryBytes[1][53503] = outputWord;
 
 					// Then the next 8 groups (uses +1 more expansion ports)
-					for (int i = 0; i < 1; i++)
-					{
+					for (int i = 0; i < 1; i++) {
 						outputWord = 0;
 						for (int gg = 0; gg < 8; gg++) {
 							int targetIndex = xReq + (yReq * 108) + gg + 7 + (i * 8);
@@ -996,11 +988,11 @@ int main(int argc, char** argv)
 				else if (memoryBytes[1][53503] == 0b0100000000000000) {
 					doCapture(0);
 					memoryBytes[1][53503] = 0;
-					cout << endl << "picture" << endl;
+					cout << endl
+						 << "picture" << endl;
 				}
 			}
 #endif
-
 
 
 			if (usingFileSystem) {
@@ -1017,145 +1009,143 @@ int main(int argc, char** argv)
 						}
 					}
 				}
-				else
-					if (memoryBytes[1][53505] >= 0b1111000000000000) { // Save raw data
-						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
-						if (ch == 85 && !outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
-							outputProgramFileStream.open(receivedPath);
-							receivedPath = "";
-						}
-						else if (ch == 78 && outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
-							outputProgramFileStream.close();
-						}
-						else {
-							if (outputProgramFileStream.is_open())
-								outputProgramFileStream << (char)(ConvertSdciiToAscii(ch));
-							else
-								receivedPath += (char)(ConvertSdciiToAscii(ch));
-						}
-						memoryBytes[1][53505] = 0;
+				else if (memoryBytes[1][53505] >= 0b1111000000000000) {	   // Save raw data
+					uint8_t ch = memoryBytes[1][53505] & 255;			   // SDCII format character
+					if (ch == 85 && !outputProgramFileStream.is_open()) {  // If newline character, attempt to open new file
+						outputProgramFileStream.open(receivedPath);
+						receivedPath = "";
 					}
-					else if (memoryBytes[1][53505] >= 0b1110000000000000) { // Save data
-						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
-						if (ch == 85 && !outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
-							outputProgramFileStream.open(receivedPath);
-							outputProgramFileStream << "Astro-8 Binary Text File Format\n";
-							outputProgramFileStream << "<settings>\n";
-							receivedPath = "";
-						}
-						else if (ch == 78 && outputProgramFileStream.is_open()) { // If newline character, attempt to open new file
-							outputProgramFileStream.close();
-						}
-						else {
-							if (outputProgramFileStream.is_open())
-								outputProgramFileStream << DecToHexFilled(ch, 4) << "\n";
-							else
-								receivedPath += (char)(ConvertSdciiToAscii(ch));
-						}
-						memoryBytes[1][53505] = 0;
+					else if (ch == 78 && outputProgramFileStream.is_open()) {  // If newline character, attempt to open new file
+						outputProgramFileStream.close();
 					}
-					else if (memoryBytes[1][53505] >= 0b1101000000000000) { // Load raw text data
-						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
-						if (ch == 85) { // If newline character, attempt to load from file
-							cout << "\n\nLoading from file: " << receivedPath << endl << endl;
-							int it = 0;
+					else {
+						if (outputProgramFileStream.is_open())
+							outputProgramFileStream << (char)(ConvertSdciiToAscii(ch));
+						else
+							receivedPath += (char)(ConvertSdciiToAscii(ch));
+					}
+					memoryBytes[1][53505] = 0;
+				}
+				else if (memoryBytes[1][53505] >= 0b1110000000000000) {	   // Save data
+					uint8_t ch = memoryBytes[1][53505] & 255;			   // SDCII format character
+					if (ch == 85 && !outputProgramFileStream.is_open()) {  // If newline character, attempt to open new file
+						outputProgramFileStream.open(receivedPath);
+						outputProgramFileStream << "Astro-8 Binary Text File Format\n";
+						outputProgramFileStream << "<settings>\n";
+						receivedPath = "";
+					}
+					else if (ch == 78 && outputProgramFileStream.is_open()) {  // If newline character, attempt to open new file
+						outputProgramFileStream.close();
+					}
+					else {
+						if (outputProgramFileStream.is_open())
+							outputProgramFileStream << DecToHexFilled(ch, 4) << "\n";
+						else
+							receivedPath += (char)(ConvertSdciiToAscii(ch));
+					}
+					memoryBytes[1][53505] = 0;
+				}
+				else if (memoryBytes[1][53505] >= 0b1101000000000000) {	 // Load raw text data
+					uint8_t ch = memoryBytes[1][53505] & 255;			 // SDCII format character
+					if (ch == 85) {										 // If newline character, attempt to load from file
+						cout << "\n\nLoading from file: " << receivedPath << endl
+							 << endl;
+						int it = 0;
 
-							fstream fin(receivedPath, fstream::in);
-							char cc;
-							while (fin >> noskipws >> cc) {
-								fileData[it] = ascToSdcii[cc];
+						fstream fin(receivedPath, fstream::in);
+						char cc;
+						while (fin >> noskipws >> cc) {
+							fileData[it] = ascToSdcii[cc];
+							it++;
+						}
+						fileLength = it;
+						cout << it << " characters read\n";
+						fin.close();
+						receivedPath = "";
+
+						memoryBytes[1][53505] = 0;
+						returningFileData = true;
+					}
+					else {
+						receivedPath += (char)(ConvertSdciiToAscii(ch));
+						memoryBytes[1][53505] = 0;
+					}
+				}
+				else if (memoryBytes[1][53505] >= 0b1100000000000000) {	 // Load data
+					uint8_t ch = memoryBytes[1][53505] & 255;			 // SDCII format character
+					if (ch == 85) {										 // If newline character, attempt to load from file
+						cout << "\n\nLoading from file: " << receivedPath << endl
+							 << endl;
+						ifstream hexFile;
+						hexFile.open(receivedPath);
+						receivedPath = "";
+						std::string tmp;
+						int it = 0;
+						if (hexFile.is_open()) {
+							getline(hexFile, tmp);
+							getline(hexFile, tmp);
+							while (getline(hexFile, tmp)) {
+								fileData[it] = HexToDec(tmp);
+
 								it++;
 							}
+							cout << it << " lines read\n";
 							fileLength = it;
-							cout << it << " characters read\n";
-							fin.close();
-							receivedPath = "";
-
-							memoryBytes[1][53505] = 0;
-							returningFileData = true;
 						}
-						else {
-							receivedPath += (char)(ConvertSdciiToAscii(ch));
-							memoryBytes[1][53505] = 0;
-						}
+						hexFile.close();
+						memoryBytes[1][53505] = 0;
+						returningFileData = true;
 					}
-					else if (memoryBytes[1][53505] >= 0b1100000000000000) { // Load data
-						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
-						if (ch == 85) { // If newline character, attempt to load from file
-							cout << "\n\nLoading from file: " << receivedPath << endl << endl;
-							ifstream hexFile;
-							hexFile.open(receivedPath);
-							receivedPath = "";
-							std::string tmp;
-							int it = 0;
-							if (hexFile.is_open()) {
-								getline(hexFile, tmp);
-								getline(hexFile, tmp);
-								while (getline(hexFile, tmp))
-								{
-									fileData[it] = HexToDec(tmp);
-
-									it++;
-								}
-								cout << it << " lines read\n";
-								fileLength = it;
+					else {
+						receivedPath += (char)(ConvertSdciiToAscii(ch));
+						memoryBytes[1][53505] = 0;
+					}
+				}
+				else if (memoryBytes[1][53505] >= 0b1000000000000000) {	 // Load data and run
+					uint8_t ch = memoryBytes[1][53505] & 255;			 // SDCII format character
+					if (ch == 85) {										 // If newline character, attempt to load from file
+						cout << "\n\nStarting from file: " << receivedPath << endl
+							 << endl;
+						ifstream hexFile;
+						hexFile.open(receivedPath);
+						receivedPath = "";
+						std::string tmp;
+						int it = 0;
+						if (hexFile.is_open()) {
+							// Clear memory before loading
+							for (int i = 0; i < memoryBytes.size(); i++) {
+								memoryBytes[0][i] = 0;
+								memoryBytes[1][i] = 0;
 							}
-							hexFile.close();
-							memoryBytes[1][53505] = 0;
-							returningFileData = true;
-						}
-						else {
-							receivedPath += (char)(ConvertSdciiToAscii(ch));
-							memoryBytes[1][53505] = 0;
-						}
-					}
-					else if (memoryBytes[1][53505] >= 0b1000000000000000) { // Load data and run
-						uint8_t ch = memoryBytes[1][53505] & 255; // SDCII format character
-						if (ch == 85) { // If newline character, attempt to load from file
-							cout << "\n\nStarting from file: " << receivedPath << endl << endl;
-							ifstream hexFile;
-							hexFile.open(receivedPath);
-							receivedPath = "";
-							std::string tmp;
-							int it = 0;
-							if (hexFile.is_open()) {
-								// Clear memory before loading
-								for (int i = 0; i < memoryBytes.size(); i++) {
-									memoryBytes[0][i] = 0;
-									memoryBytes[1][i] = 0;
-								}
-								for (int i = 0; i < videoBuffer[0].size(); i++) {
-									videoBuffer[0][i] = 0;
-									videoBuffer[1][i] = 0;
-								}
-								getline(hexFile, tmp);
-								getline(hexFile, tmp);
-								while (getline(hexFile, tmp))
-								{
-									memoryBytes[0][it] = HexToDec(tmp);
-
-									it++;
-								}
-								programCounter = 0;
-								cout << it << " lines read\n";
+							for (int i = 0; i < videoBuffer[0].size(); i++) {
+								videoBuffer[0][i] = 0;
+								videoBuffer[1][i] = 0;
 							}
-							hexFile.close();
-							memoryBytes[1][53505] = 0;
+							getline(hexFile, tmp);
+							getline(hexFile, tmp);
+							while (getline(hexFile, tmp)) {
+								memoryBytes[0][it] = HexToDec(tmp);
+
+								it++;
+							}
+							programCounter = 0;
+							cout << it << " lines read\n";
 						}
-						else {
-							receivedPath += (char)(ConvertSdciiToAscii(ch));
-							memoryBytes[1][53505] = 0;
-						}
+						hexFile.close();
+						memoryBytes[1][53505] = 0;
 					}
+					else {
+						receivedPath += (char)(ConvertSdciiToAscii(ch));
+						memoryBytes[1][53505] = 0;
+					}
+				}
 			}
 
 
 			// Poll all input events
-			while (SDL_PollEvent(&event))
-			{
+			while (SDL_PollEvent(&event)) {
 				if (event.type == SDL_KEYDOWN)
-					if (event.key.keysym.scancode == SDLK_g)
-					{
+					if (event.key.keysym.scancode == SDLK_g) {
 						SDL_SetRelativeMouseMode(SDL_FALSE);
 						SDL_ShowCursor(SDL_ENABLE);
 					}
@@ -1209,22 +1199,21 @@ int main(int argc, char** argv)
 						//mYRel = -mYRel < 0 ? (-mYRel /4) & 0b111111 : ((~-mYRel /4) + 1) & 0b111111;
 
 						// This system sends the current coordinates of the mouse pointer,
-						// which is different than how a mouse actually works I'm quite sure, 
+						// which is different than how a mouse actually works I'm quite sure,
 						// And instead they send the relative movement since the last data send, like the above code tried to implement.
 						memoryBytes[1][53501] = ((event.motion.x << 7) + event.motion.y) + (memoryBytes[1][53501] & 0b1100000000000000);
-
 					}
 					else if (event.type == SDL_MOUSEBUTTONDOWN) {
 						////SDL_SetRelativeMouseMode(SDL_TRUE);
-						if (event.button.button == 1)      // Left Mouse Button Down
+						if (event.button.button == 1)  // Left Mouse Button Down
 							memoryBytes[1][53501] = 16384 | memoryBytes[1][53501];
-						else if (event.button.button == 3) // Right Mouse Button Down
+						else if (event.button.button == 3)	// Right Mouse Button Down
 							memoryBytes[1][53501] = 32768 | memoryBytes[1][53501];
 					}
 					else if (event.type == SDL_MOUSEBUTTONUP) {
-						if (event.button.button == 1 && (memoryBytes[1][53501] & 16384) == 16384)      // Left Mouse Button Up
+						if (event.button.button == 1 && (memoryBytes[1][53501] & 16384) == 16384)  // Left Mouse Button Up
 							memoryBytes[1][53501] = 16384 ^ memoryBytes[1][53501];
-						else if (event.button.button == 3 && (memoryBytes[1][53501] & 32768) == 32768) // Right Mouse Button Up
+						else if (event.button.button == 3 && (memoryBytes[1][53501] & 32768) == 32768)	// Right Mouse Button Up
 							memoryBytes[1][53501] = 32768 ^ memoryBytes[1][53501];
 					}
 			}
@@ -1253,7 +1242,6 @@ int main(int argc, char** argv)
 				PrintColored("	-- total keys pressed: ", brightBlackFGColor, "");
 				PrintColored(to_string(amountPressed), greenFGColor, "");
 			}
-
 		}
 	}
 
@@ -1266,7 +1254,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-bool channelsPlaying[] = { false, false, false, false };
+bool channelsPlaying[] = {false, false, false, false};
 void Update()
 {
 	// If performanceMode is turned off, execute in classic mode
@@ -1285,8 +1273,7 @@ void Update()
 		programCounter += 1;
 
 		// For all steps in the instruction, execute it's corresponding microinstruction
-		for (int step = 2; step < 10; step++)
-		{
+		for (int step = 2; step < 10; step++) {
 
 			// Access the microcode of the current instruction from the rom
 			int microcodeLocation = ((InstructionReg >> 6) & 0b11111100000) + (step * 4) + (flags[0] * 2) + flags[1];
@@ -1294,263 +1281,252 @@ void Update()
 
 			// Check for any reads and execute if applicable
 			MicroInstruction readInstr = mcode & READ_MASK;
-			switch (readInstr) [[likely]]
+			switch (readInstr)
+				[[likely]]
 				{
-			case READ_RA: // Read from A register onto bus
-				bus = AReg;
-				break;
-			case READ_RB: // Read from B register onto bus
-				bus = BReg;
-				break;
-			case READ_RC: // Read from C register onto bus
-				bus = CReg;
-				break;
-			case READ_RM: // Read from memory address onto bus
-				bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
-				break;
-			case READ_IR: // Read from the instruction register onto bus
-				bus = InstructionReg & 0b11111111111;
-				break;
-			case READ_CR: // Read from the program counter onto bus
-				bus = programCounter;
-				break;
-				//case READ_RE:
-				//	bus = expansionPort[ExpReg];
-				//	break;
+					case READ_RA:  // Read from A register onto bus
+						bus = AReg;
+						break;
+					case READ_RB:  // Read from B register onto bus
+						bus = BReg;
+						break;
+					case READ_RC:  // Read from C register onto bus
+						bus = CReg;
+						break;
+					case READ_RM:  // Read from memory address onto bus
+						bus = (BankReg == 1 && memoryIndex >= 53547) ? videoBuffer[VideoBufReg][memoryIndex - 53547] : memoryBytes[BankReg][memoryIndex];
+						break;
+					case READ_IR:  // Read from the instruction register onto bus
+						bus = InstructionReg & 0b11111111111;
+						break;
+					case READ_CR:  // Read from the program counter onto bus
+						bus = programCounter;
+						break;
+						//case READ_RE:
+						//	bus = expansionPort[ExpReg];
+						//	break;
 				}
 
 
-					// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
-				MicroInstruction aluInstr = mcode & ALU_MASK;
+			// Find ALU modifiers (ie. SUB, MUL DIV, etc. using the ALU Processor)
+			MicroInstruction aluInstr = mcode & ALU_MASK;
 
-				// Standalone microinstruction (ungrouped)
-				if (mcode & STANDALONE_EO) [[unlikely]]
-					{
-						flags[0] = 0;
-						flags[1] = 0;
-						switch (aluInstr)
-						{
-						case ALU_SU: // Subtract @B from @A and put answer into @A
+			// Standalone microinstruction (ungrouped)
+			if (mcode & STANDALONE_EO) [[unlikely]] {
+				flags[0] = 0;
+				flags[1] = 0;
+				switch (aluInstr) {
+					case ALU_SU:  // Subtract @B from @A and put answer into @A
+						flags[1] = 1;
+						if (AReg - BReg == 0)
+							flags[0] = 1;
+						bus = AReg - BReg;
+						while (bus < 0) {
+							bus = 65535 + bus;
+							flags[1] = 0;
+						}
+						break;
+
+					case ALU_MU:  // Multiply @A and @B and put answer into @A
+						if (AReg * BReg == 0)
+							flags[0] = 1;
+						bus = AReg * BReg;
+						while (bus > 65535) {
+							bus = bus - 65535;
 							flags[1] = 1;
-							if (AReg - BReg == 0)
-								flags[0] = 1;
-							bus = AReg - BReg;
-							while (bus < 0)
-							{
-								bus = 65535 + bus;
-								flags[1] = 0;
-							}
-							break;
-
-						case ALU_MU: // Multiply @A and @B and put answer into @A
-							if (AReg * BReg == 0)
-								flags[0] = 1;
-							bus = AReg * BReg;
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_DI: // Divide @A by @B and put answer into @A
-							// Dont divide by zero
-							if (BReg != 0) {
-								if (AReg / BReg == 0)
-									flags[0] = 1;
-								bus = AReg / BReg;
-							}
-							else {
-								flags[0] = 1;
-								bus = 0;
-							}
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_SL: // Logical bit shift left @A by @B bits and put answer into @A
-							bus = (uint16_t)(AReg << (BReg & 0b1111));
-
-							if (bus == 0)
-								flags[0] = 1;
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_SR: // Logical bit shift right @A by @B bits and put answer into @A
-							bus = (uint16_t)(AReg >> (BReg & 0b1111));
-
-							if (bus == 0)
-								flags[0] = 1;
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_AND: // Logical AND @A and @B and put answer into @A
-							bus = AReg & BReg;
-
-							if (bus == 0)
-								flags[0] = 1;
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_OR: // Logical OR @A and @B and put answer into @A
-							bus = AReg | BReg;
-
-							if (bus == 0)
-								flags[0] = 1;
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						case ALU_NOT: // Logical NOT @A and @B and put answer into @A
-							bus = ~AReg;
-
-							if (bus == 0)
-								flags[0] = 1;
-
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
-
-						default: // Add @A and @B and put answer into @A
-							if (AReg + BReg == 0)
-								flags[0] = 1;
-							bus = AReg + BReg;
-							while (bus > 65535)
-							{
-								bus = bus - 65535;
-								flags[1] = 1;
-							}
-							break;
 						}
-					}
-
-
-						// Check for any writes and execute if applicable
-					MicroInstruction writeInstr = mcode & WRITE_MASK;
-					switch (writeInstr)
-					{
-					[[likely]] default: break;
-					case WRITE_WA: // Write from bus into A register
-						AReg = bus;
 						break;
-					case WRITE_WB: // Write from bus into B register
-						BReg = bus;
-						break;
-					case WRITE_WC: // Write from bus into C register
-						CReg = bus;
-						break;
-					case WRITE_IW: // Write from bus into Instruction register
-						InstructionReg = bus;
-						break;
-					case WRITE_WM: // Write from bus into memory location
-						// If the region of memory we are writing to is the expansion port mapped memory location for music
-						// Only play audio if writing to the dedicated audio expansion port
-						if (BankReg == 1 && memoryIndex == 53502) {
-							if (verbose) {
-								PrintColored("	-- cout >> ", brightBlackFGColor, "");
-								PrintColored(to_string(BankReg) + " ", blueFGColor, "");
-								PrintColored(to_string(bus) + " ", greenFGColor, "");
-								cout << "\n";
-							}
-							////////////
-							// Audio: //
-							////////////
 
-							//		Format:     XXXXX FFFFFFFFCCC
-							//		You can only toggle one channel at a time per expansion port write.
-							//		CCC is converted to the index of the channel that is toggled
-							//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
-							//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
-							//		is changed and the channel is turned ON if it isn't already
-							//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
-							//              This means the first channel is index 1, etc.
-
-
-							// Calculate target frequency from beginning 7-bits
-							float offset = 0.0f;
-							float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
-							int targetChannel = bus & 0b111;
-
-							if (targetChannel > 0 && targetChannel <= 4)
-								// If the channel is not playing and the selected frequency is not 0, start playing with frequency
-								if (isPlaying[targetChannel - 1] == false && targetSpeed > offset) {
-									isPlaying[targetChannel - 1] = true;
-									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-									(*tone[targetChannel - 1]).playNote(targetSpeed);
-									lastFreq[targetChannel - 1] = targetSpeed;
-								}
-							// If the channel is playing and the selected frequency is not 0, change frequency
-								else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
-									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-									(*tone[targetChannel - 1]).playNote(targetSpeed);
-									lastFreq[targetChannel - 1] = targetSpeed;
-								}
-							// If the channel is playing and the selected frequency is 0, stop channel
-								else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
-									isPlaying[targetChannel - 1] = false;
-									(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
-									lastFreq[targetChannel - 1] = targetSpeed;
-								}
-
+					case ALU_DI:  // Divide @A by @B and put answer into @A
+						// Dont divide by zero
+						if (BReg != 0) {
+							if (AReg / BReg == 0)
+								flags[0] = 1;
+							bus = AReg / BReg;
 						}
-						// Otherwise just set the memory value to the bus
 						else {
-							if (BankReg == 1 && memoryIndex >= 53546) // If a video location
-								videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
-							else // Else a normal memory location
-								memoryBytes[BankReg][memoryIndex] = bus;
+							flags[0] = 1;
+							bus = 0;
+						}
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
 						}
 						break;
-					case WRITE_J: // Write from bus into program counter, ie a `JUMP`
-						programCounter = bus;
+
+					case ALU_SL:  // Logical bit shift left @A by @B bits and put answer into @A
+						bus = (uint16_t)(AReg << (BReg & 0b1111));
+
+						if (bus == 0)
+							flags[0] = 1;
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
 						break;
-					case WRITE_AW: // Write from bus into memory index, which changes where the next read/write from memory will be
-						memoryIndex = bus;
+
+					case ALU_SR:  // Logical bit shift right @A by @B bits and put answer into @A
+						bus = (uint16_t)(AReg >> (BReg & 0b1111));
+
+						if (bus == 0)
+							flags[0] = 1;
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
 						break;
-					case WRITE_BNK: // Write from bus into bank register, which changes the current memory bank being accessed
-						BankReg = bus & 0b111;
+
+					case ALU_AND:  // Logical AND @A and @B and put answer into @A
+						bus = AReg & BReg;
+
+						if (bus == 0)
+							flags[0] = 1;
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
 						break;
-					case WRITE_VBUF: // Swap the video front and back buffer.
-						VideoBufReg = !VideoBufReg;
-						videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
-						//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
-						Draw();
-						//}
+
+					case ALU_OR:  // Logical OR @A and @B and put answer into @A
+						bus = AReg | BReg;
+
+						if (bus == 0)
+							flags[0] = 1;
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
 						break;
+
+					case ALU_NOT:  // Logical NOT @A and @B and put answer into @A
+						bus = ~AReg;
+
+						if (bus == 0)
+							flags[0] = 1;
+
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
+						break;
+
+					default:  // Add @A and @B and put answer into @A
+						if (AReg + BReg == 0)
+							flags[0] = 1;
+						bus = AReg + BReg;
+						while (bus > 65535) {
+							bus = bus - 65535;
+							flags[1] = 1;
+						}
+						break;
+				}
+			}
+
+
+			// Check for any writes and execute if applicable
+			MicroInstruction writeInstr = mcode & WRITE_MASK;
+			switch (writeInstr) {
+				[[likely]] default : break;
+				case WRITE_WA:	// Write from bus into A register
+					AReg = bus;
+					break;
+				case WRITE_WB:	// Write from bus into B register
+					BReg = bus;
+					break;
+				case WRITE_WC:	// Write from bus into C register
+					CReg = bus;
+					break;
+				case WRITE_IW:	// Write from bus into Instruction register
+					InstructionReg = bus;
+					break;
+				case WRITE_WM:	// Write from bus into memory location
+					// If the region of memory we are writing to is the expansion port mapped memory location for music
+					// Only play audio if writing to the dedicated audio expansion port
+					if (BankReg == 1 && memoryIndex == 53502) {
+						if (verbose) {
+							PrintColored("	-- cout >> ", brightBlackFGColor, "");
+							PrintColored(to_string(BankReg) + " ", blueFGColor, "");
+							PrintColored(to_string(bus) + " ", greenFGColor, "");
+							cout << "\n";
+						}
+						////////////
+						// Audio: //
+						////////////
+
+						//		Format:     XXXXX FFFFFFFFCCC
+						//		You can only toggle one channel at a time per expansion port write.
+						//		CCC is converted to the index of the channel that is toggled
+						//		Then the frequency for that channel is defined as an int value stored in FFFFFFFF
+						//              If FFFFFFFF is all Zeros, then the channel is turned off. Otherwise, the frequency
+						//		is changed and the channel is turned ON if it isn't already
+						//              CCC indexing starts at 1 instead of 0 to prevent accidental audio output:
+						//              This means the first channel is index 1, etc.
+
+
+						// Calculate target frequency from beginning 7-bits
+						float offset = 0.0f;
+						float targetSpeed = ConvertNoteIndexToFrequency((bus & 0b1111111000) >> 3);
+						int targetChannel = bus & 0b111;
+
+						if (targetChannel > 0 && targetChannel <= 4)
+							// If the channel is not playing and the selected frequency is not 0, start playing with frequency
+							if (isPlaying[targetChannel - 1] == false && targetSpeed > offset) {
+								isPlaying[targetChannel - 1] = true;
+								(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+								(*tone[targetChannel - 1]).playNote(targetSpeed);
+								lastFreq[targetChannel - 1] = targetSpeed;
+							}
+							// If the channel is playing and the selected frequency is not 0, change frequency
+							else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
+								(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+								(*tone[targetChannel - 1]).playNote(targetSpeed);
+								lastFreq[targetChannel - 1] = targetSpeed;
+							}
+							// If the channel is playing and the selected frequency is 0, stop channel
+							else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
+								isPlaying[targetChannel - 1] = false;
+								(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
+								lastFreq[targetChannel - 1] = targetSpeed;
+							}
 					}
+					// Otherwise just set the memory value to the bus
+					else {
+						if (BankReg == 1 && memoryIndex >= 53546)  // If a video location
+							videoBuffer[(int)VideoBufReg][memoryIndex - 53546] = bus;
+						else  // Else a normal memory location
+							memoryBytes[BankReg][memoryIndex] = bus;
+					}
+					break;
+				case WRITE_J:  // Write from bus into program counter, ie a `JUMP`
+					programCounter = bus;
+					break;
+				case WRITE_AW:	// Write from bus into memory index, which changes where the next read/write from memory will be
+					memoryIndex = bus;
+					break;
+				case WRITE_BNK:	 // Write from bus into bank register, which changes the current memory bank being accessed
+					BankReg = bus & 0b111;
+					break;
+				case WRITE_VBUF:  // Swap the video front and back buffer.
+					VideoBufReg = !VideoBufReg;
+					videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+					//if (imageOnlyMode) { // Draw an extra time if in imageOnlyMode
+					Draw();
+					//}
+					break;
+			}
 
 
-					bus = 0;
+			bus = 0;
 
-					// Standalone microinstructions (ungrouped)
-					if (mcode & STANDALONE_CE) [[unlikely]] // Counter enable microinstruction, increment program counter by 1
-						programCounter = programCounter == 65535 ? 0 : programCounter + 1;
+			// Standalone microinstructions (ungrouped)
+			if (mcode & STANDALONE_CE) [[unlikely]]	 // Counter enable microinstruction, increment program counter by 1
+				programCounter = programCounter == 65535 ? 0 : programCounter + 1;
+
 
 						if (mcode & STANDALONE_EI) // End instruction microinstruction, stop executing the current instruction because it is done
 							break;
@@ -1565,268 +1541,258 @@ void Update()
 		programCounter = programCounter == 65535 ? 0 : programCounter + 1;
 		int tempArithmetic = 0;
 
-		switch (inst)
-		{
-		case NOP:
-			break;
-		case AIN:
-			AReg = GetMem(BankReg, arg);
-			break;
-		case BIN:
-			BReg = GetMem(BankReg, arg);
-			break;
-		case CIN:
-			CReg = GetMem(BankReg, arg);
-			break;
-		case LDIA:
-			AReg = arg;
-			break;
-		case LDIB:
-			BReg = arg;
-			if (superVerbose)
-				cout << "ldib  set BReg to " << BReg << endl;
-			break;
-		case STA:
-			SetMem(BankReg, arg, AReg);
-			break;
-		case ADD:
-			flags[0] = 0;
-			flags[1] = 0;
-			if (AReg + BReg == 0)
-				flags[0] = 1;
-			tempArithmetic = AReg + BReg;
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case SUB:
-			flags[0] = 0;
-			flags[1] = 1;
-			if (AReg - BReg == 0)
-				flags[0] = 1;
-			tempArithmetic = AReg - BReg;
-			while (tempArithmetic < 0)
-			{
-				tempArithmetic = 65535 - tempArithmetic;
+		switch (inst) {
+			case NOP:
+				break;
+			case AIN:
+				AReg = GetMem(BankReg, arg);
+				break;
+			case BIN:
+				BReg = GetMem(BankReg, arg);
+				break;
+			case CIN:
+				CReg = GetMem(BankReg, arg);
+				break;
+			case LDIA:
+				AReg = arg;
+				break;
+			case LDIB:
+				BReg = arg;
+				if (superVerbose)
+					cout << "ldib  set BReg to " << BReg << endl;
+				break;
+			case STA:
+				SetMem(BankReg, arg, AReg);
+				break;
+			case ADD:
+				flags[0] = 0;
 				flags[1] = 0;
-			}
-			AReg = tempArithmetic;
-			break;
-		case MULT:
-			flags[0] = 0;
-			flags[1] = 0;
-			if (AReg * BReg == 0)
-				flags[0] = 1;
-			tempArithmetic = AReg * BReg;
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case DIV:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic;
-			// Dont divide by zero
-			if (BReg != 0) {
-				if (AReg / BReg == 0)
+				if (AReg + BReg == 0)
 					flags[0] = 1;
-				tempArithmetic = AReg / BReg;
-			}
-			else {
-				flags[0] = 1;
-				tempArithmetic = 0;
-			}
-
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
+				tempArithmetic = AReg + BReg;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case SUB:
+				flags[0] = 0;
 				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case JMP:
-			programCounter = GetMem(0, programCounter);
-			if (superVerbose)
-				cout << "jmp  jump to " << programCounter << endl;
-			break;
-		case JMPZ:
-			if (flags[0] == 1)
+				if (AReg - BReg == 0)
+					flags[0] = 1;
+				tempArithmetic = AReg - BReg;
+				while (tempArithmetic < 0) {
+					tempArithmetic = 65535 - tempArithmetic;
+					flags[1] = 0;
+				}
+				AReg = tempArithmetic;
+				break;
+			case MULT:
+				flags[0] = 0;
+				flags[1] = 0;
+				if (AReg * BReg == 0)
+					flags[0] = 1;
+				tempArithmetic = AReg * BReg;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case DIV:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic;
+				// Dont divide by zero
+				if (BReg != 0) {
+					if (AReg / BReg == 0)
+						flags[0] = 1;
+					tempArithmetic = AReg / BReg;
+				}
+				else {
+					flags[0] = 1;
+					tempArithmetic = 0;
+				}
+
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case JMP:
 				programCounter = GetMem(0, programCounter);
-			else
+				if (superVerbose)
+					cout << "jmp  jump to " << programCounter << endl;
+				break;
+			case JMPZ:
+				if (flags[0] == 1)
+					programCounter = GetMem(0, programCounter);
+				else
+					programCounter++;
+				if (superVerbose)
+					cout << "jmpz  jump to " << programCounter << endl;
+				break;
+			case JMPC:
+				if (flags[1] == 1)
+					programCounter = GetMem(0, programCounter);
+				else
+					programCounter++;
+				if (superVerbose)
+					cout << "jmpc  jump to " << programCounter << endl;
+				break;
+			case JREG:
+				programCounter = AReg;
+				if (superVerbose)
+					cout << "jreg  jump to " << AReg << endl;
+				break;
+			case LDAIN:
+				AReg = GetMem(BankReg, AReg);
+				if (superVerbose)
+					cout << "ldain  change AReg to " << GetMem(BankReg, AReg) << endl;
+				break;
+			case STAOUT:
+				SetMem(BankReg, AReg, BReg);
+				if (superVerbose)
+					cout << "staout  store BReg to " << AReg << endl;
+				break;
+			case LDLGE:
+				BankReg = arg & 0b111;
+				AReg = GetMem(BankReg, GetMem(0, programCounter));
+				if (superVerbose)
+					cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
 				programCounter++;
-			if (superVerbose)
-				cout << "jmpz  jump to " << programCounter << endl;
-			break;
-		case JMPC:
-			if (flags[1] == 1)
-				programCounter = GetMem(0, programCounter);
-			else
+				break;
+			case STLGE:
+				BankReg = arg & 0b111;
+				SetMem(BankReg, GetMem(0, programCounter), AReg);
+				if (superVerbose)
+					cout << "stlge  store AReg to " << GetMem(0, programCounter) << endl;
 				programCounter++;
-			if (superVerbose)
-				cout << "jmpc  jump to " << programCounter << endl;
-			break;
-		case JREG:
-			programCounter = AReg;
-			if (superVerbose)
-				cout << "jreg  jump to " << AReg << endl;
-			break;
-		case LDAIN:
-			AReg = GetMem(BankReg, AReg);
-			if (superVerbose)
-				cout << "ldain  change AReg to " << GetMem(BankReg, AReg) << endl;
-			break;
-		case STAOUT:
-			SetMem(BankReg, AReg, BReg);
-			if (superVerbose)
-				cout << "staout  store BReg to " << AReg << endl;
-			break;
-		case LDLGE:
-			BankReg = arg & 0b111;
-			AReg = GetMem(BankReg, GetMem(0, programCounter));
-			if (superVerbose)
-				cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
-			programCounter++;
-			break;
-		case STLGE:
-			BankReg = arg & 0b111;
-			SetMem(BankReg, GetMem(0, programCounter), AReg);
-			if (superVerbose)
-				cout << "stlge  store AReg to " << GetMem(0, programCounter) << endl;
-			programCounter++;
-			break;
-		case LDW:
-			//AReg = memoryBytes[0][programCounter];
-			BankReg = arg & 0b111;
-			AReg = GetMem(BankReg, programCounter);
-			programCounter++;
-			if (superVerbose)
-				cout << "ldw  change AReg to " << AReg << endl;
-			break;
-		case SWP:
-			CReg = AReg;
-			AReg = BReg;
-			BReg = CReg;
-			break;
-		case SWPC:
-			BReg = CReg;
-			CReg = AReg;
-			AReg = BReg;
-			break;
-		case PCR:
-			AReg = programCounter - 1;
-			break;
-		case BSL:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic = AReg << (BReg & 0b1111);
+				break;
+			case LDW:
+				//AReg = memoryBytes[0][programCounter];
+				BankReg = arg & 0b111;
+				AReg = GetMem(BankReg, programCounter);
+				programCounter++;
+				if (superVerbose)
+					cout << "ldw  change AReg to " << AReg << endl;
+				break;
+			case SWP:
+				CReg = AReg;
+				AReg = BReg;
+				BReg = CReg;
+				break;
+			case SWPC:
+				BReg = CReg;
+				CReg = AReg;
+				AReg = BReg;
+				break;
+			case PCR:
+				AReg = programCounter - 1;
+				break;
+			case BSL:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic = AReg << (BReg & 0b1111);
 
-			if (tempArithmetic == 0)
-				flags[0] = 1;
+				if (tempArithmetic == 0)
+					flags[0] = 1;
 
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case BSR:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic = AReg >> (BReg & 0b1111);
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case BSR:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic = AReg >> (BReg & 0b1111);
 
-			if (tempArithmetic == 0)
-				flags[0] = 1;
+				if (tempArithmetic == 0)
+					flags[0] = 1;
 
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case AND:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic = AReg & BReg;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case AND:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic = AReg & BReg;
 
-			if (tempArithmetic == 0)
-				flags[0] = 1;
+				if (tempArithmetic == 0)
+					flags[0] = 1;
 
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case OR:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic = AReg | BReg;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case OR:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic = AReg | BReg;
 
-			if (tempArithmetic == 0)
-				flags[0] = 1;
+				if (tempArithmetic == 0)
+					flags[0] = 1;
 
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case NOT:
-			flags[0] = 0;
-			flags[1] = 0;
-			tempArithmetic = ~AReg;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case NOT:
+				flags[0] = 0;
+				flags[1] = 0;
+				tempArithmetic = ~AReg;
 
-			if (tempArithmetic == 0)
-				flags[0] = 1;
+				if (tempArithmetic == 0)
+					flags[0] = 1;
 
-			while (tempArithmetic > 65535)
-			{
-				tempArithmetic = tempArithmetic - 65535;
-				flags[1] = 1;
-			}
-			AReg = tempArithmetic;
-			break;
-		case BNK:
-			BankReg = arg & 0b111;
-			if (superVerbose)
-				cout << "bnk  bank change to " << arg << endl;
-			break;
-		case VBUF:
-			VideoBufReg = !VideoBufReg;
-			videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
-			Draw();
-			if (superVerbose)
-				cout << "vbuf" << endl;
-			break;
-		case BNKC:
-			BankReg = CReg & 0b111;
-			if (superVerbose)
-				cout << "bnkc  bank change to " << CReg << endl;
-			break;
-		case LDWB:
-			BankReg = arg & 0b111;
-			BReg = GetMem(BankReg, programCounter);
-			programCounter++;
-			if (superVerbose)
-				cout << "ldwb  change BReg to " << BReg << endl;
-			break;
+				while (tempArithmetic > 65535) {
+					tempArithmetic = tempArithmetic - 65535;
+					flags[1] = 1;
+				}
+				AReg = tempArithmetic;
+				break;
+			case BNK:
+				BankReg = arg & 0b111;
+				if (superVerbose)
+					cout << "bnk  bank change to " << arg << endl;
+				break;
+			case VBUF:
+				VideoBufReg = !VideoBufReg;
+				videoBuffer[VideoBufReg] = videoBuffer[!VideoBufReg];
+				Draw();
+				if (superVerbose)
+					cout << "vbuf" << endl;
+				break;
+			case BNKC:
+				BankReg = CReg & 0b111;
+				if (superVerbose)
+					cout << "bnkc  bank change to " << CReg << endl;
+				break;
+			case LDWB:
+				BankReg = arg & 0b111;
+				BReg = GetMem(BankReg, programCounter);
+				programCounter++;
+				if (superVerbose)
+					cout << "ldwb  change BReg to " << BReg << endl;
+				break;
 		}
 	}
-
 }
 
 
-void SetMem(uint16_t bank, uint16_t address, uint16_t data) {
+void SetMem(uint16_t bank, uint16_t address, uint16_t data)
+{
 	// If the region of memory we are writing to is the expansion port mapped memory location for music
 	// Only play audio if writing to the dedicated audio expansion port
 	if (bank == 1 && address == 53502) {
@@ -1863,34 +1829,35 @@ void SetMem(uint16_t bank, uint16_t address, uint16_t data) {
 				(*tone[targetChannel - 1]).playNote(targetSpeed);
 				lastFreq[targetChannel - 1] = targetSpeed;
 			}
-		// If the channel is playing and the selected frequency is not 0, change frequency
+			// If the channel is playing and the selected frequency is not 0, change frequency
 			else if (isPlaying[targetChannel - 1] == true && targetSpeed > offset && lastFreq[targetChannel - 1] != targetSpeed) {
 				(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
 				(*tone[targetChannel - 1]).playNote(targetSpeed);
 				lastFreq[targetChannel - 1] = targetSpeed;
 			}
-		// If the channel is playing and the selected frequency is 0, stop channel
+			// If the channel is playing and the selected frequency is 0, stop channel
 			else if (isPlaying[targetChannel - 1] == true && targetSpeed == offset) {
 				isPlaying[targetChannel - 1] = false;
 				(*tone[targetChannel - 1]).stopNote(lastFreq[targetChannel - 1]);
 				lastFreq[targetChannel - 1] = targetSpeed;
 			}
-
 	}
 	// Otherwise just set the memory value to the bus
 	else {
-		if (bank == 1 && address >= 53546) // If a video location
+		if (bank == 1 && address >= 53546)	// If a video location
 			videoBuffer[(int)VideoBufReg][address - 53546] = data;
-		else // Else a normal memory location
+		else  // Else a normal memory location
 			memoryBytes[bank][address] = data;
 	}
 }
 
-uint16_t GetMem(uint16_t bank, uint16_t address) {
+uint16_t GetMem(uint16_t bank, uint16_t address)
+{
 	return ((bank == 1 && address >= 53547) ? videoBuffer[VideoBufReg][address - 53547] : memoryBytes[bank][address]);
 }
 
-void DrawNextPixel() {
+void DrawNextPixel()
+{
 	int charVal = videoBuffer[(int)(!VideoBufReg)][characterRamIndex];
 	int characterRamValue = charVal & 0b11111111;
 	int colorValue = (charVal >> 8) & 0b11111111;
@@ -1908,7 +1875,7 @@ void DrawNextPixel() {
 			colorValue = 0;
 
 		r = BitRange(colorValue, 5, 3) * 36 + 0b11;
-		g = BitRange(colorValue, 2, 3) * 36 + 0b11; // 0b00011111
+		g = BitRange(colorValue, 2, 3) * 36 + 0b11;	 // 0b00011111
 		b = BitRange(colorValue, 0, 2) * 85;
 	}
 	else {
@@ -1918,9 +1885,9 @@ void DrawNextPixel() {
 			b = 255;
 		}
 		else {
-			r = (BitRange(pixelVal, 10, 5)) * 8; // Get first 5 bits
-			g = (BitRange(pixelVal, 5, 5)) * 8; // get middle bits
-			b = (BitRange(pixelVal, 0, 5)) * 8; // Gets last 5 bits
+			r = (BitRange(pixelVal, 10, 5)) * 8;  // Get first 5 bits
+			g = (BitRange(pixelVal, 5, 5)) * 8;	  // get middle bits
+			b = (BitRange(pixelVal, 0, 5)) * 8;	  // Gets last 5 bits
 		}
 	}
 
@@ -1935,8 +1902,7 @@ void DrawNextPixel() {
 	}
 
 	// If x-coord is max, reset and increment y-coord
-	if (imgX >= 108)
-	{
+	if (imgX >= 108) {
 		imgY++;
 		charPixY++;
 		charPixX = 0;
@@ -1951,7 +1917,7 @@ void DrawNextPixel() {
 	}
 
 
-	if (imgY >= 108) // The final layer is done, reset counter and render image
+	if (imgY >= 108)  // The final layer is done, reset counter and render image
 	{
 		imgY = 0;
 
@@ -1967,7 +1933,8 @@ void DrawNextPixel() {
 }
 
 // Draw an entire screen's worth of pixels
-void Draw() {
+void Draw()
+{
 	while (true) {
 		DrawNextPixel();
 		if (pixelRamIndex >= 108 * 108) {
@@ -2006,13 +1973,15 @@ void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals)
 
 	using namespace std;
 	ofstream ofs(name + ".ppm", ios_base::out | ios_base::binary);
-	ofs << "P6" << endl << dimx << ' ' << dimy << endl << "255" << endl;
+	ofs << "P6" << endl
+		<< dimx << ' ' << dimy << endl
+		<< "255" << endl;
 
 
 	for (auto y = 0u; y < dimy; ++y)
 		for (auto x = 0u; x < dimx; ++x) {
 			const unsigned int offset = (y * 4 * dimx) + x * 4;
-			ofs << img_vals[offset + 0] << img_vals[offset + 1] << img_vals[offset + 2];       // red, green, blue
+			ofs << img_vals[offset + 0] << img_vals[offset + 1] << img_vals[offset + 2];  // red, green, blue
 		}
 
 	ofs.close();
@@ -2021,15 +1990,16 @@ void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals)
 }
 
 // Neatly convert a large float number of Hz to a string with label
-std::string SimplifiedHertz(float input) {
+std::string SimplifiedHertz(float input)
+{
 	if (input == INFINITY)
 		input = FLT_MAX;
 
-	if (input >= 1000000000.0) // GHz
+	if (input >= 1000000000.0)	// GHz
 		return to_string(floor(input / 100000000.0f) / 10.0f) + " GHz";
-	if (input >= 1000000.0) // MHz
+	if (input >= 1000000.0)	 // MHz
 		return to_string(floor(input / 100000.0f) / 10.0f) + " MHz";
-	if (input >= 1000.0) // KHz
+	if (input >= 1000.0)  // KHz
 		return to_string(floor(input / 100.0f) / 10.0f) + " KHz";
 
 	return to_string(round(input * 10.0f) / 10.0f) + " Hz";
@@ -2072,11 +2042,12 @@ std::string charToString(char* a)
 // Gets range of bits inside of an integer <value> starting at <offset> inclusive for <n> range
 unsigned BitRange(unsigned value, unsigned offset, unsigned n)
 {
-	return(value >> offset) & ((1u << n) - 1);
+	return (value >> offset) & ((1u << n) - 1);
 }
 
 // Split a string <str> by a char <ch> into a vector of strings vector<std::string>
-vector<std::string> explode(const std::string& str, const char& ch) {
+vector<std::string> explode(const std::string& str, const char& ch)
+{
 	std::string next;
 	vector<std::string> result;
 
@@ -2123,16 +2094,14 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #endif
 
 	int memaddr = 0;
-	for (int i = 0; i < splitcode.size(); i++)
-	{
+	for (int i = 0; i < splitcode.size(); i++) {
 		splitcode[i] = trim(split(splitcode[i], ",")[0]);
 		if (splitcode[i] == "")
 			continue;
 
 		vector<std::string> splitBySpace = explode(splitcode[i], ' ');
 
-		if (splitBySpace[0][0] == ',')
-		{
+		if (splitBySpace[0][0] == ',') {
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\n");
 #endif
@@ -2140,20 +2109,19 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	}
 
 		// Sets the specified memory location to a value:  set <addr> <val>
-		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3)
-		{
+		if (splitBySpace[0] == "SET" && splitBySpace.size() == 3) {
 			int addr;
 			int argValue;
 			try {
 				addr = stoi(splitBySpace[1]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				addr = variableMap[splitBySpace[1]];
 			}
 			try {
 				argValue = stoi(splitBySpace[2]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[2]];
 			}
 			std::string hVal = DecToHexFilled(argValue, 4);
@@ -2165,20 +2133,19 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		}
 
 		// Sets the specified memory location to a value with bank:  set <addr> <val> <bank>
-		else if (splitBySpace[0] == "SET")
-		{
+		else if (splitBySpace[0] == "SET") {
 			int addr;
 			int argValue;
 			try {
 				addr = stoi(splitBySpace[1]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				addr = variableMap[splitBySpace[1]];
 			}
 			try {
 				argValue = stoi(splitBySpace[2]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[2]];
 			}
 			std::string hVal = DecToHexFilled(argValue, 4);
@@ -2190,14 +2157,13 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		}
 
 		// Set the current location in memory equal to a value: here <value>
-		if (splitBySpace[0] == "HERE")
-		{
+		if (splitBySpace[0] == "HERE") {
 			int addr = memaddr;
 			int argValue;
 			try {
 				argValue = stoi(splitBySpace[1]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
 			std::string hVal = DecToHexFilled(argValue, 4);
@@ -2210,8 +2176,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		}
 
 		// Name a constant variable: const @var <value>
-		if (splitBySpace[0] == "CONST")
-		{
+		if (splitBySpace[0] == "CONST") {
 			variableMap[splitBySpace[1]] = stoi(splitBySpace[2]);
 #if DEV_MODE
 			cout << ("-\t" + splitcode[i] + "\t  ~   ~\n");
@@ -2224,14 +2189,13 @@ vector<vector<std::string>> parseCode(const std::string& input)
 		// ex:   `alloc 2`
 		// is:   here 0
 		//       here 0
-		if (splitBySpace[0] == "ALLOC")
-		{
+		if (splitBySpace[0] == "ALLOC") {
 			int addr = memaddr;
 			int argValue;
 			try {
 				argValue = stoi(splitBySpace[1]);
 			}
-			catch (exception) { // If the argument is not an integer, it is a variable
+			catch (exception) {	 // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
 			/*std::string hVal = DecToHexFilled(argValue, 4);
@@ -2254,15 +2218,14 @@ vector<vector<std::string>> parseCode(const std::string& input)
 
 		// Find index of instruction
 		bool notFound = false;
-		for (int f = 0; f < instructions.size(); f++)
-		{
-			if (instructions[f] == splitBySpace[0])
-			{
+		for (int f = 0; f < instructions.size(); f++) {
+			if (instructions[f] == splitBySpace[0]) {
 #if DEV_MODE
 				cout << DecToBinFilled(f, 5);
 #endif
 				outputBytes[0][memaddr] = DecToBinFilled(f, 5);
 				break;
+
 		}
 			if (f == instructions.size() - 1) // if the instruction was not found
 			{
@@ -2276,12 +2239,12 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			continue;
 
 		// Check if any args are after the command
-		if (splitcode[i] != splitBySpace[0])
-		{
+		if (splitcode[i] != splitBySpace[0]) {
 			int argValue;
 			try {
 				argValue = stoi(splitBySpace[1]);
 			}
+
 			catch (exception) { // If the argument is not an integer, it is a variable
 				argValue = variableMap[splitBySpace[1]];
 			}
@@ -2289,6 +2252,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 			cout << DecToBinFilled(argValue, 11);
 #endif
 			outputBytes[0][memaddr] += DecToBinFilled(argValue, 11);
+
 			}
 		else
 		{
@@ -2300,7 +2264,7 @@ vector<vector<std::string>> parseCode(const std::string& input)
 #if DEV_MODE
 		cout << "  " + BinToHexFilled(outputBytes[0][memaddr], 4) + "\n";
 #endif
-		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4); // Convert from binary to hex
+		outputBytes[0][memaddr] = BinToHexFilled(outputBytes[0][memaddr], 4);  // Convert from binary to hex
 		memaddr += 1;
 		}
 
@@ -2309,10 +2273,8 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	std::string processedOutput = "";
 	processedOutput += "\nv3.0 hex words addressed\n";
 	processedOutput += "000: ";
-	for (int outindex = 0; outindex < outputBytes[0].size(); outindex++)
-	{
-		if (outindex % 8 == 0 && outindex != 0)
-		{
+	for (int outindex = 0; outindex < outputBytes[0].size(); outindex++) {
+		if (outindex % 8 == 0 && outindex != 0) {
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
@@ -2334,21 +2296,18 @@ vector<vector<std::string>> parseCode(const std::string& input)
 	return outputBytes;
 	}
 
-void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction) {
+void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction)
+{
 
-	for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++)
-	{
+	for (int mins = 0; mins < sizeof(microinstructions) / sizeof(microinstructions[0]); mins++) {
 		// Check if microinstruction matches at index
-		if (stepContents.find(microinstructions[mins]) != std::string::npos)
-		{
-			stepComputedInstruction[mins] = '1'; // activate
+		if (stepContents.find(microinstructions[mins]) != std::string::npos) {
+			stepComputedInstruction[mins] = '1';  // activate
 		}
 
 		// Check if microinstruction requires special code
-		for (int minsother = 0; minsother < sizeof(writeInstructionSpecialAddress) / sizeof(writeInstructionSpecialAddress[0]); minsother++)
-		{ // Check all write instruction types
-			if (stepContents.find(writeInstructionSpecialAddress[minsother]) != std::string::npos)
-			{
+		for (int minsother = 0; minsother < sizeof(writeInstructionSpecialAddress) / sizeof(writeInstructionSpecialAddress[0]); minsother++) {	// Check all write instruction types
+			if (stepContents.find(writeInstructionSpecialAddress[minsother]) != std::string::npos) {
 				std::string binaryval = DecToBinFilled(minsother + 1, 4);
 				stepComputedInstruction[5] = binaryval[0];
 				stepComputedInstruction[6] = binaryval[1];
@@ -2358,10 +2317,8 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 		}
 
 		// Check if microinstruction requires special code
-		for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++)
-		{ // Check all read instruction types
-			if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos)
-			{
+		for (int minsother = 0; minsother < sizeof(readInstructionSpecialAddress) / sizeof(readInstructionSpecialAddress[0]); minsother++) {  // Check all read instruction types
+			if (stepContents.find(readInstructionSpecialAddress[minsother]) != std::string::npos) {
 				std::string binaryval = DecToBinFilled(minsother + 1, 3);
 				stepComputedInstruction[9] = binaryval[0];
 				stepComputedInstruction[10] = binaryval[1];
@@ -2370,10 +2327,8 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 		}
 
 		// Check if microinstruction requires special code
-		for (int minsother = 0; minsother < sizeof(aluInstructionSpecialAddress) / sizeof(aluInstructionSpecialAddress[0]); minsother++)
-		{ // Check all ALU instruction types
-			if (stepContents.find(aluInstructionSpecialAddress[minsother]) != std::string::npos)
-			{
+		for (int minsother = 0; minsother < sizeof(aluInstructionSpecialAddress) / sizeof(aluInstructionSpecialAddress[0]); minsother++) {	// Check all ALU instruction types
+			if (stepContents.find(aluInstructionSpecialAddress[minsother]) != std::string::npos) {
 				std::string binaryval = DecToBinFilled(minsother + 1, 4);
 				stepComputedInstruction[12] = binaryval[0];
 				stepComputedInstruction[13] = binaryval[1];
@@ -2381,7 +2336,6 @@ void ComputeStepInstructions(const std::string& stepContents, char* stepComputed
 				stepComputedInstruction[15] = binaryval[3];
 			}
 		}
-
 	}
 }
 
@@ -2392,11 +2346,9 @@ void GenerateMicrocode()
 	vector<std::string> output(2048, "00000");
 
 	// Remove spaces from instruction codes and make uppercase
-	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++)
-	{
+	for (int cl = 0; cl < sizeof(instructioncodes) / sizeof(instructioncodes[0]); cl++) {
 		std::string newStr = "";
-		for (int clc = 0; clc < instructioncodes[cl].length(); clc++)
-		{
+		for (int clc = 0; clc < instructioncodes[cl].length(); clc++) {
 			if (instructioncodes[cl][clc] != ' ')
 				newStr += instructioncodes[cl][clc];
 		}
@@ -2408,37 +2360,35 @@ void GenerateMicrocode()
 		instructioncodes[cl] = explode(instructioncodes[cl], '(')[1];
 		}
 
-	// Special process fetch instruction
+// Special process fetch instruction
 #if DEV_MODE
 	cout << "\n\ngenerate fetch... \n";
 #endif
-	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++) // Iterate through all definitions of instructions
+	for (int ins = 0; ins < sizeof(instructioncodes) / sizeof(instructioncodes[0]); ins++)	// Iterate through all definitions of instructions
 	{
 		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[0], '&');
-		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
+		for (int step = 0; step < instSteps.size(); step++)	 // Iterate through every step
 		{
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
 			std::string midaddress = DecToBinFilled(actualStep, 3);
 
-			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'};
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
 			// Compute flags combinations
-			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++)
-			{
-				char endaddress[] = { '0', '0' };
+			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++) {
+				char endaddress[] = {'0', '0'};
 				// Look for flags
-				if (instSteps[step].find("|") != std::string::npos)
-				{
+				if (instSteps[step].find("|") != std::string::npos) {
 					vector<std::string> inststepFlags = explode(explode(instSteps[step], '|')[1], ',');
-					for (int flag = 0; flag < inststepFlags.size(); flag++) // Iterate through all flags in step
+					for (int flag = 0; flag < inststepFlags.size(); flag++)	 // Iterate through all flags in step
 					{
-						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++) // What is the index of the flag
+						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++)  // What is the index of the flag
 						{
 							if (inststepFlags[flag] == flagtypes[checkflag])
 								endaddress[checkflag] = '1';
@@ -2449,10 +2399,8 @@ void GenerateMicrocode()
 				char* newendaddress = (char*)tmpFlagCombos.c_str();
 
 				bool doesntmatch = false;
-				for (int i = 0; i < (sizeof(endaddress) / sizeof(endaddress[0])); i++)
-				{
-					if (endaddress[i] == '1')
-					{
+				for (int i = 0; i < (sizeof(endaddress) / sizeof(endaddress[0])); i++) {
+					if (endaddress[i] == '1') {
 						if (newendaddress[i] != '1')
 							doesntmatch = true;
 					}
@@ -2466,6 +2414,8 @@ void GenerateMicrocode()
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
 			}
 		}
+	}
+
 
 	}
 
@@ -2473,7 +2423,7 @@ void GenerateMicrocode()
 #if DEV_MODE
 	cout << "\n\ngenerate general... \n";
 #endif
-	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++) // Iterate through all definitions of instructions
+	for (int ins = 1; ins < (sizeof(instructioncodes) / sizeof(instructioncodes[0])); ins++)  // Iterate through all definitions of instructions
 	{
 #if DEV_MODE
 		cout << (instructioncodes[ins] + "\n");
@@ -2482,32 +2432,29 @@ void GenerateMicrocode()
 		std::string startaddress = DecToBinFilled(ins, 6);
 
 		vector<std::string> instSteps = explode(instructioncodes[ins], '&');
-		for (int step = 0; step < instSteps.size(); step++) // Iterate through every step
+		for (int step = 0; step < instSteps.size(); step++)	 // Iterate through every step
 		{
 			int actualStep = stoi(explode(instSteps[step], '=')[0]);
 			std::string stepContents = explode(explode(instSteps[step], '=')[1], '|')[0];
 
 			std::string midaddress = DecToBinFilled(actualStep, 3);
 
-			char stepComputedInstruction[MICROINSTR_SIZE] = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' };
+			char stepComputedInstruction[MICROINSTR_SIZE] = {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'};
 			ComputeStepInstructions(stepContents, stepComputedInstruction);
 
 
 			// Compute flags combinations
-			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++)
-			{
-				char endaddress[] = { '0', '0' };
-				int stepLocked[] = { 0, 0 };
+			for (int flagcombinations = 0; flagcombinations < (sizeof(flagtypes) / sizeof(flagtypes[0])) * (sizeof(flagtypes) / sizeof(flagtypes[0])); flagcombinations++) {
+				char endaddress[] = {'0', '0'};
+				int stepLocked[] = {0, 0};
 				// If flags are specified in current step layer, set them to what is specified and lock that bit
-				if (instSteps[step].find("|") != std::string::npos)
-				{
+				if (instSteps[step].find("|") != std::string::npos) {
 					vector<std::string> inststepFlags = explode(explode(instSteps[step], '|')[1], ',');
-					for (int flag = 0; flag < inststepFlags.size(); flag++) // Iterate through all flags in step
+					for (int flag = 0; flag < inststepFlags.size(); flag++)	 // Iterate through all flags in step
 					{
-						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++) // What is the index of the flag
+						for (int checkflag = 0; checkflag < (sizeof(flagtypes) / sizeof(flagtypes[0])); checkflag++)  // What is the index of the flag
 						{
-							if (inststepFlags[flag].find(flagtypes[checkflag]) != std::string::npos)
-							{
+							if (inststepFlags[flag].find(flagtypes[checkflag]) != std::string::npos) {
 								if (inststepFlags[flag][0] == '!')
 									endaddress[checkflag] = '0';
 								else
@@ -2522,10 +2469,8 @@ void GenerateMicrocode()
 
 				// Make sure the current combination doesn't change the locked bits, otherwise go to next step
 				bool doesntmatch = false;
-				for (int i = 0; i < (sizeof(endaddress) / sizeof(endaddress[0])); i++)
-				{
-					if (stepLocked[i] == 1)
-					{
+				for (int i = 0; i < (sizeof(endaddress) / sizeof(endaddress[0])); i++) {
+					if (stepLocked[i] == 1) {
 						if (newendaddress[i] != endaddress[i])
 							doesntmatch = true;
 					}
@@ -2534,7 +2479,7 @@ void GenerateMicrocode()
 					continue;
 
 #if DEV_MODE
-				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  " + BinToHexFilled(stepComputedInstruction, 4));
+				cout << ("\t& " + startaddress + " " + midaddress + " " + charToString(newendaddress) + "  =  0x " + BinToHexFilled(stepComputedInstruction, 4) + "  =  0b " + stepComputedInstruction);
 				cout << endl;
 #endif
 				output[BinToDec(startaddress + midaddress + charToString(newendaddress))] = BinToHexFilled(stepComputedInstruction, 5);
@@ -2546,10 +2491,8 @@ void GenerateMicrocode()
 	std::string processedOutput = "";
 	processedOutput += "\nv3.0 hex words addressed\n";
 	processedOutput += "000: ";
-	for (int outindex = 0; outindex < output.size(); outindex++)
-	{
-		if (outindex % 8 == 0 && outindex != 0)
-		{
+	for (int outindex = 0; outindex < output.size(); outindex++) {
+		if (outindex % 8 == 0 && outindex != 0) {
 			std::string locationTmp = DecToHexFilled(outindex, 3);
 			transform(locationTmp.begin(), locationTmp.end(), locationTmp.begin(), ::toupper);
 			processedOutput += "\n" + DecToHexFilled(outindex, 3) + ": ";
@@ -2560,8 +2503,7 @@ void GenerateMicrocode()
 		transform(ttmp.begin(), ttmp.end(), ttmp.begin(), ::toupper);
 
 		std::string binversion = HexToBin(ttmp, MICROINSTR_SIZE);
-		for (int i = 0; i < binversion.size(); i++)
-		{
+		for (int i = 0; i < binversion.size(); i++) {
 			microinstructionData[outindex] |= (binversion[i] == '1') << ((MICROINSTR_SIZE - 1) - i);
 		}
 	}
@@ -2578,7 +2520,8 @@ vector<string> labels;
 vector<int> labelLineValues;
 vector<string> compiledLines;
 
-uint16_t ConvertNoteIndexToFrequency(uint8_t index) {
+uint16_t ConvertNoteIndexToFrequency(uint8_t index)
+{
 	uint16_t conversionTable[96];
 	conversionTable[0] = 0;
 	conversionTable[1] = 16;
@@ -2670,33 +2613,36 @@ uint16_t ConvertNoteIndexToFrequency(uint8_t index) {
 }
 
 // This will convert ASCII/SDL2 key codes to their SDCII alternatives
-int ConvertAsciiToSdcii(int asciiCode) {
+int ConvertAsciiToSdcii(int asciiCode)
+{
 
 	if (superVerbose)
 		cout << "Ascii code for that key is: " << to_string(asciiCode) << endl;
 
 	int actualVal = asciiToSdcii[asciiCode];
-	if (actualVal == -1) // -1 Means unspecified value
+	if (actualVal == -1)  // -1 Means unspecified value
 		actualVal = 168;
 
 	return actualVal;
 }
 
 // This will convert SDCII to ASCII alternatives
-int ConvertSdciiToAscii(int sdciiCode) {
+int ConvertSdciiToAscii(int sdciiCode)
+{
 
 	if (superVerbose)
 		cout << "Sdcii code for that key is: " << to_string(sdciiCode) << endl;
 
 	int actualVal = sdciiToAscii[sdciiCode];
-	if (actualVal == -1) // -1 Means unspecified value
+	if (actualVal == -1)  // -1 Means unspecified value
 		actualVal = 168;
 
 	return actualVal;
 }
 
 
-void GenerateAsciiSdciiTables() {
+void GenerateAsciiSdciiTables()
+{
 	for (size_t i = 0; i < sizeof(asciiToSdcii) / sizeof(asciiToSdcii[0]); i++) {
 		asciiToSdcii[i] = -1;
 		sdciiToAscii[i] = -1;
@@ -2766,56 +2712,53 @@ void GenerateAsciiSdciiTables() {
 	asciiToSdcii[42] = 70;	// backspace -> backspace
 
 
-
-
-
 	// Letters
-	sdciiToAscii[13] = 97;	    // a -> a
-	sdciiToAscii[14] = 98;   	// b -> b
-	sdciiToAscii[15] = 99;  	// c -> c
-	sdciiToAscii[16] = 100;	// d -> d
-	sdciiToAscii[17] = 101;	// e -> e
-	sdciiToAscii[18] = 102;	// f -> f
-	sdciiToAscii[19] = 103;	// g -> g
-	sdciiToAscii[20] = 104;	// h -> h
-	sdciiToAscii[21] = 105;	// i -> i
-	sdciiToAscii[22] = 106;	// j -> j
-	sdciiToAscii[23] = 107;	// k -> k
-	sdciiToAscii[24] = 108;	// l -> l
-	sdciiToAscii[25] = 109;	// m -> m
-	sdciiToAscii[26] = 110;	// n -> n
-	sdciiToAscii[27] = 111;	// o -> o
-	sdciiToAscii[28] = 112;	// p -> p
-	sdciiToAscii[29] = 113;	// q -> q
-	sdciiToAscii[30] = 114;	// r -> r
-	sdciiToAscii[31] = 115;	// s -> s
-	sdciiToAscii[32] = 116;	// t -> t
-	sdciiToAscii[33] = 117;	// u -> u
-	sdciiToAscii[34] = 118;	// v -> v
-	sdciiToAscii[35] = 119;	// w -> w
-	sdciiToAscii[36] = 120;	// x -> x
-	sdciiToAscii[37] = 121;	// y -> y
-	sdciiToAscii[38] = 122;	// z -> z
+	sdciiToAscii[13] = 97;	 // a -> a
+	sdciiToAscii[14] = 98;	 // b -> b
+	sdciiToAscii[15] = 99;	 // c -> c
+	sdciiToAscii[16] = 100;	 // d -> d
+	sdciiToAscii[17] = 101;	 // e -> e
+	sdciiToAscii[18] = 102;	 // f -> f
+	sdciiToAscii[19] = 103;	 // g -> g
+	sdciiToAscii[20] = 104;	 // h -> h
+	sdciiToAscii[21] = 105;	 // i -> i
+	sdciiToAscii[22] = 106;	 // j -> j
+	sdciiToAscii[23] = 107;	 // k -> k
+	sdciiToAscii[24] = 108;	 // l -> l
+	sdciiToAscii[25] = 109;	 // m -> m
+	sdciiToAscii[26] = 110;	 // n -> n
+	sdciiToAscii[27] = 111;	 // o -> o
+	sdciiToAscii[28] = 112;	 // p -> p
+	sdciiToAscii[29] = 113;	 // q -> q
+	sdciiToAscii[30] = 114;	 // r -> r
+	sdciiToAscii[31] = 115;	 // s -> s
+	sdciiToAscii[32] = 116;	 // t -> t
+	sdciiToAscii[33] = 117;	 // u -> u
+	sdciiToAscii[34] = 118;	 // v -> v
+	sdciiToAscii[35] = 119;	 // w -> w
+	sdciiToAscii[36] = 120;	 // x -> x
+	sdciiToAscii[37] = 121;	 // y -> y
+	sdciiToAscii[38] = 122;	 // z -> z
 
 
-	sdciiToAscii[0] = 32;	// space -> space
+	sdciiToAscii[0] = 32;  // space -> space
 
 
 	sdciiToAscii[85] = 10;	// newline -> newline
 
 	// Numbers
-	sdciiToAscii[39] = 48;	// 0 -> 0 
-	sdciiToAscii[40] = 49;	// 1 -> 1 
-	sdciiToAscii[41] = 50;	// 2 -> 2 
-	sdciiToAscii[42] = 51;	// 3 -> 3 
-	sdciiToAscii[43] = 52;	// 4 -> 4 
-	sdciiToAscii[44] = 53;	// 5 -> 5 
-	sdciiToAscii[45] = 54;	// 6 -> 6 
-	sdciiToAscii[46] = 55;	// 7 -> 7 
-	sdciiToAscii[47] = 56;	// 8 -> 8 
-	sdciiToAscii[48] = 57;	// 9 -> 9 
+	sdciiToAscii[39] = 48;	// 0 -> 0
+	sdciiToAscii[40] = 49;	// 1 -> 1
+	sdciiToAscii[41] = 50;	// 2 -> 2
+	sdciiToAscii[42] = 51;	// 3 -> 3
+	sdciiToAscii[43] = 52;	// 4 -> 4
+	sdciiToAscii[44] = 53;	// 5 -> 5
+	sdciiToAscii[45] = 54;	// 6 -> 6
+	sdciiToAscii[46] = 55;	// 7 -> 7
+	sdciiToAscii[47] = 56;	// 8 -> 8
+	sdciiToAscii[48] = 57;	// 9 -> 9
 
-	sdciiToAscii[54] = 46;	// . -> . 
+	sdciiToAscii[54] = 46;	// . -> .
 
 	for (size_t i = 0; i < sizeof(asciiToSdcii) / sizeof(asciiToSdcii[0]); i++)
 		if (sdciiToAscii[i] != -1)
@@ -2829,8 +2772,7 @@ string DecToHexFilled(int input, int desiredSize)
 	ss << hex << input;
 	string output(ss.str());
 
-	while (output.length() < desiredSize)
-	{
+	while (output.length() < desiredSize) {
 		output = "0" + output;
 	}
 
@@ -2841,8 +2783,7 @@ string BinToHexFilled(const string& input, int desiredSize)
 	int dec = BinToDec(input);
 	string output = DecToHexFilled(dec, 0);
 
-	while (output.length() < desiredSize)
-	{
+	while (output.length() < desiredSize) {
 		output = "0" + output;
 	}
 
@@ -2857,15 +2798,17 @@ string DecToBin(int input)
 {
 	string r;
 	int n = input;
-	while (n != 0) { r = (n % 2 == 0 ? "0" : "1") + r; n /= 2; }
+	while (n != 0) {
+		r = (n % 2 == 0 ? "0" : "1") + r;
+		n /= 2;
+	}
 	return r;
 }
 string DecToBinFilled(int input, int desiredSize)
 {
 	string output = DecToBin(input);
 
-	while (output.length() < desiredSize)
-	{
+	while (output.length() < desiredSize) {
 		output = "0" + output;
 	}
 
@@ -2885,8 +2828,7 @@ string HexToBin(const string& s, int desiredSize)
 	}
 
 	// Fill
-	while (out.length() < desiredSize)
-	{
+	while (out.length() < desiredSize) {
 		out = "0" + out;
 	}
 	if (out.length() > desiredSize)
@@ -2898,8 +2840,7 @@ int HexToDec(const string& hex)
 {
 	unsigned long result = 0;
 	for (int i = 0; i < hex.length(); i++) {
-		if (hex[i] >= 48 && hex[i] <= 57)
-		{
+		if (hex[i] >= 48 && hex[i] <= 57) {
 			result += (hex[i] - 48) * pow(16, hex.length() - i - 1);
 		}
 		else if (hex[i] >= 65 && hex[i] <= 70) {
@@ -2912,54 +2853,63 @@ int HexToDec(const string& hex)
 	return result;
 }
 
-bool IsHex(const string& in) {
+bool IsHex(const string& in)
+{
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'x')
 			return true;
 	return false;
 }
-bool IsBin(const string& in) {
+bool IsBin(const string& in)
+{
 	if (in.size() > 2)
 		if (in[0] == '0' && in[1] == 'b')
 			return true;
 	return false;
 }
-bool IsReg(const string& in) {
+bool IsReg(const string& in)
+{
 	if (in.size() > 1)
 		if (in[0] == '@')
 			return true;
 	return false;
 }
-bool IsVar(const string& in) {
+bool IsVar(const string& in)
+{
 	if (in.size() > 1)
 		if (in[0] == '$')
 			return true;
 	return false;
 }
-bool IsLabel(const string& in) {
+bool IsLabel(const string& in)
+{
 	if (in.size() > 1)
 		if (in[0] == '#')
 			return true;
 	return false;
 }
-bool IsPointer(const string& in) {
+bool IsPointer(const string& in)
+{
 	if (in.size() > 1)
 		if (in[0] == '*')
 			return true;
 	return false;
 }
-bool IsDec(const string& in) {
+bool IsDec(const string& in)
+{
 	if (!IsHex(in) && !IsReg(in) && !IsVar(in) && !IsLabel(in) && !IsPointer(in))
 		return true;
 	return false;
 }
 
-void PutSetOnCurrentLine(const string& value) {
+void PutSetOnCurrentLine(const string& value)
+{
 	compiledLines.push_back("here " + value);
 }
 
 // Loading of memory value into register, automatically allowing large addressing as needed
-void LoadAddress(const string& reg, const string& address) {
+void LoadAddress(const string& reg, const string& address)
+{
 	int actualVal = ParseValue(address);
 	int actualLineNum = GetLineNumber();
 
@@ -2986,11 +2936,11 @@ void LoadAddress(const string& reg, const string& address) {
 		PutSetOnCurrentLine(to_string(actualVal));
 		compiledLines.push_back(MoveFromRegToReg("@A", reg));
 	}
-
 }
 
 // Storing of register into memory, automatically allowing large addressing as needed
-void StoreAddress(const string& reg, const string& address) {
+void StoreAddress(const string& reg, const string& address)
+{
 	int actualLineNum = GetLineNumber();
 	int actualVal = ParseValue(address);
 	string addrOutWord = "ain ";
@@ -3007,7 +2957,8 @@ void StoreAddress(const string& reg, const string& address) {
 }
 
 // Function to determine the instructions needed to load an immediate value into any register
-void RegIdToLDI(const string& in, const string& followingValue) {
+void RegIdToLDI(const string& in, const string& followingValue)
+{
 	int actualValue = ParseValue(followingValue);
 
 	if (actualValue < 1023) {
@@ -3049,7 +3000,8 @@ void RegIdToLDI(const string& in, const string& followingValue) {
 	}
 }
 
-string MoveFromRegToReg(const string& from, const string& destination) {
+string MoveFromRegToReg(const string& from, const string& destination)
+{
 	if (from == destination)
 		return "";
 
@@ -3086,7 +3038,8 @@ string MoveFromRegToReg(const string& from, const string& destination) {
 
 // Get the actual line number in compiled assembly, this takes `SET` commands into account,
 // where they set a location other than their own and is therefore not a real command when assembled.
-int ActualLineNumFromNum(int x) {
+int ActualLineNumFromNum(int x)
+{
 	string outStr = "";
 	for (int i = 0; i < compiledLines.size(); i++)
 		outStr += trim(compiledLines[i]) + "\n";
@@ -3094,8 +3047,7 @@ int ActualLineNumFromNum(int x) {
 	compiledLines = split(outStr, "\n");
 	int outInt = 1;
 	int i = 0;
-	while (i < compiledLines.size() && i <= x)
-	{
+	while (i < compiledLines.size() && i <= x) {
 		if (trim(compiledLines[i]) != "" && AccomodateSetInProgramRange(compiledLines[i], outInt) && split(compiledLines[i], " ")[0] != "endif" && split(compiledLines[i], " ")[0][0] != ',')
 			outInt++;
 
@@ -3108,19 +3060,32 @@ int ActualLineNumFromNum(int x) {
 }
 
 // Find the memory location of an Armstrong variable, and if it doesn't exist allocate memory
-int GetVariableAddress(const string& id) {
+int GetVariableAddress(const string& id)
+{
 	// Search all variable names to get index
 	for (int i = 0; i < vars.size(); i++)
 		if (id == vars[i])
-			return i + 16382;
+			return AS_VARIABLE_OFFSET - i;
 
 	// Not found, add to list and return size-1
 	vars.push_back(id);
-	return 16382 + vars.size() - 1;
+	return AS_VARIABLE_OFFSET - vars.size() + 1;
 }
 
-// Find the line number that a label refers to 
-int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues) {
+std::string GetVariableNameFromAddress(int addr)
+{
+	// Search all variable names to get index
+	for (int i = 0; i < vars.size(); i++)
+		if (AS_VARIABLE_OFFSET - i == addr)
+			return vars[i];
+
+	// If not found, just return addr as string
+	return std::to_string(addr);
+}
+
+// Find the line number that a label refers to
+int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labelLineValues)
+{
 	for (int i = 0; i < labels.size(); i++)
 		if (labelName == labels[i])
 			return labelLineValues[i];
@@ -3130,26 +3095,27 @@ int FindLabelLine(const string& labelName, const vector<string>& labels, const v
 }
 
 // Parse a value into it's final form, whether it is a constant, memory address, variable, label, or pointer
-int ParseValue(const string& input) {
+int ParseValue(const string& input)
+{
 	if (input.size() > 2) {
-		if (IsHex(input))      // If preceded by '0x', then it is a hex number
+		if (IsHex(input))  // If preceded by '0x', then it is a hex number
 			return HexToDec(split(input, "0x")[1]);
-		else if (IsBin(input)) // If preceded by '0b', then it is a binary number
+		else if (IsBin(input))	// If preceded by '0b', then it is a binary number
 			return BinToDec(split(input, "0b")[1]);
-		else if (input[0] == '\'') { // If preceded by ', then it is a char
+		else if (input[0] == '\'') {  // If preceded by ', then it is a char
 			if (ConvertAsciiToSdcii((int)toupper(input[1]) - 61) != 168)
 				return ConvertAsciiToSdcii((int)toupper(input[1]) - 61);
 			else
 				return (int)toupper(input[1]) - 61;
 		}
 	}
-	if (IsVar(input)) // If a variable
+	if (IsVar(input))  // If a variable
 		return GetVariableAddress(input);
-	if (IsDec(input)) // If a decimal number
+	if (IsDec(input))  // If a decimal number
 		return stoi(input);
-	if (IsLabel(input)) // If a label
+	if (IsLabel(input))	 // If a label
 		return FindLabelLine(input, labels, labelLineValues);
-	if (IsPointer(input)) { // If a pointer
+	if (IsPointer(input)) {	 // If a pointer
 		std::string pval = input.substr(1);
 		return ParseValue(pval.substr(pval.find_last_of("]") + 1, pval.size()));
 	}
@@ -3158,7 +3124,8 @@ int ParseValue(const string& input) {
 }
 
 // Reads from mem at the address stored in pointer, into REG A
-void LoadPointer(const string& str) {
+void LoadPointer(const string& str)
+{
 	LoadAddress("@A", split(str, "]")[1]);
 	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("ldain");
@@ -3166,7 +3133,8 @@ void LoadPointer(const string& str) {
 }
 
 // Writes from REG B to mem at the address stored in pointer
-void StoreIntoPointer(const string& str) {
+void StoreIntoPointer(const string& str)
+{
 	LoadAddress("@A", split(str, "]")[1]);
 	compiledLines.push_back("bnk " + split(split(str, "[")[1], "]")[0]);
 	compiledLines.push_back("staout");
@@ -3174,7 +3142,8 @@ void StoreIntoPointer(const string& str) {
 }
 
 // Generate assembly for logically comparing any two values, memory locations, or registers
-void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars) {
+void CompareValues(const string& valA, const string& comparer, const string& valB, const vector<string>& vars)
+{
 	int procA = ParseValue(valA);
 	int procB = ParseValue(valB);
 
@@ -3195,7 +3164,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If B is variable
 	else if (IsVar(valB)) {
-		LoadAddress("@B", to_string(GetVariableAddress(valB)));
+		LoadAddress("@B", valB);
 	}
 	// If B is decimal
 	else if (IsDec(valB)) {
@@ -3219,7 +3188,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If A is variable
 	else if (IsVar(valA)) {
-		LoadAddress("@A", to_string(GetVariableAddress(valA)));
+		LoadAddress("@A", valA);
 	}
 	// If A is decimal
 	else if (IsDec(valA)) {
@@ -3243,10 +3212,10 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 		// Finally compare with a subtract, which WILL activate the CARRY flag if A is less than B
 		compiledLines.push_back("sub\n");
 	}
-
 }
 
-int GetLineNumber() {
+int GetLineNumber()
+{
 	string outStr = "";
 	for (int i = 0; i < compiledLines.size(); i++)
 		outStr += trim(compiledLines[i]) + "\n";
@@ -3261,7 +3230,8 @@ int GetLineNumber() {
 }
 
 // Compile Armstrong into assembly
-string CompileCode(const string& inputcode) {
+string CompileCode(const string& inputcode)
+{
 
 	cout << "   -  Preprocessing Armstrong...";
 
@@ -3279,8 +3249,7 @@ string CompileCode(const string& inputcode) {
 	int foundIfs = 0;
 	int currentNumber = 0;
 	int i = 0;
-	for (int i = 0; i < codelines.size(); i++)
-	{
+	for (int i = 0; i < codelines.size(); i++) {
 		if (codelines[i] == "")
 			continue;
 
@@ -3316,13 +3285,12 @@ string CompileCode(const string& inputcode) {
 	PrintColored("  Done!\n", brightGreenFGColor, "");
 
 
-	int issues = 0; // Number of problems faced while compiling
+	int issues = 0;	 // Number of problems faced while compiling
 
 	// Begin actual parsing and compilation
 
 	cout << "   -  Compiling Armstrong...\n";
-	for (int i = 0; i < codelines.size(); i++)
-	{
+	for (int i = 0; i < codelines.size(); i++) {
 		string command = trim(split(codelines[i], " ")[0]);
 
 		//if (verbose)
@@ -3330,8 +3298,7 @@ string CompileCode(const string& inputcode) {
 
 
 		// "#" label marker ex. #JumpToHere
-		if (command[0] == '#')
-		{
+		if (command[0] == '#') {
 			int labelLineVal = GetLineNumber();
 			labels.push_back(command);
 			labelLineValues.push_back(labelLineVal);
@@ -3343,11 +3310,14 @@ string CompileCode(const string& inputcode) {
 				PrintColored("'" + to_string(labelLineValues.at(labelLineValues.size() - 1)) + "'\n", brightBlueFGColor, "");
 			}
 
-			compiledLines.push_back(",\n, == " + command + " ==");
+			compiledLines.push_back(",\n, label");
+			if (StringContains(command, ':'))
+				compiledLines.push_back(command);
+			else
+				compiledLines.push_back(command + ":");
 
 			// Replace any uses of this label with the labelLineVal
-			for (int h = 0; h < compiledLines.size(); h++)
-			{
+			for (int h = 0; h < compiledLines.size(); h++) {
 				vector<string> splitBySpace = split(trim(compiledLines[h]), " ");
 
 				// No second argument, skip
@@ -3356,13 +3326,13 @@ string CompileCode(const string& inputcode) {
 
 				// Make sure it is a set instruction, and replace if it contains a label that matches.
 				if (splitBySpace[0].size() >= 3) {
-					if (splitBySpace[0] == "set") { // If a "set" followed by label placeholder
-						if (splitBySpace[2] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal); // Replace
+					if (splitBySpace[0] == "set") {																		 // If a "set" followed by label placeholder
+						if (splitBySpace[2] == command)																	 // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " " + splitBySpace[1] + " " + to_string(labelLineVal);	 // Replace
 					}
-					if (splitBySpace[0] == "here") { // If a "here" followed by label placeholder
-						if (splitBySpace[1] == command) // Check if matching label
-							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal); // Replace
+					if (splitBySpace[0] == "here") {											 // If a "here" followed by label placeholder
+						if (splitBySpace[1] == command)											 // Check if matching label
+							compiledLines[h] = splitBySpace[0] + " " + to_string(labelLineVal);	 // Replace
 					}
 				}
 			}
@@ -3371,8 +3341,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// "set" command (set <addr> <value>)
-		if (command == "define")
-		{
+		if (command == "define") {
 			string addrPre = split(trim(split(split(codelines[i], "define ")[1], "=")[0]), " ")[0];
 			string valuePre = split(trim(split(split(codelines[i], "define ")[1], "=")[1]), " ")[0];
 			if (verbose) {
@@ -3392,8 +3361,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// "change" command (change <location> = <value or location>)
-		else if (command == "change")
-		{
+		else if (command == "change") {
 			string addrPre = trim(split(split(codelines[i], "change ")[1], "=")[0]);
 			string valuePre = trim(split(split(codelines[i], "change ")[1], "=")[1]);
 			if (verbose) {
@@ -3457,7 +3425,7 @@ string CompileCode(const string& inputcode) {
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
 				LoadAddress("@A", to_string(value));
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -3481,8 +3449,8 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				LoadAddress("@A", valuePre);
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -3505,7 +3473,7 @@ string CompileCode(const string& inputcode) {
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
+				StoreAddress(valuePre, addrPre);
 			}
 
 
@@ -3515,24 +3483,24 @@ string CompileCode(const string& inputcode) {
 
 			// If changing a value pointed to by a pointer to a pointer		(＝ω＝.)
 			else if (IsPointer(addrPre) && IsPointer(valuePre)) {
-				LoadPointer(valuePre); // Load pointer val to change TO into A
-				compiledLines.push_back("swp"); // Move val into B for writing
-				StoreIntoPointer(addrPre); // Store B into other pointer
+				LoadPointer(valuePre);			 // Load pointer val to change TO into A
+				compiledLines.push_back("swp");	 // Move val into B for writing
+				StoreIntoPointer(addrPre);		 // Store B into other pointer
 			}
 			// If changing memory value at an address and setting equal to a pointer
 			else if (IsHex(addrPre) || IsDec(addrPre) && IsPointer(valuePre)) {
-				LoadPointer(valuePre); // Load pointer val to change TO into A
+				LoadPointer(valuePre);	// Load pointer val to change TO into A
 				StoreAddress("@A", to_string(addr));
 			}
 			// If changing a register value and setting equal to a pointer
 			else if (IsReg(addrPre) && IsPointer(valuePre)) {
-				LoadPointer(valuePre); // Load pointer val to change TO into A
+				LoadPointer(valuePre);	// Load pointer val to change TO into A
 				compiledLines.push_back(MoveFromRegToReg("@A", addrPre));
 			}
 			// If changing a variable value and setting equal to a pointer
 			else if (IsVar(addrPre) && IsPointer(valuePre)) {
-				LoadPointer(valuePre); // Load pointer val to change TO into A
-				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
+				LoadPointer(valuePre);	// Load pointer val to change TO into A
+				StoreAddress("@A", addrPre);
 			}
 
 
@@ -3541,8 +3509,7 @@ string CompileCode(const string& inputcode) {
 
 		// arithmetic/logic commands add, sub, div, mult  ex. (add <val>,<val> -> <location>)
 		else if (command == "add" || command == "sub" || command == "mult" || command == "div" ||
-			command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr")
-		{
+				 command == "and" || command == "or" || command == "not" || command == "bsl" || command == "bsr") {
 			string valAPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			string valBPre = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[0]);
 			string outLoc = trim(split(split(trim(split(codelines[i], command + " ")[1]), ",")[1], "->")[1]);
@@ -3572,20 +3539,20 @@ string CompileCode(const string& inputcode) {
 					LoadAddress("@B", to_string(valBProcessed));
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-			// If second argument is a register
+				// If second argument is a register
 				else if (IsReg(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += MoveFromRegToReg(valBPre, "@B");
 				}
-			// If second argument is a variable
+				// If second argument is a variable
 				else if (IsVar(valBPre)) {
 					LoadAddress("@B", valBPre);
 					compiledLines.at(compiledLines.size() - 1) += "\n";
 				}
-			// If second argument is a new decimal value
+				// If second argument is a new decimal value
 				else if (IsDec(valBPre)) {
 					compiledLines.at(compiledLines.size() - 1) += "ldib " + to_string(valBProcessed) + "\n";
 				}
-			// If second argument is a pointer
+				// If second argument is a pointer
 				else if (IsPointer(valBPre)) {
 					LoadPointer(valBPre);
 				}
@@ -3637,8 +3604,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'goto' command  ex. (goto <addr>)
-		else if (command == "goto")
-		{
+		else if (command == "goto") {
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[0]);
 			if (verbose) {
 				PrintColored("ok.	", greenFGColor, "");
@@ -3652,11 +3618,13 @@ string CompileCode(const string& inputcode) {
 			if (addrProcessed == "-1") {
 				addrProcessed = addrPre;
 			}
+			if (IsLabel(addrPre))
+				addrProcessed = addrPre;
 
 			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
 
 
-			compiledLines.push_back("jmp"); // Jump to v
+			compiledLines.push_back("jmp");	 // Jump to v
 			compiledLines.push_back("here " + addrProcessed);
 
 
@@ -3664,8 +3632,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'gotoif' command  ex. (gotoif <valA>==<valB>,<addr>)
-		else if (command == "gotoif")
-		{
+		else if (command == "gotoif") {
 			string valAPre = trim(splitByComparator(split(codelines[i], command + " ")[1])[0]);
 			string valBPre = trim(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0]);
 			string addrPre = trim(split(split(codelines[i], command + " ")[1], ",")[1]);
@@ -3687,6 +3654,8 @@ string CompileCode(const string& inputcode) {
 			if (addrProcessed == "-1") {
 				addrProcessed = addrPre;
 			}
+			if (IsLabel(addrPre))
+				addrProcessed = addrPre;
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
@@ -3695,28 +3664,28 @@ string CompileCode(const string& inputcode) {
 			}
 			// If using not equal to '!=' comparer
 			else if (comparer == "!=") {
-				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz");  // Jump past jump to endif if false
 				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmp");
 				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater than '>' comparer
 			else if (comparer == ">") {
-				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz");  // Jump past jump to endif if false
 				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
 				compiledLines.push_back("jmpc");
 				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using greater equal to '>=' comparer
 			else if (comparer == ">=") {
-				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz");  // Jump past jump to endif if false
 				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
 				compiledLines.push_back("here " + addrProcessed);
 			}
 			// If using less than '<' comparer
 			else if (comparer == "<") {
-				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz");  // Jump past jump to endif if false
 				compiledLines.push_back("here " + to_string(GetLineNumber() + 5));
 				compiledLines.push_back("jmpc");
 				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
@@ -3725,7 +3694,7 @@ string CompileCode(const string& inputcode) {
 			}
 			// If using less equal to '<=' comparer
 			else if (comparer == "<=") {
-				compiledLines.push_back("jmpz"); // Jump past jump to endif if false
+				compiledLines.push_back("jmpz");  // Jump past jump to endif if false
 				compiledLines.push_back("here " + addrProcessed);
 				compiledLines.push_back("jmpc");
 				compiledLines.push_back("here " + to_string(GetLineNumber() + 3));
@@ -3738,8 +3707,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'if' command  ex. (if <valA>==<valB>: )
-		else if (command == "if")
-		{
+		else if (command == "if") {
 			string valAPre = trim(splitByComparator(split(codelines[i], command + " ")[1])[0]);
 			string valBPre = trim(split(split(splitByComparator(split(codelines[i], command + " ")[1])[1], ",")[0], ":")[0]);
 			string comparer = trim(split(split(split(codelines[i], command + " ")[1], valAPre)[1], valBPre)[0]);
@@ -3755,8 +3723,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'endif' statement
-		else if (command == "endif")
-		{
+		else if (command == "endif") {
 			if (verbose) {
 				PrintColored("ok.	", greenFGColor, "");
 				cout << "endif:\n";
@@ -3768,8 +3735,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'asm' inline assembly
-		else if (trim(split(codelines[i], "\"")[0]) == "asm")
-		{
+		else if (trim(split(codelines[i], "\"")[0]) == "asm") {
 			if (verbose) {
 				PrintColored("ok.	", greenFGColor, "");
 				cout << "asm:\n";
@@ -3778,8 +3744,7 @@ string CompileCode(const string& inputcode) {
 			compiledLines.push_back(",\n, " + string("inline assembly"));
 
 			compiledLines.push_back(split(codelines[i], "\"")[1]);
-			for (i = i + 1; i < codelines.size(); i++)
-			{
+			for (i = i + 1; i < codelines.size(); i++) {
 				if (std::count(codelines[i].begin(), codelines[i].end(), '\"') >= 1)
 					break;
 				compiledLines.push_back(split(codelines[i], "\"")[0]);
@@ -3789,8 +3754,7 @@ string CompileCode(const string& inputcode) {
 		}
 
 		// 'presentvbuff' swap the back/front video buffers
-		else if (trim(split(codelines[i], "\"")[0]) == "presentvbuff")
-		{
+		else if (trim(split(codelines[i], "\"")[0]) == "presentvbuff") {
 			if (verbose) {
 				PrintColored("ok.	", greenFGColor, "");
 				cout << "video buffer:\n";
@@ -3823,8 +3787,7 @@ string CompileCode(const string& inputcode) {
 		PrintColored("Done!\n\n", greenFGColor, "");
 
 		string outStr = "";
-		for (int i = 0; i < compiledLines.size(); i++)
-		{
+		for (int i = 0; i < compiledLines.size(); i++) {
 			outStr += trim(compiledLines[i]) + "\n";
 		}
 		return outStr;

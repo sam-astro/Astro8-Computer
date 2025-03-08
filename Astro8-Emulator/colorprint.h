@@ -1,23 +1,25 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-#include <limits>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <regex>
+#include <string>
+
+#include "strops.h"
 
 #if defined(__unix__)
-#define UNIX true
-#define WINDOWS false
+	#define UNIX true
+	#define WINDOWS false
 #elif defined(_MSC_VER)
-#define UNIX false
-#define WINDOWS true
+	#define UNIX false
+	#define WINDOWS true
 #endif
 
 
 #if WINDOWS
-#include "color.hpp"
+	#include "color.hpp"
 #endif
 
 #include "processing.h"
@@ -62,11 +64,10 @@ static const std::string brightWhiteBGColor = "\x1B[107m";
 static const std::string resetColor = "\033[0m";
 
 
-
-
-static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineCount) {
+static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineCount)
+{
 	std::string command = split(entireLine, " ")[0];
-	if (trim(command) != "set") // Not 'set', passes test
+	if (trim(command) != "set")	 // Not 'set', passes test
 		return true;
 
 	int memAddr = stoi(trim(split(entireLine, " ")[1]));
@@ -77,10 +78,10 @@ static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineC
 		if (stoi(trim(split(entireLine, " ")[3])) != 0)
 			return false;
 
-	if (memAddr <= currentLineCount + 1) // If it is 'set', then it will increment counter IF the memory location is in program mem
+	if (memAddr <= currentLineCount + 1)  // If it is 'set', then it will increment counter IF the memory location is in program mem
 		return true;
 	else
-		return false; // If just a normal 'set', passes and doesn't increment counter.
+		return false;  // If just a normal 'set', passes and doesn't increment counter.
 }
 
 static void PrintColored(std::string text, std::string fgColor, std::string bgColor)
@@ -162,13 +163,13 @@ static void PrintColored(std::string text, std::string fgColor, std::string bgCo
 #endif
 }
 
-static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instructions) {
+static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instructions)
+{
 	cout << instructions.size() << endl;
 
 	vector<std::string> nstr = split(asmb, "\n");
 	int actualNum = 0;
-	for (size_t i = 0; i < nstr.size(); i++)
-	{
+	for (size_t i = 0; i < nstr.size(); i++) {
 		if (nstr[i] == "")
 			continue;
 
@@ -181,6 +182,10 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 			PrintColored("\t\t" + split(nstr[i], " ")[0], greenFGColor, "");
 			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
 		}
+		else if (StringStartsWith(nstr[i], "const") || nstr[i][0] == '#') {
+			PrintColored("\t\t" + split(nstr[i], " ")[0], greenFGColor, "");
+			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+		}
 		// Else
 		else {
 			bool matchesCommand = false;
@@ -188,8 +193,7 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 			std::string instruction = split(nstr[i], " ")[0];
 			transform(instruction.begin(), instruction.end(), instruction.begin(), ::toupper);
 
-			for (int i = 0; i < instructions.size(); i++)
-			{
+			for (int i = 0; i < instructions.size(); i++) {
 				if (instruction == instructions[i]) {
 					matchesCommand = true;
 					break;
@@ -205,7 +209,7 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 						stoi(split(nstr[i], " ")[1]);
 						PrintColored(" " + split(nstr[i], " ")[1], brightMagentaFGColor, "");
 					}
-					catch (exception) { // If the argument is not an integer, it is a variable
+					catch (exception) {	 // If the argument is not an integer, it is a variable
 						PrintColored(" " + split(nstr[i], " ")[1], greenFGColor, "");
 					}
 					if (split(nstr[i], " ").size() > 2)
@@ -213,7 +217,7 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 							stoi(split(nstr[i], " ")[2]);
 							PrintColored(" " + split(nstr[i], " ")[2], brightMagentaFGColor, "");
 						}
-						catch (exception) { // If the argument is not an integer, it is a variable
+						catch (exception) {	 // If the argument is not an integer, it is a variable
 							PrintColored(" " + split(nstr[i], " ")[2], greenFGColor, "");
 						}
 					PrintColored("\n", cyanFGColor, "");
@@ -234,8 +238,7 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 					PrintColored("\t" + instruction + "\n", redFGColor, "");
 				}
-			else if (instruction.at(instruction.size() - 1) == ':')
-			{
+			else if (instruction.at(instruction.size() - 1) == ':') {
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 				PrintColored("\t" + split(nstr[i], " ")[0], greenFGColor, "");
 				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
