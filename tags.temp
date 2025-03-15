@@ -25,23 +25,8 @@ A5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double A5 = 880.00;$/;"
 A6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double A6 = 1760.00;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 A7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double A7 = 3520.00;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 A8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double A8 = 7040.00;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-ADD	Astro8-Emulator/main.cpp	/^	ADD,$/;"	e	enum:AllInstructions	file:
 ADSREnvelope	Astro8-Emulator/VSSynth/utils/Envelope.h	/^        ADSREnvelope(double attack, double sustain, double attackTime, double decayTime, double /;"	f	struct:VSSynth::ADSREnvelope
 ADSREnvelope	Astro8-Emulator/VSSynth/utils/Envelope.h	/^    struct ADSREnvelope$/;"	s	namespace:VSSynth
-AIN	Astro8-Emulator/main.cpp	/^	AIN = 1,$/;"	e	enum:AllInstructions	file:
-ALUInstruction	Astro8-Emulator/main.cpp	/^enum ALUInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
-ALU_AND	Astro8-Emulator/main.cpp	/^	ALU_AND = 0b0000000000000110,$/;"	e	enum:ALUInstruction	file:
-ALU_DI	Astro8-Emulator/main.cpp	/^	ALU_DI = 0b0000000000000011,$/;"	e	enum:ALUInstruction	file:
-ALU_MASK	Astro8-Emulator/main.cpp	/^	ALU_MASK = 0b0000000000001111,$/;"	e	enum:ALUInstruction	file:
-ALU_MU	Astro8-Emulator/main.cpp	/^	ALU_MU = 0b0000000000000010,$/;"	e	enum:ALUInstruction	file:
-ALU_NOT	Astro8-Emulator/main.cpp	/^	ALU_NOT = 0b0000000000001000,$/;"	e	enum:ALUInstruction	file:
-ALU_OR	Astro8-Emulator/main.cpp	/^	ALU_OR = 0b0000000000000111,$/;"	e	enum:ALUInstruction	file:
-ALU_SL	Astro8-Emulator/main.cpp	/^	ALU_SL = 0b0000000000000100,$/;"	e	enum:ALUInstruction	file:
-ALU_SR	Astro8-Emulator/main.cpp	/^	ALU_SR = 0b0000000000000101,$/;"	e	enum:ALUInstruction	file:
-ALU_SU	Astro8-Emulator/main.cpp	/^	ALU_SU = 0b0000000000000001,$/;"	e	enum:ALUInstruction	file:
-AND	Astro8-Emulator/main.cpp	/^	AND,$/;"	e	enum:AllInstructions	file:
-AReg	Astro8-Emulator/main.cpp	/^uint16_t AReg = 0;$/;"	v	typeref:typename:uint16_t
-AS_VARIABLE_OFFSET	Astro8-Emulator/main.cpp	/^#define AS_VARIABLE_OFFSET /;"	d	file:
 ATTACK	Astro8-Emulator/VSSynth/utils/Envelope.h	/^            ATTACK,$/;"	e	enum:VSSynth::Envelope::Curves
 Ab0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ab0 = 25.96;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Ab1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ab1 = 51.91;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -53,8 +38,6 @@ Ab6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ab6 = 1661.22;$
 Ab7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ab7 = 3322.44;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Ab8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ab8 = 6644.88;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 AccomodateSetInProgramRange	Astro8-Emulator/colorprint.h	/^static bool AccomodateSetInProgramRange(std::string entireLine, int currentLineCount)$/;"	f	typeref:typename:bool
-ActualLineNumFromNum	Astro8-Emulator/main.cpp	/^int ActualLineNumFromNum(int x)$/;"	f	typeref:typename:int
-AllInstructions	Astro8-Emulator/main.cpp	/^enum AllInstructions : FullInstruction {$/;"	g	typeref:typename:FullInstruction	file:
 As0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double As0 = 29.14;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 As1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double As1 = 58.27;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 As2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double As2 = 116.54;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -83,15 +66,8 @@ B8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double B8 = 7902.13;$/;
 BAD_COLOR	Astro8-Emulator/color.hpp	/^    constexpr int BAD_COLOR = -256;$/;"	v	namespace:hue	typeref:typename:int
 BASS	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch BASS = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 BASS_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope BASS_ENVELOPE(1.00f, 0.15f, 0.001f, 0.1f, 0.80f, false);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
-BIN	Astro8-Emulator/main.cpp	/^	BIN,$/;"	e	enum:AllInstructions	file:
-BNK	Astro8-Emulator/main.cpp	/^	BNK,$/;"	e	enum:AllInstructions	file:
-BNKC	Astro8-Emulator/main.cpp	/^	BNKC,$/;"	e	enum:AllInstructions	file:
 BRASS	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch BRASS = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 BRASS_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope BRASS_ENVELOPE(0.90f, 0.30f, 0.1f, 0.1f, 0.05f);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
-BReg	Astro8-Emulator/main.cpp	/^uint16_t BReg = 0;$/;"	v	typeref:typename:uint16_t
-BSL	Astro8-Emulator/main.cpp	/^	BSL,$/;"	e	enum:AllInstructions	file:
-BSR	Astro8-Emulator/main.cpp	/^	BSR,$/;"	e	enum:AllInstructions	file:
-BankReg	Astro8-Emulator/main.cpp	/^uint8_t BankReg = 0;$/;"	v	typeref:typename:uint8_t
 Bb0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb0 = 29.14;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Bb1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb1 = 58.27;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Bb2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb2 = 116.54;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -101,11 +77,8 @@ Bb5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb5 = 932.33;$/
 Bb6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb6 = 1864.66;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Bb7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb7 = 3729.31;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Bb8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Bb8 = 7458.62;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-BinToDec	Astro8-Emulator/main.cpp	/^int BinToDec(const string& input)$/;"	f	typeref:typename:int
 BinToDec	ResourceGenerator/Program.cs	/^    static int BinToDec(string input)$/;"	m	class:Program	file:
-BinToHexFilled	Astro8-Emulator/main.cpp	/^string BinToHexFilled(const string& input, int desiredSize)$/;"	f	typeref:typename:string
 BinToHexFilled	ResourceGenerator/Program.cs	/^    static string BinToHexFilled(string input, int desiredSize)$/;"	m	class:Program	file:
-BitRange	Astro8-Emulator/main.cpp	/^unsigned BitRange(unsigned value, unsigned offset, unsigned n)$/;"	f	typeref:typename:unsigned
 C0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double C0 = 16.35;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 C1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double C1 = 32.70;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 C2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double C2 = 65.41;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -134,7 +107,6 @@ CAPTURE_SHARPNESS	Astro8-Emulator/escapi.h	/^	CAPTURE_SHARPNESS,$/;"	e	enum:CAPT
 CAPTURE_TILT	Astro8-Emulator/escapi.h	/^	CAPTURE_TILT,$/;"	e	enum:CAPTURE_PROPETIES
 CAPTURE_WHITEBALANCE	Astro8-Emulator/escapi.h	/^	CAPTURE_WHITEBALANCE,$/;"	e	enum:CAPTURE_PROPETIES
 CAPTURE_ZOOM	Astro8-Emulator/escapi.h	/^	CAPTURE_ZOOM,$/;"	e	enum:CAPTURE_PROPETIES
-CIN	Astro8-Emulator/main.cpp	/^	CIN,$/;"	e	enum:AllInstructions	file:
 CMAKE_BINARY_DIR	Astro8-Emulator/linux-build/Makefile	/^CMAKE_BINARY_DIR = \/home\/sam\/Code\/Astro8-Computer\/Astro8-Emulator\/linux-build$/;"	m
 CMAKE_COMMAND	Astro8-Emulator/linux-build/Makefile	/^CMAKE_COMMAND = \/usr\/bin\/cmake$/;"	m
 CMAKE_CROSSCOMPILING	Astro8-Emulator/linux-build/cmake_install.cmake	/^  set(CMAKE_CROSSCOMPILING "FALSE")$/;"	v
@@ -153,7 +125,6 @@ CMAKE_OBJDUMP	Astro8-Emulator/linux-build/cmake_install.cmake	/^  set(CMAKE_OBJD
 CMAKE_SOURCE_DIR	Astro8-Emulator/linux-build/Makefile	/^CMAKE_SOURCE_DIR = \/home\/sam\/Code\/Astro8-Computer\/Astro8-Emulator$/;"	m
 CODES	Astro8-Emulator/color.hpp	/^    static const std::map<std::string, int> CODES = {$/;"	v	namespace:hue	typeref:typename:const std::map<std::string,int>
 COLOR_HPP	Astro8-Emulator/color.hpp	/^#define COLOR_HPP$/;"	d
-CReg	Astro8-Emulator/main.cpp	/^uint16_t CReg = 0;$/;"	v	typeref:typename:uint16_t
 CYMBAL	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch CYMBAL = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 CYMBAL_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope CYMBAL_ENVELOPE(0.90f, 0.30f, 0.001f, 0.5f, 1.00f);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
 CharStrStartsWith	Astro8-Emulator/strops.cpp	/^bool CharStrStartsWith(unsigned char* str, char* substr, int len)$/;"	f	typeref:typename:bool
@@ -163,12 +134,6 @@ CommaLargeNumber	Astro8-Emulator/strops.cpp	/^std::string CommaLargeNumber(unsig
 CommaLargeNumberF	Astro8-Emulator/strops.cpp	/^std::string CommaLargeNumberF(double num)$/;"	f	typeref:typename:std::string
 CommaLargeNumberF	Astro8-Emulator/strops.cpp	/^std::string CommaLargeNumberF(float num)$/;"	f	typeref:typename:std::string
 CompareCharNumbers	Astro8-Emulator/strops.cpp	/^bool CompareCharNumbers(const unsigned char* number1, const unsigned char* number2)$/;"	f	typeref:typename:bool
-CompareValues	Astro8-Emulator/main.cpp	/^void CompareValues(const string& valA, const string& comparer, const string& valB, const vector</;"	f	typeref:typename:void
-CompileCode	Astro8-Emulator/main.cpp	/^string CompileCode(const string& inputcode)$/;"	f	typeref:typename:string
-ComputeStepInstructions	Astro8-Emulator/main.cpp	/^void ComputeStepInstructions(const std::string& stepContents, char* stepComputedInstruction)$/;"	f	typeref:typename:void
-ConvertAsciiToSdcii	Astro8-Emulator/main.cpp	/^int ConvertAsciiToSdcii(int asciiCode)$/;"	f	typeref:typename:int
-ConvertNoteIndexToFrequency	Astro8-Emulator/main.cpp	/^uint16_t ConvertNoteIndexToFrequency(uint8_t index)$/;"	f	typeref:typename:uint16_t
-ConvertSdciiToAscii	Astro8-Emulator/main.cpp	/^int ConvertSdciiToAscii(int sdciiCode)$/;"	f	typeref:typename:int
 CopyToAudioBuffer	Astro8-Emulator/audio.h	/^		void CopyToAudioBuffer(const unsigned char* memory, unsigned short start_address, unsigned cha/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
 Cs0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Cs0 = 17.32;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Cs1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Cs1 = 34.65;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -191,8 +156,6 @@ D7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double D7 = 2349.32;$/;
 D8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double D8 = 4698.63;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 DECAY	Astro8-Emulator/VSSynth/utils/Envelope.h	/^            DECAY,$/;"	e	enum:VSSynth::Envelope::Curves
 DEFAULT_COLOR	Astro8-Emulator/color.hpp	/^    constexpr int DEFAULT_COLOR = 7;$/;"	v	namespace:hue	typeref:typename:int
-DEV_MODE	Astro8-Emulator/main.cpp	/^#define DEV_MODE /;"	d	file:
-DIV	Astro8-Emulator/main.cpp	/^	DIV,$/;"	e	enum:AllInstructions	file:
 Db0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db0 = 17.32;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Db1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db1 = 34.65;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Db2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db2 = 69.30;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -202,16 +165,9 @@ Db5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db5 = 554.37;$/
 Db6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db6 = 1108.73;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Db7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db7 = 2217.46;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Db8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Db8 = 4434.92;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-DecToBin	Astro8-Emulator/main.cpp	/^string DecToBin(int input)$/;"	f	typeref:typename:string
-DecToBinFilled	Astro8-Emulator/main.cpp	/^string DecToBinFilled(int input, int desiredSize)$/;"	f	typeref:typename:string
 DecToBinFilled	ResourceGenerator/Program.cs	/^    static string DecToBinFilled(int input, int desiredSize)$/;"	m	class:Program	file:
-DecToHexFilled	Astro8-Emulator/main.cpp	/^string DecToHexFilled(int input, int desiredSize)$/;"	f	typeref:typename:string
 DecToHexFilled	ResourceGenerator/Program.cs	/^    static string DecToHexFilled(int input, int desiredSize)$/;"	m	class:Program	file:
 Decay	Astro8-Emulator/audio.h	/^	enum class EnvelopeGeneratorState { Off, Attack, Decay, Sustain, Release };$/;"	e	enum:Hyper_BandCHIP::EnvelopeGeneratorState
-DisplayTexture	Astro8-Emulator/main.cpp	/^void DisplayTexture(SDL_Renderer* renderer, SDL_Texture* texture)$/;"	f	typeref:typename:void
-Draw	Astro8-Emulator/main.cpp	/^void Draw()$/;"	f	typeref:typename:void
-DrawNextPixel	Astro8-Emulator/main.cpp	/^void DrawNextPixel()$/;"	f	typeref:typename:void
-DrawPixel	Astro8-Emulator/main.cpp	/^void DrawPixel(int x, int y, int r, int g, int b)$/;"	f	typeref:typename:void
 Ds0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ds0 = 19.45;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Ds1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ds1 = 38.89;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Ds2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Ds2 = 77.78;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -256,7 +212,6 @@ F5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double F5 = 698.46;$/;"
 F6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double F6 = 1396.91;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 F7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double F7 = 2793.83;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 F8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double F8 = 5587.65;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-FindLabelLine	Astro8-Emulator/main.cpp	/^int FindLabelLine(const string& labelName, const vector<string>& labels, const vector<int>& labe/;"	f	typeref:typename:int
 FormatHPS	Astro8-Emulator/strops.cpp	/^std::string FormatHPS(float input)$/;"	f	typeref:typename:std::string
 FormatWithCommas	Astro8-Emulator/strops.h	/^std::string FormatWithCommas(T value)$/;"	f	typeref:typename:std::string
 Fs0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Fs0 = 23.12;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -268,7 +223,6 @@ Fs5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Fs5 = 739.99;$/
 Fs6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Fs6 = 1479.98;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Fs7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Fs7 = 2959.96;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Fs8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Fs8 = 5919.91;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-FullInstruction	Astro8-Emulator/main.cpp	/^using FullInstruction = uint16_t;$/;"	t	typeref:typename:uint16_t	file:
 G0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double G0 = 24.50;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 G1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double G1 = 49.00;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 G2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double G2 = 98.00;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -291,9 +245,6 @@ Gb5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gb5 = 739.99;$/
 Gb6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gb6 = 1479.98;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gb7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gb7 = 2959.96;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gb8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gb8 = 5919.91;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-GenerateAsciiSdciiTables	Astro8-Emulator/main.cpp	/^void GenerateAsciiSdciiTables()$/;"	f	typeref:typename:void
-GenerateCharacterROM	Astro8-Emulator/main.cpp	/^int GenerateCharacterROM()$/;"	f	typeref:typename:int
-GenerateMicrocode	Astro8-Emulator/main.cpp	/^void GenerateMicrocode()$/;"	f	typeref:typename:void
 GenerateMicrocode	ResourceGenerator/Program.cs	/^    static void GenerateMicrocode()$/;"	m	class:Program	file:
 Generators	Astro8-Emulator/VSSynth/SoundGenerator.h	/^    namespace Generators$/;"	n	namespace:VSSynth
 Generators	Astro8-Emulator/VSSynth/generators/Instrument.h	/^    namespace Generators$/;"	n	namespace:VSSynth
@@ -301,10 +252,6 @@ Generators	Astro8-Emulator/VSSynth/generators/MonophonicInstrument.h	/^    names
 Generators	Astro8-Emulator/VSSynth/generators/PolyphonicInstrument.h	/^    namespace Generators$/;"	n	namespace:VSSynth
 Generators	Astro8-Emulator/VSSynth/generators/Sequencer.h	/^    namespace Generators$/;"	n	namespace:VSSynth
 Generators	Astro8-Emulator/VSSynth/generators/Tone.h	/^    namespace Generators$/;"	n	namespace:VSSynth
-GetLineNumber	Astro8-Emulator/main.cpp	/^int GetLineNumber()$/;"	f	typeref:typename:int
-GetMem	Astro8-Emulator/main.cpp	/^uint16_t GetMem(uint16_t bank, uint16_t address)$/;"	f	typeref:typename:uint16_t
-GetVariableAddress	Astro8-Emulator/main.cpp	/^int GetVariableAddress(const string& id)$/;"	f	typeref:typename:int
-GetVariableNameFromAddress	Astro8-Emulator/main.cpp	/^std::string GetVariableNameFromAddress(int addr)$/;"	f	typeref:typename:std::string
 Gs0	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs0 = 25.96;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gs1	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs1 = 51.91;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gs2	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs2 = 103.83;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
@@ -314,70 +261,36 @@ Gs5	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs5 = 830.61;$/
 Gs6	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs6 = 1661.22;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gs7	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs7 = 3322.44;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
 Gs8	Astro8-Emulator/VSSynth/utils/Notes.h	/^        const double Gs8 = 6644.88;$/;"	v	namespace:VSSynth::Notes	typeref:typename:const double
-HexToBin	Astro8-Emulator/main.cpp	/^string HexToBin(const string& s, int desiredSize)$/;"	f	typeref:typename:string
 HexToBin	ResourceGenerator/Program.cs	/^    static string HexToBin(string hex, int desiredSize)$/;"	m	class:Program	file:
-HexToDec	Astro8-Emulator/main.cpp	/^int HexToDec(const string& hex)$/;"	f	typeref:typename:int
 HexToDec	ResourceGenerator/Program.cs	/^    static int HexToDec(string hex)$/;"	m	class:Program	file:
 Hyper_BandCHIP	Astro8-Emulator/audio.h	/^namespace Hyper_BandCHIP$/;"	n
 IDI_ICON1	Astro8-Emulator/Astro8-Emulator.rc	/^IDI_ICON1               ICON                    "icon.ico"$/;"	i
 IDI_ICON1	Astro8-Emulator/resource.h	/^#define IDI_ICON1 /;"	d
 INACTIVE	Astro8-Emulator/VSSynth/utils/Envelope.h	/^            INACTIVE$/;"	e	enum:VSSynth::Envelope::Curves
 IndentText	Astro8-Emulator/processing.h	/^std::string IndentText(std::string text)$/;"	f	typeref:typename:std::string
-InitGraphics	Astro8-Emulator/main.cpp	/^int InitGraphics(const std::string& windowTitle, int width, int height, int pixelScale)$/;"	f	typeref:typename:int
 InitializeAudioBuffer	Astro8-Emulator/audio.h	/^		void InitializeAudioBuffer(unsigned char voice = 0)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
-InstructionReg	Astro8-Emulator/main.cpp	/^uint16_t InstructionReg = 0;$/;"	v	typeref:typename:uint16_t
 Instrument	Astro8-Emulator/VSSynth/generators/Instrument.h	/^        class Instrument : public SoundGenerator$/;"	c	namespace:VSSynth::Generators
 InvertExpression	Astro8-Emulator/processing.h	/^std::string InvertExpression(const std::string& expression)$/;"	f	typeref:typename:std::string
-IsBin	Astro8-Emulator/main.cpp	/^bool IsBin(const string& in)$/;"	f	typeref:typename:bool
-IsDec	Astro8-Emulator/main.cpp	/^bool IsDec(const string& in)$/;"	f	typeref:typename:bool
-IsHex	Astro8-Emulator/main.cpp	/^bool IsHex(const string& in)$/;"	f	typeref:typename:bool
-IsLabel	Astro8-Emulator/main.cpp	/^bool IsLabel(const string& in)$/;"	f	typeref:typename:bool
 IsPaused	Astro8-Emulator/audio.h	/^		bool IsPaused(unsigned char voice = 0) const$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:bool
-IsPointer	Astro8-Emulator/main.cpp	/^bool IsPointer(const string& in)$/;"	f	typeref:typename:bool
-IsReg	Astro8-Emulator/main.cpp	/^bool IsReg(const string& in)$/;"	f	typeref:typename:bool
-IsVar	Astro8-Emulator/main.cpp	/^bool IsVar(const string& in)$/;"	f	typeref:typename:bool
 IsVersionGreaterOrEqual	Astro8-Emulator/strops.cpp	/^bool IsVersionGreaterOrEqual(std::string a, std::string b)$/;"	f	typeref:typename:bool
-JMP	Astro8-Emulator/main.cpp	/^	JMP,$/;"	e	enum:AllInstructions	file:
-JMPC	Astro8-Emulator/main.cpp	/^	JMPC,$/;"	e	enum:AllInstructions	file:
-JMPZ	Astro8-Emulator/main.cpp	/^	JMPZ,$/;"	e	enum:AllInstructions	file:
-JREG	Astro8-Emulator/main.cpp	/^	JREG,$/;"	e	enum:AllInstructions	file:
 JoinArrayPieces	Astro8-Emulator/strops.cpp	/^std::string JoinArrayPieces(std::string input[])$/;"	f	typeref:typename:std::string
 JoinArrayPieces	Astro8-Emulator/strops.cpp	/^std::string JoinArrayPieces(std::vector<std::string>& input)$/;"	f	typeref:typename:std::string
 JoinRange	Astro8-Emulator/processing.h	/^std::string JoinRange(std::vector<std::string> strs, int start, int max)$/;"	f	typeref:typename:std::string
-KeyPress	Astro8-Emulator/main.cpp	/^	KeyPress(int key, bool isPressed)$/;"	f	class:KeyPress	file:
-KeyPress	Astro8-Emulator/main.cpp	/^class KeyPress {$/;"	c	file:
-LDAIN	Astro8-Emulator/main.cpp	/^	LDAIN,$/;"	e	enum:AllInstructions	file:
-LDIA	Astro8-Emulator/main.cpp	/^	LDIA,$/;"	e	enum:AllInstructions	file:
-LDIB	Astro8-Emulator/main.cpp	/^	LDIB,$/;"	e	enum:AllInstructions	file:
-LDLGE	Astro8-Emulator/main.cpp	/^	LDLGE,$/;"	e	enum:AllInstructions	file:
-LDW	Astro8-Emulator/main.cpp	/^	LDW,$/;"	e	enum:AllInstructions	file:
-LDWB	Astro8-Emulator/main.cpp	/^	LDWB,$/;"	e	enum:AllInstructions	file:
-LoadAddress	Astro8-Emulator/main.cpp	/^void LoadAddress(const string& reg, const string& address)$/;"	f	typeref:typename:void
-LoadPointer	Astro8-Emulator/main.cpp	/^void LoadPointer(const string& str)$/;"	f	typeref:typename:void
-MICROINSTR_SIZE	Astro8-Emulator/main.cpp	/^#define MICROINSTR_SIZE /;"	d	file:
-MULT	Astro8-Emulator/main.cpp	/^	MULT,$/;"	e	enum:AllInstructions	file:
 Main	ResourceGenerator/Program.cs	/^    public static void Main(string[] args)$/;"	m	class:Program
 MakeCharacterRom	ResourceGenerator/Program.cs	/^    static void MakeCharacterRom()$/;"	m	class:Program	file:
-MicroInstruction	Astro8-Emulator/main.cpp	/^using MicroInstruction = uint16_t;$/;"	t	typeref:typename:uint16_t	file:
 Middleware	Astro8-Emulator/VSSynth/SynthMiddleware.h	/^    namespace Middleware$/;"	n	namespace:VSSynth
 Middleware	Astro8-Emulator/VSSynth/middleware/WAVWriter.h	/^    namespace Middleware$/;"	n	namespace:VSSynth
 MonophonicInstrument	Astro8-Emulator/VSSynth/generators/MonophonicInstrument.h	/^        class MonophonicInstrument : public Instrument$/;"	c	namespace:VSSynth::Generators
-MoveFromRegToReg	Astro8-Emulator/main.cpp	/^string MoveFromRegToReg(const string& from, const string& destination)$/;"	f	typeref:typename:string
 NAMES	Astro8-Emulator/color.hpp	/^    static const std::map<int, std::string> NAMES = {$/;"	v	namespace:hue	typeref:typename:const std::map<int,std::string>
-NOP	Astro8-Emulator/main.cpp	/^	NOP = 0,$/;"	e	enum:AllInstructions	file:
-NOT	Astro8-Emulator/main.cpp	/^	NOT,$/;"	e	enum:AllInstructions	file:
 NoteEvent	Astro8-Emulator/VSSynth/generators/Sequencer.h	/^            struct NoteEvent$/;"	s	class:VSSynth::Generators::Sequencer
 Notes	Astro8-Emulator/VSSynth/utils/Notes.h	/^    namespace Notes$/;"	n	namespace:VSSynth
-OR	Astro8-Emulator/main.cpp	/^	OR,$/;"	e	enum:AllInstructions	file:
 ORGAN	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch ORGAN = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 ORGAN_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope ORGAN_ENVELOPE(0.90f, 0.30f, 0.1f, 0.1f, 0.40f);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
 Off	Astro8-Emulator/audio.h	/^	enum class EnvelopeGeneratorState { Off, Attack, Decay, Sustain, Release };$/;"	e	enum:Hyper_BandCHIP::EnvelopeGeneratorState
-PCR	Astro8-Emulator/main.cpp	/^	PCR,$/;"	e	enum:AllInstructions	file:
 PIANO	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch PIANO = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 PIANO_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope PIANO_ENVELOPE(0.90f, 0.30f, 0.1f, 0.1f, 0.30f);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
 PadString	Astro8-Emulator/strops.cpp	/^std::string PadString(const std::string& input, char padChar, size_t desiredLength)$/;"	f	typeref:typename:std::string
 PadStringRight	Astro8-Emulator/strops.cpp	/^std::string PadStringRight(const std::string& input, char padChar, size_t desiredLength)$/;"	f	typeref:typename:std::string
-ParseValue	Astro8-Emulator/main.cpp	/^int ParseValue(const string& input)$/;"	f	typeref:typename:int
 Patch	Astro8-Emulator/VSSynth/utils/Patches.h	/^        typedef std::function<double(double, double)> Patch;$/;"	t	namespace:VSSynth::Patches
 Patches	Astro8-Emulator/VSSynth/utils/Patches.h	/^    namespace Patches$/;"	n	namespace:VSSynth
 PauseAudio	Astro8-Emulator/audio.h	/^		void PauseAudio(bool pause, unsigned char voice = 0)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
@@ -387,21 +300,11 @@ PrintColored	Astro8-Emulator/colorprint.h	/^static void PrintColored(std::string
 ProcessingThread	Astro8-Emulator/audio.h	/^		std::thread ProcessingThread;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:std::thread
 ProcessingThread	Astro8-Emulator/audio.h	/^		std::thread ProcessingThread;$/;"	m	class:Hyper_BandCHIP::SampleAudio	typeref:typename:std::thread
 Program	ResourceGenerator/Program.cs	/^public class Program$/;"	c
-PutSetOnCurrentLine	Astro8-Emulator/main.cpp	/^void PutSetOnCurrentLine(const string& value)$/;"	f	typeref:typename:void
 R	Astro8-Emulator/color.hpp	/^    template<typename T> using R = colorful<bar<T>>;$/;"	t	namespace:dye	typeref:typename:colorful<bar<T>>
-READ_CR	Astro8-Emulator/main.cpp	/^	READ_CR = 0b0000000001100000,$/;"	e	enum:ReadInstruction	file:
-READ_IR	Astro8-Emulator/main.cpp	/^	READ_IR = 0b0000000001010000,$/;"	e	enum:ReadInstruction	file:
-READ_MASK	Astro8-Emulator/main.cpp	/^	READ_MASK = 0b0000000001110000,$/;"	e	enum:ReadInstruction	file:
-READ_RA	Astro8-Emulator/main.cpp	/^	READ_RA = 0b0000000000010000,$/;"	e	enum:ReadInstruction	file:
-READ_RB	Astro8-Emulator/main.cpp	/^	READ_RB = 0b0000000000100000,$/;"	e	enum:ReadInstruction	file:
-READ_RC	Astro8-Emulator/main.cpp	/^	READ_RC = 0b0000000000110000,$/;"	e	enum:ReadInstruction	file:
-READ_RM	Astro8-Emulator/main.cpp	/^	READ_RM = 0b0000000001000000,$/;"	e	enum:ReadInstruction	file:
 REED	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const Patch REED = [](double freq, double time) {$/;"	v	namespace:VSSynth::Patches	typeref:typename:const Patch
 REED_ENVELOPE	Astro8-Emulator/VSSynth/utils/Patches.h	/^        const ADSREnvelope REED_ENVELOPE(0.90f, 0.30f, 0.1f, 0.1f, 0.05f);$/;"	v	namespace:VSSynth::Patches	typeref:typename:const ADSREnvelope
 RELEASE	Astro8-Emulator/VSSynth/utils/Envelope.h	/^            RELEASE,$/;"	e	enum:VSSynth::Envelope::Curves
 RM	Astro8-Emulator/linux-build/Makefile	/^RM = \/usr\/bin\/cmake -E rm -f$/;"	m
-ReadInstruction	Astro8-Emulator/main.cpp	/^enum ReadInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
-RegIdToLDI	Astro8-Emulator/main.cpp	/^void RegIdToLDI(const string& in, const string& followingValue)$/;"	f	typeref:typename:void
 Release	Astro8-Emulator/audio.h	/^	enum class EnvelopeGeneratorState { Off, Attack, Decay, Sustain, Release };$/;"	e	enum:Hyper_BandCHIP::EnvelopeGeneratorState
 ReplaceEscapeSymbols	Astro8-Emulator/strops.cpp	/^std::string ReplaceEscapeSymbols(std::string s)$/;"	f	typeref:typename:std::string
 Reset	Astro8-Emulator/audio.h	/^		void Reset(unsigned char voice = 0)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
@@ -432,35 +335,17 @@ SDL2_MIXER_VERSION_STRING	Astro8-Emulator/FindSDL2_mixer.cmake	/^  set(SDL2_MIXE
 SDL2_MIXER_VERSION_STRING	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^  set(SDL2_MIXER_VERSION_STRING ${SDL2_MIXER_VERSION_MAJOR}.${SDL2_MIXER_VERSION_MINOR}.${SDL2_M/;"	v
 SDL2_MIXER_VERSION_STRING	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(SDL2_MIXER_VERSION_STRING ${SDL2_MIXER_VERSION_MAJOR}.${SDL2_MIXER_VERSION_MINOR}.${SDL2_M/;"	v
 SHELL	Astro8-Emulator/linux-build/Makefile	/^SHELL = \/bin\/sh$/;"	m
-STA	Astro8-Emulator/main.cpp	/^	STA,$/;"	e	enum:AllInstructions	file:
-STANDALONE_CE	Astro8-Emulator/main.cpp	/^	STANDALONE_CE = 0b0100000000000000,$/;"	e	enum:StandaloneInstruction	file:
-STANDALONE_EI	Astro8-Emulator/main.cpp	/^	STANDALONE_EI = 0b0001000000000000,$/;"	e	enum:StandaloneInstruction	file:
-STANDALONE_EO	Astro8-Emulator/main.cpp	/^	STANDALONE_EO = 0b1000000000000000,$/;"	e	enum:StandaloneInstruction	file:
-STANDALONE_FL	Astro8-Emulator/main.cpp	/^	STANDALONE_FL = 0b0000100000000000,$/;"	e	enum:StandaloneInstruction	file:
-STANDALONE_ST	Astro8-Emulator/main.cpp	/^	STANDALONE_ST = 0b0010000000000000,$/;"	e	enum:StandaloneInstruction	file:
-STAOUT	Astro8-Emulator/main.cpp	/^	STAOUT,$/;"	e	enum:AllInstructions	file:
-STLGE	Astro8-Emulator/main.cpp	/^	STLGE,$/;"	e	enum:AllInstructions	file:
-SUB	Astro8-Emulator/main.cpp	/^	SUB,$/;"	e	enum:AllInstructions	file:
 SUSTAIN	Astro8-Emulator/VSSynth/utils/Envelope.h	/^            SUSTAIN,$/;"	e	enum:VSSynth::Envelope::Curves
-SWP	Astro8-Emulator/main.cpp	/^	SWP,$/;"	e	enum:AllInstructions	file:
-SWPC	Astro8-Emulator/main.cpp	/^	SWPC,$/;"	e	enum:AllInstructions	file:
-SYS_PAUSE	Astro8-Emulator/main.cpp	/^	#define SYS_PAUSE /;"	d	file:
 SampleAudio	Astro8-Emulator/audio.h	/^		SampleAudio() : processing(true)$/;"	f	class:Hyper_BandCHIP::SampleAudio
 SampleAudio	Astro8-Emulator/audio.h	/^	class SampleAudio$/;"	c	namespace:Hyper_BandCHIP
-Save_Frame	Astro8-Emulator/main.cpp	/^void Save_Frame(const ::std::string& name, vector<unsigned char> img_vals)$/;"	f	typeref:typename:void
 Sequencer	Astro8-Emulator/VSSynth/generators/Sequencer.h	/^        class Sequencer : public SoundGenerator$/;"	c	namespace:VSSynth::Generators
 SetChannelOutput	Astro8-Emulator/audio.h	/^		void SetChannelOutput(unsigned char channel_mask, unsigned char voice)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
-SetMem	Astro8-Emulator/main.cpp	/^void SetMem(uint16_t bank, uint16_t address, uint16_t data)$/;"	f	typeref:typename:void
 SetPlaybackRate	Astro8-Emulator/audio.h	/^		void SetPlaybackRate(unsigned char rate, unsigned char voice = 0)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
 SetVolume	Astro8-Emulator/audio.h	/^		void SetVolume(unsigned char volume, unsigned char voice)$/;"	f	class:Hyper_BandCHIP::SampleAudio	typeref:typename:void
 SimpleCapParams	Astro8-Emulator/escapi.h	/^struct SimpleCapParams$/;"	s
-SimplifiedHertz	Astro8-Emulator/main.cpp	/^std::string SimplifiedHertz(float input)$/;"	f	typeref:typename:std::string
 SoundGenerator	Astro8-Emulator/VSSynth/SoundGenerator.h	/^    class SoundGenerator$/;"	c	namespace:VSSynth
 SplitGetLastAfterChar	Astro8-Emulator/strops.cpp	/^std::string SplitGetLastAfterChar(const std::string& str, std::string delim)$/;"	f	typeref:typename:std::string
 SplitString	Astro8-Emulator/strops.cpp	/^std::vector<std::string> SplitString(std::string& str, std::string delim)$/;"	f	typeref:typename:std::vector<std::string>
-StandaloneInstruction	Astro8-Emulator/main.cpp	/^enum StandaloneInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
-StoreAddress	Astro8-Emulator/main.cpp	/^void StoreAddress(const string& reg, const string& address)$/;"	f	typeref:typename:void
-StoreIntoPointer	Astro8-Emulator/main.cpp	/^void StoreIntoPointer(const string& str)$/;"	f	typeref:typename:void
 StringContains	Astro8-Emulator/strops.cpp	/^bool StringContains(std::string& str, char check)$/;"	f	typeref:typename:bool
 StringContains	Astro8-Emulator/strops.cpp	/^bool StringContains(std::string& str, std::string check)$/;"	f	typeref:typename:bool
 StringStartsWith	Astro8-Emulator/strops.cpp	/^bool StringStartsWith(std::string str, std::string substr)$/;"	f	typeref:typename:bool
@@ -468,21 +353,17 @@ Sustain	Astro8-Emulator/audio.h	/^	enum class EnvelopeGeneratorState { Off, Atta
 SynthData	Astro8-Emulator/VSSynth/Synthesizer.h	/^    struct SynthData$/;"	s	namespace:VSSynth
 SynthMiddleware	Astro8-Emulator/VSSynth/SynthMiddleware.h	/^    class SynthMiddleware$/;"	c	namespace:VSSynth
 Synthesizer	Astro8-Emulator/VSSynth/Synthesizer.h	/^    class Synthesizer$/;"	c	namespace:VSSynth
-TARGET_RENDER_FPS	Astro8-Emulator/main.cpp	/^#define TARGET_RENDER_FPS /;"	d	file:
 ToLower	Astro8-Emulator/strops.cpp	/^std::string ToLower(std::string s)$/;"	f	typeref:typename:std::string
 ToUpper	Astro8-Emulator/strops.cpp	/^std::string ToUpper(std::string s)$/;"	f	typeref:typename:std::string
 Tone	Astro8-Emulator/VSSynth/generators/Tone.h	/^        class Tone : public SoundGenerator$/;"	c	namespace:VSSynth::Generators
 TrimString	Astro8-Emulator/strops.cpp	/^std::string TrimString(std::string s)$/;"	f	typeref:typename:std::string
 UNIX	Astro8-Emulator/colorprint.h	/^	#define UNIX /;"	d
-Update	Astro8-Emulator/main.cpp	/^void Update()$/;"	f	typeref:typename:void
-VBUF	Astro8-Emulator/main.cpp	/^	VBUF,$/;"	e	enum:AllInstructions	file:
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x64)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x86)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x64)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x86)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x64)$/;"	v
 VC_LIB_PATH_SUFFIX	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(VC_LIB_PATH_SUFFIX lib\/x86)$/;"	v
-VERSION	Astro8-Emulator/main.cpp	/^std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";$/;"	v	typeref:typename:std::string
 VSSynth	Astro8-Emulator/VSSynth/SoundGenerator.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/SynthMiddleware.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/Synthesizer.h	/^namespace VSSynth$/;"	n
@@ -496,23 +377,9 @@ VSSynth	Astro8-Emulator/VSSynth/utils/Envelope.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/utils/Notes.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/utils/Patches.h	/^namespace VSSynth$/;"	n
 VSSynth	Astro8-Emulator/VSSynth/utils/Waveforms.h	/^namespace VSSynth$/;"	n
-VecToString	Astro8-Emulator/main.cpp	/^std::string VecToString(const vector<std::string>& vec)$/;"	f	typeref:typename:std::string
-VideoBufReg	Astro8-Emulator/main.cpp	/^bool VideoBufReg = false;$/;"	v	typeref:typename:bool
 WAVWriter	Astro8-Emulator/VSSynth/middleware/WAVWriter.h	/^        class WAVWriter : public SynthMiddleware$/;"	c	namespace:VSSynth::Middleware
 WINDOWS	Astro8-Emulator/colorprint.h	/^	#define WINDOWS /;"	d
-WRITE_AW	Astro8-Emulator/main.cpp	/^	WRITE_AW = 0b0000010000000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_BNK	Astro8-Emulator/main.cpp	/^	WRITE_BNK = 0b0000010010000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_DW	Astro8-Emulator/main.cpp	/^	WRITE_DW = 0b0000001010000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_IW	Astro8-Emulator/main.cpp	/^	WRITE_IW = 0b0000001000000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_J	Astro8-Emulator/main.cpp	/^	WRITE_J = 0b0000001110000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_MASK	Astro8-Emulator/main.cpp	/^	WRITE_MASK = 0b0000011110000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_VBUF	Astro8-Emulator/main.cpp	/^	WRITE_VBUF = 0b0000010100000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_WA	Astro8-Emulator/main.cpp	/^	WRITE_WA = 0b0000000010000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_WB	Astro8-Emulator/main.cpp	/^	WRITE_WB = 0b0000000100000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_WC	Astro8-Emulator/main.cpp	/^	WRITE_WC = 0b0000000110000000,$/;"	e	enum:WriteInstruction	file:
-WRITE_WM	Astro8-Emulator/main.cpp	/^	WRITE_WM = 0b0000001100000000,$/;"	e	enum:WriteInstruction	file:
 Waveforms	Astro8-Emulator/VSSynth/utils/Waveforms.h	/^    namespace Waveforms$/;"	n	namespace:VSSynth
-WriteInstruction	Astro8-Emulator/main.cpp	/^enum WriteInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
 _APS_NEXT_COMMAND_VALUE	Astro8-Emulator/resource.h	/^#define _APS_NEXT_COMMAND_VALUE /;"	d
 _APS_NEXT_CONTROL_VALUE	Astro8-Emulator/resource.h	/^#define _APS_NEXT_CONTROL_VALUE /;"	d
 _APS_NEXT_RESOURCE_VALUE	Astro8-Emulator/resource.h	/^#define _APS_NEXT_RESOURCE_VALUE /;"	d
@@ -525,10 +392,6 @@ _SDL2_MIXER_NO_DEFAULT_PATH	Astro8-Emulator/cmake/FindSDL2_mixer.cmake	/^set(_SD
 _SDL2_MIXER_NO_DEFAULT_PATH	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^  set(_SDL2_MIXER_NO_DEFAULT_PATH ON)$/;"	v
 _SDL2_MIXER_NO_DEFAULT_PATH	Astro8-Emulator/linux-build/FindSDL2_mixer.cmake	/^set(_SDL2_MIXER_NO_DEFAULT_PATH OFF)$/;"	v
 __anon05a9cb200102	Astro8-Emulator/color.hpp	/^            {$/;"	f	function:hue::stoc	file:
-__anon5af039410102	Astro8-Emulator/main.cpp	/^		[](double frequency, double time) {$/;"	f	function:main	file:
-__anon5af039410202	Astro8-Emulator/main.cpp	/^		[](double frequency, double time) {$/;"	f	function:main	file:
-__anon5af039410302	Astro8-Emulator/main.cpp	/^		[](double frequency, double time) {$/;"	f	function:main	file:
-__anon5af039410402	Astro8-Emulator/main.cpp	/^		[](double frequency, double time) {$/;"	f	function:main	file:
 __anon5f040b730108	Astro8-Emulator/audio.h	/^		{$/;"	s	class:Hyper_BandCHIP::SampleAudio
 __anon7c6d03de0102	Astro8-Emulator/processing.h	/^	auto isEmptyOrBlank = [](const std::string& s) {$/;"	f	function:PreProcess	file:
 __anon7c6d03de0202	Astro8-Emulator/processing.h	/^	auto isComment = [](const std::string& s) {$/;"	f	function:PreProcess	file:
@@ -547,9 +410,7 @@ add	example_armstrong_programs/pong.armstrong.asm	/^add$/;"	l
 addOneToHexStr	Astro8-Emulator/strops.cpp	/^void addOneToHexStr(char* num, int len)$/;"	f	typeref:typename:void
 addOneToHexStrInRange	Astro8-Emulator/strops.cpp	/^void addOneToHexStrInRange(char* num, int start, int len)$/;"	f	typeref:typename:void
 all	Astro8-Emulator/linux-build/Makefile	/^all: cmake_check_build_system$/;"	t
-aluInstructionSpecialAddress	Astro8-Emulator/main.cpp	/^std::string aluInstructionSpecialAddress[] = {"SU", "MU", "DI", "SL", "SR", "AND", "OR", "NOT"};$/;"	v	typeref:typename:std::string[]
 and	example_armstrong_programs/pong.armstrong.asm	/^and$/;"	l
-apply_pixels	Astro8-Emulator/main.cpp	/^void apply_pixels($/;"	f	typeref:typename:void
 aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& aqua(std::ostream& os) { set_text("a");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 aqua	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> aqua(T t) { return R<T> { S<T>(t, "a") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 aqua_on_aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& aqua_on_aqua(std::ostream& os) { set("a", "a");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -584,9 +445,6 @@ aqua_on_white	Astro8-Emulator/color.hpp	/^    static std::ostream& aqua_on_white
 aqua_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> aqua_on_white(T t) { return R<T> { S<T>(t, "a", "w") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 aqua_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& aqua_on_yellow(std::ostream& os) { set("a", "y");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 aqua_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> aqua_on_yellow(T t) { return R<T> { S<T>(t, "a", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
-ascToSdcii	Astro8-Emulator/main.cpp	/^uint8_t ascToSdcii[600];$/;"	v	typeref:typename:uint8_t[600]
-asciiToSdcii	Astro8-Emulator/main.cpp	/^uint8_t asciiToSdcii[600];$/;"	v	typeref:typename:uint8_t[600]
-assembleOnly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 astro8	Astro8-Emulator/CMakeLists.txt	/^add_executable (astro8 main.cpp color.hpp colorprint.h processing.h armstrong-compiler.h strops./;"	t
 astro8	Astro8-Emulator/CMakeLists.txt	/^project(astro8)$/;"	p
 astro8	Astro8-Emulator/linux-build/Makefile	/^astro8: cmake_check_build_system$/;"	t
@@ -723,27 +581,16 @@ bright_white_on_white	Astro8-Emulator/color.hpp	/^    static std::ostream& brigh
 bright_white_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> bright_white_on_white(T t) { return R<T> { S<T>(t, "bw", "w") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 bright_white_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& bright_white_on_yellow(std::ostream& os) { set("bw", "y");  return os; /;"	f	namespace:hue	typeref:typename:std::ostream &
 bright_white_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> bright_white_on_yellow(T t) { return R<T> { S<T>(t, "bw", "y") }; /;"	f	namespace:dye	typeref:typename:R<T>
-bus	Astro8-Emulator/main.cpp	/^int bus = 0;$/;"	v	typeref:typename:int
 cConcatInt	Astro8-Emulator/strops.cpp	/^void cConcatInt(char* arr, char* outArr, int len, int x)$/;"	f	typeref:typename:void
 channel_output	Astro8-Emulator/audio.h	/^			std::array<bool, channels> channel_output;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:std::array<bool,channels>
-channelsPlaying	Astro8-Emulator/main.cpp	/^bool channelsPlaying[] = {false, false, false, false};$/;"	v	typeref:typename:bool[]
-charPixX	Astro8-Emulator/main.cpp	/^uint8_t charPixX = 0;$/;"	v	typeref:typename:uint8_t
-charPixY	Astro8-Emulator/main.cpp	/^uint8_t charPixY = 0;$/;"	v	typeref:typename:uint8_t
-charToString	Astro8-Emulator/main.cpp	/^std::string charToString(char* a)$/;"	f	typeref:typename:std::string
-characterRamIndex	Astro8-Emulator/main.cpp	/^uint16_t characterRamIndex = 0;$/;"	v	typeref:typename:uint16_t
-characterRom	Astro8-Emulator/main.cpp	/^vector<bool> characterRom;$/;"	v	typeref:typename:vector<bool>
-clamp	Astro8-Emulator/main.cpp	/^int clamp(int x, int min, int max)$/;"	f	typeref:typename:int
 clampf	Astro8-Emulator/strops.cpp	/^float clampf(float x, float min, float max)$/;"	f	typeref:typename:float
 clean	Astro8-Emulator/linux-build/Makefile	/^clean:$/;"	t
 clean/fast	Astro8-Emulator/linux-build/Makefile	/^clean\/fast: clean$/;"	t
-clear_buffers	Astro8-Emulator/main.cpp	/^void clear_buffers(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)$/;"	f	typeref:typename:void
 cmake_check_build_system	Astro8-Emulator/linux-build/Makefile	/^cmake_check_build_system:$/;"	t
 cmake_force	Astro8-Emulator/linux-build/Makefile	/^cmake_force:$/;"	t
 color	Astro8-Emulator/color.hpp	/^        int color;$/;"	m	class:dye::item	typeref:typename:int
 colorful	Astro8-Emulator/color.hpp	/^    class colorful : private std::list<item<T>>$/;"	c	namespace:dye
 colorize	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> colorize(T t, std::string a) { return R<T> { S<T>(t, a) }; }$/;"	f	namespace:dye	typeref:typename:R<T>
-compileOnly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
-compiledLines	Astro8-Emulator/main.cpp	/^vector<string> compiledLines;$/;"	v	typeref:typename:vector<string>
 countCaptureDevices	Astro8-Emulator/escapi.cpp	/^countCaptureDevicesProc countCaptureDevices;$/;"	v	typeref:typename:countCaptureDevicesProc
 countCaptureDevicesProc	Astro8-Emulator/escapi.h	/^typedef int (*countCaptureDevicesProc)();$/;"	t	typeref:typename:int (*)()
 csubstr	Astro8-Emulator/strops.cpp	/^void csubstr(char* arr, char* outArr, int begin, int len, int totalLen, int& actualSize)$/;"	f	typeref:typename:void
@@ -760,7 +607,6 @@ default_target	Astro8-Emulator/linux-build/Makefile	/^default_target: all$/;"	t
 deinitCapture	Astro8-Emulator/escapi.cpp	/^deinitCaptureProc deinitCapture;$/;"	v	typeref:typename:deinitCaptureProc
 deinitCaptureProc	Astro8-Emulator/escapi.h	/^typedef void (*deinitCaptureProc)(unsigned int deviceno);$/;"	t	typeref:typename:void (*)(unsigned int deviceno)
 depend	Astro8-Emulator/linux-build/Makefile	/^depend:$/;"	t
-destroy	Astro8-Emulator/main.cpp	/^void destroy(SDL_Renderer* renderer, SDL_Window* window)$/;"	f	typeref:typename:void
 divideHexByFloat	Astro8-Emulator/strops.cpp	/^std::string divideHexByFloat(const std::string& hexNumber, float divisor)$/;"	f	typeref:typename:std::string
 doCapture	Astro8-Emulator/escapi.cpp	/^doCaptureProc doCapture;$/;"	v	typeref:typename:doCaptureProc
 doCaptureProc	Astro8-Emulator/escapi.h	/^typedef void (*doCaptureProc)(unsigned int deviceno);$/;"	t	typeref:typename:void (*)(unsigned int deviceno)
@@ -769,14 +615,7 @@ edit_cache	Astro8-Emulator/linux-build/Makefile	/^edit_cache:$/;"	t
 edit_cache/fast	Astro8-Emulator/linux-build/Makefile	/^edit_cache\/fast: edit_cache$/;"	t
 egs_accumulator	Astro8-Emulator/audio.h	/^		double egs_accumulator;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:double
 egs_tp	Astro8-Emulator/audio.h	/^		high_resolution_clock::time_point egs_tp;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:high_resolution_clock::time_point
-executableDirectory	Astro8-Emulator/main.cpp	/^std::string executableDirectory;$/;"	v	typeref:typename:std::string
-explode	Astro8-Emulator/main.cpp	/^vector<std::string> explode(const std::string& str, const char& ch)$/;"	f	typeref:typename:vector<std::string>
-flags	Astro8-Emulator/main.cpp	/^uint8_t flags[2] = {0, 0};$/;"	v	typeref:typename:uint8_t[2]
-flagtypes	Astro8-Emulator/main.cpp	/^std::string flagtypes[] = {"ZEROFLAG", "CARRYFLAG"};$/;"	v	typeref:typename:std::string[]
 frequency	Astro8-Emulator/audio.h	/^		double frequency;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:double
-gRenderer	Astro8-Emulator/main.cpp	/^SDL_Renderer* gRenderer = NULL;$/;"	v	typeref:typename:SDL_Renderer *
-gScreenSurface	Astro8-Emulator/main.cpp	/^SDL_Surface* gScreenSurface = NULL;$/;"	v	typeref:typename:SDL_Surface *
-gWindow	Astro8-Emulator/main.cpp	/^SDL_Window* gWindow = NULL;$/;"	v	typeref:typename:SDL_Window *
 get	Astro8-Emulator/color.hpp	/^    static int get()$/;"	f	namespace:hue	typeref:typename:int
 getCaptureDeviceName	Astro8-Emulator/escapi.cpp	/^getCaptureDeviceNameProc getCaptureDeviceName;$/;"	v	typeref:typename:getCaptureDeviceNameProc
 getCaptureDeviceNameProc	Astro8-Emulator/escapi.h	/^typedef void (*getCaptureDeviceNameProc)(unsigned int deviceno, char *namebuffer, int bufferleng/;"	t	typeref:typename:void (*)(unsigned int deviceno,char * namebuffer,int bufferlength)
@@ -861,7 +700,6 @@ grey_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> grey_on_
 grey_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& grey_on_yellow(std::ostream& os) { set("e", "y");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 grey_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> grey_on_yellow(T t) { return R<T> { S<T>(t, "e", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 help	Astro8-Emulator/linux-build/Makefile	/^help:$/;"	t
-helpDialog	Astro8-Emulator/main.cpp	/^std::string helpDialog = R"V0G0N($/;"	v	typeref:typename:std::string
 here	example_armstrong_programs/pong.armstrong.asm	/^here 100$/;"	l
 here	example_armstrong_programs/pong.armstrong.asm	/^here 10000$/;"	l
 here	example_armstrong_programs/pong.armstrong.asm	/^here 14000$/;"	l
@@ -965,17 +803,10 @@ here	example_armstrong_programs/stack.arm.asm	/^here 60000$/;"	l
 hexCharacterToBinary	ResourceGenerator/Program.cs	/^    private static readonly Dictionary<char, string> hexCharacterToBinary = new Dictionary<char,/;"	f	class:Program	file:
 hold	Astro8-Emulator/VSSynth/generators/Sequencer.h	/^                bool hold;$/;"	m	struct:VSSynth::Generators::Sequencer::NoteEvent	typeref:typename:bool
 hue	Astro8-Emulator/color.hpp	/^namespace hue$/;"	n
-imageOnlyMode	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
-imageOnlyModeFrameCount	Astro8-Emulator/main.cpp	/^uint16_t imageOnlyModeFrameCount = 10;$/;"	v	typeref:typename:uint16_t
-imageOnlyModeFrames	Astro8-Emulator/main.cpp	/^uint16_t imageOnlyModeFrames = 10;$/;"	v	typeref:typename:uint16_t
-imgX	Astro8-Emulator/main.cpp	/^uint8_t imgX = 0;$/;"	v	typeref:typename:uint8_t
-imgY	Astro8-Emulator/main.cpp	/^uint8_t imgY = 0;$/;"	v	typeref:typename:uint8_t
 initCOM	Astro8-Emulator/escapi.cpp	/^initCOMProc initCOM;$/;"	v	typeref:typename:initCOMProc
 initCOMProc	Astro8-Emulator/escapi.cpp	/^typedef void (*initCOMProc)();$/;"	t	typeref:typename:void (*)()	file:
 initCapture	Astro8-Emulator/escapi.cpp	/^initCaptureProc initCapture;$/;"	v	typeref:typename:initCaptureProc
 initCaptureProc	Astro8-Emulator/escapi.h	/^typedef int (*initCaptureProc)(unsigned int deviceno, struct SimpleCapParams *aParams);$/;"	t	typeref:typename:int (*)(unsigned int deviceno,struct SimpleCapParams * aParams)
-instructioncodes	Astro8-Emulator/main.cpp	/^std::string instructioncodes[] = {$/;"	v	typeref:typename:std::string[]
-instructions	Astro8-Emulator/main.cpp	/^vector<std::string> instructions = {"NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "STA", "ADD", "S/;"	v	typeref:typename:vector<std::string>
 instructions	ResourceGenerator/Program.cs	/^    static string[] instructions = { "NOP", "AIN", "BIN", "CIN", "LDIA", "LDIB", "RDEXP", "WREXP/;"	f	class:Program	file:
 invert	Astro8-Emulator/color.hpp	/^        colorful<T>& invert()$/;"	f	class:dye::colorful	typeref:typename:colorful<T> &
 invert	Astro8-Emulator/color.hpp	/^        item<T>& invert()$/;"	f	class:dye::item	typeref:typename:item<T> &
@@ -983,8 +814,6 @@ invert	Astro8-Emulator/color.hpp	/^    colorful<T> invert(colorful<T> col)$/;"	f
 invert	Astro8-Emulator/color.hpp	/^    static int invert(int c)$/;"	f	namespace:hue	typeref:typename:int
 isCaptureDone	Astro8-Emulator/escapi.cpp	/^isCaptureDoneProc isCaptureDone;$/;"	v	typeref:typename:isCaptureDoneProc
 isCaptureDoneProc	Astro8-Emulator/escapi.h	/^typedef int (*isCaptureDoneProc)(unsigned int deviceno);$/;"	t	typeref:typename:int (*)(unsigned int deviceno)
-isDown	Astro8-Emulator/main.cpp	/^	bool isDown = true;	 \/\/ Differ between sending down\/up signal$/;"	m	class:KeyPress	typeref:typename:bool	file:
-isPlaying	Astro8-Emulator/main.cpp	/^bool isPlaying[4] = {false, false, false, false};$/;"	v	typeref:typename:bool[4]
 is_good	Astro8-Emulator/color.hpp	/^    static inline bool is_good(int c)$/;"	f	namespace:hue	typeref:typename:bool
 item	Astro8-Emulator/color.hpp	/^        item(T t) : thing(std::move(t)), color(hue::get()) {}$/;"	f	class:dye::item
 item	Astro8-Emulator/color.hpp	/^        item(T t, int a) : thing(std::move(t)), color(hue::itoc(a)) {}$/;"	f	class:dye::item
@@ -999,10 +828,6 @@ jmp	example_armstrong_programs/stack.arm.asm	/^jmp$/;"	l
 jmpc	example_armstrong_programs/pong.armstrong.asm	/^jmpc$/;"	l
 jmpz	example_armstrong_programs/pong.armstrong.asm	/^jmpz$/;"	l
 jmpz	example_armstrong_programs/stack.arm.asm	/^jmpz$/;"	l
-keyCode	Astro8-Emulator/main.cpp	/^	uint16_t keyCode;$/;"	m	class:KeyPress	typeref:typename:uint16_t	file:
-labelLineValues	Astro8-Emulator/main.cpp	/^vector<int> labelLineValues;$/;"	v	typeref:typename:vector<int>
-labels	Astro8-Emulator/main.cpp	/^vector<string> labels;$/;"	v	typeref:typename:vector<string>
-lastFreq	Astro8-Emulator/main.cpp	/^float lastFreq[4] = {440, 440, 440, 440};$/;"	v	typeref:typename:float[4]
 ldain	example_armstrong_programs/pong.armstrong.asm	/^ldain$/;"	l
 ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 0$/;"	l
 ldia	example_armstrong_programs/pong.armstrong.asm	/^ldia 1$/;"	l
@@ -1276,18 +1101,13 @@ mWave	Astro8-Emulator/VSSynth/generators/Tone.h	/^            std::function<doub
 mWidth	Astro8-Emulator/escapi.h	/^	int mWidth;$/;"	m	struct:SimpleCapParams	typeref:typename:int
 magentaBGColor	Astro8-Emulator/colorprint.h	/^static const std::string magentaBGColor = "\\x1B[45m";$/;"	v	typeref:typename:const std::string
 magentaFGColor	Astro8-Emulator/colorprint.h	/^static const std::string magentaFGColor = "\\x1B[35m";$/;"	v	typeref:typename:const std::string
-main	Astro8-Emulator/main.cpp	/^int main(int argc, char** argv)$/;"	f	typeref:typename:int
 main.cpp.i	Astro8-Emulator/linux-build/Makefile	/^main.cpp.i:$/;"	t
 main.cpp.o	Astro8-Emulator/linux-build/Makefile	/^main.cpp.o:$/;"	t
 main.cpp.s	Astro8-Emulator/linux-build/Makefile	/^main.cpp.s:$/;"	t
 main.i	Astro8-Emulator/linux-build/Makefile	/^main.i: main.cpp.i$/;"	t
 main.o	Astro8-Emulator/linux-build/Makefile	/^main.o: main.cpp.o$/;"	t
 main.s	Astro8-Emulator/linux-build/Makefile	/^main.s: main.cpp.s$/;"	t
-memoryBytes	Astro8-Emulator/main.cpp	/^vector<vector<uint16_t>> memoryBytes;$/;"	v	typeref:typename:vector<vector<uint16_t>>
-memoryIndex	Astro8-Emulator/main.cpp	/^uint16_t memoryIndex = 0;$/;"	v	typeref:typename:uint16_t
-microinstructionData	Astro8-Emulator/main.cpp	/^MicroInstruction microinstructionData[2048];$/;"	v	typeref:typename:MicroInstruction[2048]
 microinstructionData	ResourceGenerator/Program.cs	/^    static string[] microinstructionData = new string[2048];$/;"	f	class:Program	file:
-microinstructions	Astro8-Emulator/main.cpp	/^std::string microinstructions[] = {"EO", "CE", "ST", "EI", "FL"};$/;"	v	typeref:typename:std::string[]
 middleware	Astro8-Emulator/VSSynth/Synthesizer.h	/^        std::vector<SynthMiddleware *> middleware;$/;"	m	struct:VSSynth::SynthData	typeref:typename:std::vector<SynthMiddleware * >
 mult	example_armstrong_programs/pong.armstrong.asm	/^mult$/;"	l
 multiplyHexByInteger	Astro8-Emulator/strops.cpp	/^std::string multiplyHexByInteger(const std::string& hexNumber, int multiplier)$/;"	f	typeref:typename:std::string
@@ -1324,7 +1144,6 @@ on_white	Astro8-Emulator/color.hpp	/^    static std::ostream& on_white(std::ostr
 on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> on_white(T t) { return R<T> { S<T>(t, "k", "w") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& on_yellow(std::ostream& os) { set_background("y");    return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> on_yellow(T t) { return R<T> { S<T>(t, "k", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
-operator !=	Astro8-Emulator/main.cpp	/^bool operator!=(const KeyPress& k1, const KeyPress& k2)$/;"	f	typeref:typename:bool
 operator +	Astro8-Emulator/color.hpp	/^    colorful<T> operator+(colorful<T> lhs, colorful<T> rhs)$/;"	f	namespace:dye	typeref:typename:colorful<T>
 operator +	Astro8-Emulator/color.hpp	/^    colorful<T> operator+(colorful<T> lhs, std::string rhs)$/;"	f	namespace:dye	typeref:typename:colorful<T>
 operator +	Astro8-Emulator/color.hpp	/^    colorful<T> operator+(const std::string& lhs, colorful<T> rhs)$/;"	f	namespace:dye	typeref:typename:colorful<T>
@@ -1333,24 +1152,15 @@ operator +=	Astro8-Emulator/color.hpp	/^        colorful<T>& operator+=(colorful
 operator +=	Astro8-Emulator/color.hpp	/^        colorful<T>& operator+=(const colorful<T>& rhs)$/;"	f	class:dye::colorful	typeref:typename:colorful<T> &
 operator <<	Astro8-Emulator/color.hpp	/^    std::ostream& operator<<(std::ostream& os, const colorful<T>& colorful)$/;"	f	namespace:dye	typeref:typename:std::ostream &
 operator <<	Astro8-Emulator/color.hpp	/^    std::ostream& operator<<(std::ostream& os, const item<T>& it)$/;"	f	namespace:dye	typeref:typename:std::ostream &
-operator ==	Astro8-Emulator/main.cpp	/^bool operator==(const KeyPress& k1, const KeyPress& k2)$/;"	f	typeref:typename:bool
-optimizeAssembly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
-outputReg	Astro8-Emulator/main.cpp	/^uint16_t outputReg = 0;$/;"	v	typeref:typename:uint16_t
-parseCode	Astro8-Emulator/main.cpp	/^vector<vector<std::string>> parseCode(const std::string& input)$/;"	f	typeref:typename:vector<vector<std::string>>
 parseCode	ResourceGenerator/Program.cs	/^    static List<string> parseCode(string input)$/;"	m	class:Program	file:
 pause	Astro8-Emulator/audio.h	/^			bool pause;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:bool
-performanceMode	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
-pixelRamIndex	Astro8-Emulator/main.cpp	/^uint16_t pixelRamIndex = 0;$/;"	v	typeref:typename:uint16_t
-pixels	Astro8-Emulator/main.cpp	/^std::vector<unsigned char> pixels(108 * 108 * 4, 0);$/;"	v	typeref:typename:std::vector<unsigned char>
 playback_rate	Astro8-Emulator/audio.h	/^			double playback_rate;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:double
 pos	Astro8-Emulator/audio.h	/^			int pos;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:int
 preinstall	Astro8-Emulator/linux-build/Makefile	/^preinstall: all$/;"	t
 preinstall/fast	Astro8-Emulator/linux-build/Makefile	/^preinstall\/fast:$/;"	t
 processing	Astro8-Emulator/audio.h	/^		bool processing;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:bool
 processing	Astro8-Emulator/audio.h	/^		bool processing;$/;"	m	class:Hyper_BandCHIP::SampleAudio	typeref:typename:bool
-programCounter	Astro8-Emulator/main.cpp	/^uint16_t programCounter = 0;$/;"	v	typeref:typename:uint16_t
 programName	Astro8-Emulator/CMakeLists.txt	/^SET(programName astro8)$/;"	v
-projectDirectory	Astro8-Emulator/main.cpp	/^std::string projectDirectory;$/;"	v	typeref:typename:std::string
 purple	Astro8-Emulator/color.hpp	/^    static std::ostream& purple(std::ostream& os) { set_text("p");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 purple	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> purple(T t) { return R<T> { S<T>(t, "p") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 purple_on_aqua	Astro8-Emulator/color.hpp	/^    static std::ostream& purple_on_aqua(std::ostream& os) { set("p", "a");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -1387,8 +1197,6 @@ purple_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& purple_on_
 purple_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> purple_on_yellow(T t) { return R<T> { S<T>(t, "p", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 push_back	Astro8-Emulator/color.hpp	/^        void push_back(T t)$/;"	f	class:dye::colorful	typeref:typename:void
 push_front	Astro8-Emulator/color.hpp	/^        void push_front(T t)$/;"	f	class:dye::colorful	typeref:typename:void
-r	Astro8-Emulator/main.cpp	/^SDL_Rect r;$/;"	v	typeref:typename:SDL_Rect
-readInstructionSpecialAddress	Astro8-Emulator/main.cpp	/^std::string readInstructionSpecialAddress[] = {"RA", "RB", "RC", "RM", "IR", "CR"};$/;"	v	typeref:typename:std::string[]
 rebuild_cache	Astro8-Emulator/linux-build/Makefile	/^rebuild_cache:$/;"	t
 rebuild_cache/fast	Astro8-Emulator/linux-build/Makefile	/^rebuild_cache\/fast: rebuild_cache$/;"	t
 red	Astro8-Emulator/color.hpp	/^    static std::ostream& red(std::ostream& os) { set_text("r");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -1435,16 +1243,13 @@ resetColor	Astro8-Emulator/colorprint.h	/^static const std::string resetColor = 
 round	Astro8-Emulator/strops.cpp	/^double round(float value, int decimal_places)$/;"	f	typeref:typename:double
 roundFloat	Astro8-Emulator/strops.cpp	/^inline static const std::string roundFloat(const double input, const int decimal_places)$/;"	f	typeref:typename:const std::string	file:
 rtrim	Astro8-Emulator/strops.cpp	/^void rtrim(std::string& s)$/;"	f	typeref:typename:void
-runAstroExecutable	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 sampleDeltaTime	Astro8-Emulator/VSSynth/Synthesizer.h	/^        double sampleDeltaTime;$/;"	m	struct:VSSynth::SynthData	typeref:typename:double
-sdciiToAscii	Astro8-Emulator/main.cpp	/^uint8_t sdciiToAscii[600];$/;"	v	typeref:typename:uint8_t[600]
 set	Astro8-Emulator/color.hpp	/^    static void set(int a, int b)$/;"	f	namespace:hue	typeref:typename:void
 set	Astro8-Emulator/color.hpp	/^    static void set(int c)$/;"	f	namespace:hue	typeref:typename:void
 set	Astro8-Emulator/color.hpp	/^    static void set(std::string a, std::string b)$/;"	f	namespace:hue	typeref:typename:void
 setCaptureProperty	Astro8-Emulator/escapi.cpp	/^setCapturePropertyProc setCaptureProperty;$/;"	v	typeref:typename:setCapturePropertyProc
 setCapturePropertyProc	Astro8-Emulator/escapi.h	/^typedef int (*setCapturePropertyProc)(unsigned int deviceno, int prop, float value, int autoval)/;"	t	typeref:typename:int (*)(unsigned int deviceno,int prop,float value,int autoval)
 set_background	Astro8-Emulator/color.hpp	/^    static void set_background(std::string b)$/;"	f	namespace:hue	typeref:typename:void
-set_pixel	Astro8-Emulator/main.cpp	/^void set_pixel($/;"	f	typeref:typename:void
 set_text	Astro8-Emulator/color.hpp	/^    static void set_text(std::string a)$/;"	f	namespace:hue	typeref:typename:void
 setupESCAPI	Astro8-Emulator/escapi.cpp	/^int setupESCAPI()$/;"	f	typeref:typename:int
 shiftHexNumber	Astro8-Emulator/strops.cpp	/^std::string shiftHexNumber(const std::string& hexNumber, int digits)$/;"	f	typeref:typename:std::string
@@ -1468,31 +1273,18 @@ strops_h	Astro8-Emulator/strops.h	/^#define strops_h$/;"	d
 sub	example_armstrong_programs/pong.armstrong.asm	/^sub$/;"	l
 sub	example_armstrong_programs/stack.arm.asm	/^sub$/;"	l
 subOneFromHex	Astro8-Emulator/strops.cpp	/^void subOneFromHex(std::string& hexNumber, int index)$/;"	f	typeref:typename:void
-superVerbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 sustain	Astro8-Emulator/VSSynth/utils/Envelope.h	/^        double attack, sustain;                    \/\/ Amplitudes$/;"	m	struct:VSSynth::ADSREnvelope	typeref:typename:double
 sustain_level	Astro8-Emulator/audio.h	/^		double sustain_level;$/;"	m	class:Hyper_BandCHIP::Audio	typeref:typename:double
 sustainable	Astro8-Emulator/VSSynth/utils/Envelope.h	/^        bool sustainable;$/;"	m	struct:VSSynth::ADSREnvelope	typeref:typename:bool
 swp	example_armstrong_programs/pong.armstrong.asm	/^swp$/;"	l
-target_cpu_freq	Astro8-Emulator/main.cpp	/^uint32_t target_cpu_freq = 16000000;$/;"	v	typeref:typename:uint32_t
-texture	Astro8-Emulator/main.cpp	/^SDL_Texture* texture;$/;"	v	typeref:typename:SDL_Texture *
 thing	Astro8-Emulator/color.hpp	/^        T thing;$/;"	m	class:dye::item	typeref:typename:T
 time	Astro8-Emulator/VSSynth/Synthesizer.h	/^        double *time;$/;"	m	struct:VSSynth::SynthData	typeref:typename:double *
 time	Astro8-Emulator/audio.h	/^			double time;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:double
 toHexChar	Astro8-Emulator/strops.cpp	/^char toHexChar(int value)$/;"	f	typeref:typename:char
-tone	Astro8-Emulator/main.cpp	/^Tone* tone[4];$/;"	v	typeref:typename:Tone * [4]
 trim	Astro8-Emulator/processing.h	/^static inline std::string trim(std::string s)$/;"	f	typeref:typename:std::string
 truncateMetricNum	Astro8-Emulator/strops.cpp	/^std::string truncateMetricNum(double x)$/;"	f	typeref:typename:std::string
-uses	Astro8-Emulator/main.cpp	/^	int uses = 2;$/;"	m	class:KeyPress	typeref:typename:int	file:
-usingFileSystem	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
-usingKeyboard	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
-usingMouse	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
-usingWebcam	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
 vanilla	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> vanilla(T t) { return R<T> { S<T>(t) }; }$/;"	f	namespace:dye	typeref:typename:R<T>
-variableMap	Astro8-Emulator/main.cpp	/^std::map<std::string, int> variableMap;$/;"	v	typeref:typename:std::map<std::string,int>
-vars	Astro8-Emulator/main.cpp	/^vector<string> vars;$/;"	v	typeref:typename:vector<string>
 vbuf	example_armstrong_programs/pong.armstrong.asm	/^vbuf$/;"	l
-verbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
-videoBuffer	Astro8-Emulator/main.cpp	/^vector<vector<uint16_t>> videoBuffer;$/;"	v	typeref:typename:vector<vector<uint16_t>>
 voice_list	Astro8-Emulator/audio.h	/^		} voice_list[voices];$/;"	m	class:Hyper_BandCHIP::SampleAudio	typeref:struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108[]
 volume	Astro8-Emulator/audio.h	/^			double volume;$/;"	m	struct:Hyper_BandCHIP::SampleAudio::__anon5f040b730108	typeref:typename:double
 white	Astro8-Emulator/color.hpp	/^    static std::ostream& white(std::ostream& os) { set_text("w");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
@@ -1531,7 +1323,6 @@ white_on_white	Astro8-Emulator/color.hpp	/^    static std::ostream& white_on_whi
 white_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> white_on_white(T t) { return R<T> { S<T>(t, "w", "w") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 white_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& white_on_yellow(std::ostream& os) { set("w", "y");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 white_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> white_on_yellow(T t) { return R<T> { S<T>(t, "w", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
-writeInstructionSpecialAddress	Astro8-Emulator/main.cpp	/^std::string writeInstructionSpecialAddress[] = {"WA", "WB", "WC", "IW", "DW", "WM", "J", "AW", "/;"	v	typeref:typename:std::string[]
 yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& yellow(std::ostream& os) { set_text("y");          return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> yellow(T t) { return R<T> { S<T>(t, "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 yellowBGColor	Astro8-Emulator/colorprint.h	/^static const std::string yellowBGColor = "\\x1B[43m";$/;"	v	typeref:typename:const std::string
@@ -1569,3 +1360,78 @@ yellow_on_white	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> yellow
 yellow_on_yellow	Astro8-Emulator/color.hpp	/^    static std::ostream& yellow_on_yellow(std::ostream& os) { set("y", "y");   return os; }$/;"	f	namespace:hue	typeref:typename:std::ostream &
 yellow_on_yellow	Astro8-Emulator/color.hpp	/^    template<typename T> R<T> yellow_on_yellow(T t) { return R<T> { S<T>(t, "y", "y") }; }$/;"	f	namespace:dye	typeref:typename:R<T>
 ~SampleAudio	Astro8-Emulator/audio.h	/^		~SampleAudio()$/;"	f	class:Hyper_BandCHIP::SampleAudio
+SYS_PAUSE	Astro8-Emulator/main.cpp	/^	#define SYS_PAUSE /;"	d	file:
+SYS_PAUSE	Astro8-Emulator/main.cpp	/^	#define SYS_PAUSE /;"	d	file:
+DEV_MODE	Astro8-Emulator/main.cpp	/^#define DEV_MODE /;"	d	file:
+VERSION	Astro8-Emulator/main.cpp	/^std::string VERSION = "Astro-8 VERSION: v3.4.3-alpha";$/;"	v	typeref:typename:std::string
+compileOnly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+assembleOnly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+runAstroExecutable	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+verbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+superVerbose	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+usingWebcam	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+imageOnlyMode	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+optimizeAssembly	Astro8-Emulator/main.cpp	/^bool compileOnly, assembleOnly, runAstroExecutable, verbose, superVerbose, usingWebcam, imageOnl/;"	v	typeref:typename:bool
+usingKeyboard	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
+usingMouse	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
+performanceMode	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
+usingFileSystem	Astro8-Emulator/main.cpp	/^bool usingKeyboard = true, usingMouse = true, performanceMode = true, usingFileSystem = true;$/;"	v	typeref:typename:bool
+imageOnlyModeFrames	Astro8-Emulator/main.cpp	/^uint16_t imageOnlyModeFrames = 10;$/;"	v	typeref:typename:uint16_t
+imageOnlyModeFrameCount	Astro8-Emulator/main.cpp	/^uint16_t imageOnlyModeFrameCount = 10;$/;"	v	typeref:typename:uint16_t
+AReg	Astro8-Emulator/main.cpp	/^uint16_t AReg = 0;$/;"	v	typeref:typename:uint16_t
+BReg	Astro8-Emulator/main.cpp	/^uint16_t BReg = 0;$/;"	v	typeref:typename:uint16_t
+CReg	Astro8-Emulator/main.cpp	/^uint16_t CReg = 0;$/;"	v	typeref:typename:uint16_t
+BankReg	Astro8-Emulator/main.cpp	/^uint8_t BankReg = 0;$/;"	v	typeref:typename:uint8_t
+InstructionReg	Astro8-Emulator/main.cpp	/^uint16_t InstructionReg = 0;$/;"	v	typeref:typename:uint16_t
+flags	Astro8-Emulator/main.cpp	/^uint8_t flags[2] = {0, 0};$/;"	v	typeref:typename:uint8_t[2]
+bus	Astro8-Emulator/main.cpp	/^int bus = 0;$/;"	v	typeref:typename:int
+outputReg	Astro8-Emulator/main.cpp	/^uint16_t outputReg = 0;$/;"	v	typeref:typename:uint16_t
+memoryIndex	Astro8-Emulator/main.cpp	/^uint16_t memoryIndex = 0;$/;"	v	typeref:typename:uint16_t
+programCounter	Astro8-Emulator/main.cpp	/^uint16_t programCounter = 0;$/;"	v	typeref:typename:uint16_t
+imgX	Astro8-Emulator/main.cpp	/^uint8_t imgX = 0;$/;"	v	typeref:typename:uint8_t
+imgY	Astro8-Emulator/main.cpp	/^uint8_t imgY = 0;$/;"	v	typeref:typename:uint8_t
+charPixX	Astro8-Emulator/main.cpp	/^uint8_t charPixX = 0;$/;"	v	typeref:typename:uint8_t
+charPixY	Astro8-Emulator/main.cpp	/^uint8_t charPixY = 0;$/;"	v	typeref:typename:uint8_t
+characterRamIndex	Astro8-Emulator/main.cpp	/^uint16_t characterRamIndex = 0;$/;"	v	typeref:typename:uint16_t
+pixelRamIndex	Astro8-Emulator/main.cpp	/^uint16_t pixelRamIndex = 0;$/;"	v	typeref:typename:uint16_t
+AS_VARIABLE_OFFSET	Astro8-Emulator/main.cpp	/^#define AS_VARIABLE_OFFSET /;"	d	file:
+VideoBufReg	Astro8-Emulator/main.cpp	/^bool VideoBufReg = false;$/;"	v	typeref:typename:bool
+target_cpu_freq	Astro8-Emulator/main.cpp	/^uint32_t target_cpu_freq = 16000000;$/;"	v	typeref:typename:uint32_t
+TARGET_RENDER_FPS	Astro8-Emulator/main.cpp	/^#define TARGET_RENDER_FPS /;"	d	file:
+memoryBytes	Astro8-Emulator/main.cpp	/^vector<vector<uint16_t>> memoryBytes;$/;"	v	typeref:typename:vector<vector<uint16_t>>
+videoBuffer	Astro8-Emulator/main.cpp	/^vector<vector<uint16_t>> videoBuffer;$/;"	v	typeref:typename:vector<vector<uint16_t>>
+asciiToSdcii	Astro8-Emulator/main.cpp	/^uint8_t asciiToSdcii[600];$/;"	v	typeref:typename:uint8_t[600]
+ascToSdcii	Astro8-Emulator/main.cpp	/^uint8_t ascToSdcii[600];$/;"	v	typeref:typename:uint8_t[600]
+sdciiToAscii	Astro8-Emulator/main.cpp	/^uint8_t sdciiToAscii[600];$/;"	v	typeref:typename:uint8_t[600]
+projectDirectory	Astro8-Emulator/main.cpp	/^std::string projectDirectory;$/;"	v	typeref:typename:std::string
+executableDirectory	Astro8-Emulator/main.cpp	/^std::string executableDirectory;$/;"	v	typeref:typename:std::string
+MICROINSTR_SIZE	Astro8-Emulator/main.cpp	/^#define MICROINSTR_SIZE /;"	d	file:
+MicroInstruction	Astro8-Emulator/main.cpp	/^using MicroInstruction = uint16_t;$/;"	t	typeref:typename:uint16_t	file:
+microinstructionData	Astro8-Emulator/main.cpp	/^MicroInstruction microinstructionData[2048];$/;"	v	typeref:typename:MicroInstruction[2048]
+ALUInstruction	Astro8-Emulator/main.cpp	/^enum ALUInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
+ALU_SU	Astro8-Emulator/main.cpp	/^	ALU_SU = 0b0000000000000001,$/;"	e	enum:ALUInstruction	file:
+ALU_MU	Astro8-Emulator/main.cpp	/^	ALU_MU = 0b0000000000000010,$/;"	e	enum:ALUInstruction	file:
+ALU_DI	Astro8-Emulator/main.cpp	/^	ALU_DI = 0b0000000000000011,$/;"	e	enum:ALUInstruction	file:
+ALU_SL	Astro8-Emulator/main.cpp	/^	ALU_SL = 0b0000000000000100,$/;"	e	enum:ALUInstruction	file:
+ALU_SR	Astro8-Emulator/main.cpp	/^	ALU_SR = 0b0000000000000101,$/;"	e	enum:ALUInstruction	file:
+ALU_AND	Astro8-Emulator/main.cpp	/^	ALU_AND = 0b0000000000000110,$/;"	e	enum:ALUInstruction	file:
+ALU_OR	Astro8-Emulator/main.cpp	/^	ALU_OR = 0b0000000000000111,$/;"	e	enum:ALUInstruction	file:
+ALU_NOT	Astro8-Emulator/main.cpp	/^	ALU_NOT = 0b0000000000001000,$/;"	e	enum:ALUInstruction	file:
+ALU_MASK	Astro8-Emulator/main.cpp	/^	ALU_MASK = 0b0000000000001111,$/;"	e	enum:ALUInstruction	file:
+ReadInstruction	Astro8-Emulator/main.cpp	/^enum ReadInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
+READ_RA	Astro8-Emulator/main.cpp	/^	READ_RA = 0b0000000000010000,$/;"	e	enum:ReadInstruction	file:
+READ_RB	Astro8-Emulator/main.cpp	/^	READ_RB = 0b0000000000100000,$/;"	e	enum:ReadInstruction	file:
+READ_RC	Astro8-Emulator/main.cpp	/^	READ_RC = 0b0000000000110000,$/;"	e	enum:ReadInstruction	file:
+READ_RM	Astro8-Emulator/main.cpp	/^	READ_RM = 0b0000000001000000,$/;"	e	enum:ReadInstruction	file:
+READ_IR	Astro8-Emulator/main.cpp	/^	READ_IR = 0b0000000001010000,$/;"	e	enum:ReadInstruction	file:
+READ_CR	Astro8-Emulator/main.cpp	/^	READ_CR = 0b0000000001100000,$/;"	e	enum:ReadInstruction	file:
+READ_MASK	Astro8-Emulator/main.cpp	/^	READ_MASK = 0b0000000001110000,$/;"	e	enum:ReadInstruction	file:
+WriteInstruction	Astro8-Emulator/main.cpp	/^enum WriteInstruction : MicroInstruction {$/;"	g	typeref:typename:MicroInstruction	file:
+WRITE_WA	Astro8-Emulator/main.cpp	/^	WRITE_WA = 0b0000000010000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_WB	Astro8-Emulator/main.cpp	/^	WRITE_WB = 0b0000000100000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_WC	Astro8-Emulator/main.cpp	/^	WRITE_WC = 0b0000000110000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_IW	Astro8-Emulator/main.cpp	/^	WRITE_IW = 0b0000001000000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_DW	Astro8-Emulator/main.cpp	/^	WRITE_DW = 0b0000001010000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_WM	Astro8-Emulator/main.cpp	/^	WRITE_WM = 0b0000001100000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_J	Astro8-Emulator/main.cpp	/^	WRITE_J = 0b0000001110000000,$/;"	e	enum:WriteInstruction	file:
+WRITE_AW	Astro8-Emulator/main.cpp	/^	WRITE_AW = 0b000

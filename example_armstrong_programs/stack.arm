@@ -1,42 +1,7 @@
 #AS
 
-asm"
-jmp
-here #main
-, STD Library:
-const @__CHAR_MEM_ADDR__ 53546
-const @__PIXEL_MEM_ADDR__ 53870
-#__CHAR_PTR__:
-here 0
-#printf:      
-, End STD Library
-"
+#loop:
 
+change $charval = 7
 
-// The call stack will be the end of the first bank of memory, growing down
-// It will be 512 words long
-define $call_stack_ptr = 65535
-define $call_stack_min = 65023
-
-
-// The general stack will be from $call_stack_min-1, growing down for another 1024 words
-define $stack_ptr = 65022
-define $stack_min = 64510
-
-
-// RETURN
-// Jump here after pushing current execution address to call stack
-// example:
-//         lda #call_stack_ptr
-//         ldib 1
-//         sub    , Subtract 1 from call stack pointer
-//         pcr    , Read program counter into @A
-//         ldib 6
-//         add
-//         swp
-//         lda #call_stack_ptr
-//         staout  , Store the PCR value + offset into address at *#call_stack_ptr
-//         jmp
-//         here <FUNCTION_NAME>
-#return
-
+gotoif $charval != 168 , #loop

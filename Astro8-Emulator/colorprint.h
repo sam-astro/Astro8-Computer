@@ -173,18 +173,25 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 		if (nstr[i] == "")
 			continue;
 
+		std::string inlineComment = "";
+		if (nstr[i][0] != ',')
+			if (nstr[i].find(',') != std::string::npos) {
+				inlineComment = nstr[i].substr(nstr[i].find(',') - 1);
+				nstr[i] = nstr[i].substr(0, nstr[i].find(',') - 1);
+			}
+
 		// If line is a comment
 		if (nstr[i][0] == ',')
-			PrintColored("\t\t" + nstr[i] + "\n", brightBlackFGColor, "");
+			PrintColored("\t\t" + nstr[i], brightBlackFGColor, "");
 		// Else if uncounted set
 		else if (!AccomodateSetInProgramRange(nstr[i], actualNum)) {
 			//PrintColored("\t"+ to_string(actualNum), yellowFGColor, "");
 			PrintColored("\t\t" + split(nstr[i], " ")[0], greenFGColor, "");
-			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999), brightMagentaFGColor, "");
 		}
 		else if (StringStartsWith(nstr[i], "const") || nstr[i][0] == '#') {
 			PrintColored("\t\t" + split(nstr[i], " ")[0], greenFGColor, "");
-			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+			PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999), brightMagentaFGColor, "");
 		}
 		// Else
 		else {
@@ -206,8 +213,10 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 					PrintColored("\t" + split(nstr[i], " ")[0], cyanFGColor, "");
 					try {
-						stoi(split(nstr[i], " ")[1]);
+						int iVal = stoi(split(nstr[i], " ")[1]);
 						PrintColored(" " + split(nstr[i], " ")[1], brightMagentaFGColor, "");
+						if (instruction == "ALLOC")
+							actualNum += iVal - 1;
 					}
 					catch (exception) {	 // If the argument is not an integer, it is a variable
 						PrintColored(" " + split(nstr[i], " ")[1], greenFGColor, "");
@@ -220,34 +229,34 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 						catch (exception) {	 // If the argument is not an integer, it is a variable
 							PrintColored(" " + split(nstr[i], " ")[2], greenFGColor, "");
 						}
-					PrintColored("\n", cyanFGColor, "");
+					//PrintColored("\n", cyanFGColor, "");
 				}
 				else {
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
-					PrintColored("\t" + nstr[i] + "\n", cyanFGColor, "");
+					PrintColored("\t" + nstr[i], cyanFGColor, "");
 				}
 			else if (instruction == "CONST")
 				if (split(nstr[i], " ").size() > 1) {
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 					PrintColored("\t" + split(nstr[i], " ")[0], cyanFGColor, "");
 					PrintColored(" " + split(nstr[i], " ")[1], greenFGColor, "");
-					PrintColored(" " + JoinRange(split(nstr[i], " "), 2, 9999) + "\n", brightMagentaFGColor, "");
+					PrintColored(" " + JoinRange(split(nstr[i], " "), 2, 9999), brightMagentaFGColor, "");
 				}
 				else {
 					PrintColored(" !!", redFGColor, "");
 					PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
-					PrintColored("\t" + instruction + "\n", redFGColor, "");
+					PrintColored("\t" + instruction, redFGColor, "");
 				}
 			else if (instruction.at(instruction.size() - 1) == ':') {
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
 				PrintColored("\t" + split(nstr[i], " ")[0], greenFGColor, "");
-				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999) + "\n", brightMagentaFGColor, "");
+				PrintColored(" " + JoinRange(split(nstr[i], " "), 1, 9999), brightMagentaFGColor, "");
 			}
 			// If not a valid instruction, print in red
 			else {
 				PrintColored(" !!", redFGColor, "");
 				PrintColored("\t" + to_string(actualNum), yellowFGColor, "");
-				PrintColored("\t" + instruction + "\n", redFGColor, "");
+				PrintColored("\t" + instruction, redFGColor, "");
 				/*cout << "\n\nPress Enter to Exit...";
 				cin.ignore();
 				exit(1);*/
@@ -255,5 +264,6 @@ static void ColorAndPrintAssembly(std::string asmb, vector<std::string> instruct
 
 			actualNum++;
 		}
+		PrintColored(inlineComment + "\n", brightBlackFGColor, "");
 	}
 }

@@ -440,7 +440,7 @@ int main(int argc, char** argv)
 #endif
 
 	// Fill the memory
-	memoryBytes = vector<vector<uint16_t>>(6, vector<uint16_t>(65535, 0));
+	memoryBytes = vector<vector<uint16_t>>(6, vector<uint16_t>(65536, 0));
 	videoBuffer = vector<vector<uint16_t>>(2, vector<uint16_t>(11990, 0));
 
 	//// Fill video buffers with random data to emulate real ram chip
@@ -1536,6 +1536,9 @@ void Update()
 	// If in performance mode, execute instructions quickly
 	else {
 		// Fetch
+		if (superVerbose)
+			cout << programCounter << ":\t";
+
 		InstructionReg = memoryBytes[0][programCounter];
 		FullInstruction inst = ((InstructionReg >> 11) & 0b11111);
 		uint16_t arg = InstructionReg & 0b11111111111;
@@ -1544,18 +1547,28 @@ void Update()
 
 		switch (inst) {
 			case NOP:
+				if (superVerbose)
+					cout << "nop" << endl;
 				break;
 			case AIN:
 				AReg = GetMem(BankReg, arg);
+				if (superVerbose)
+					cout << "ain  set AReg to " << AReg << endl;
 				break;
 			case BIN:
 				BReg = GetMem(BankReg, arg);
+				if (superVerbose)
+					cout << "bin  set BReg to " << BReg << endl;
 				break;
 			case CIN:
 				CReg = GetMem(BankReg, arg);
+				if (superVerbose)
+					cout << "cin  set CReg to " << CReg << endl;
 				break;
 			case LDIA:
 				AReg = arg;
+				if (superVerbose)
+					cout << "ldia  set AReg to " << arg << endl;
 				break;
 			case LDIB:
 				BReg = arg;
@@ -1564,6 +1577,8 @@ void Update()
 				break;
 			case STA:
 				SetMem(BankReg, arg, AReg);
+				if (superVerbose)
+					cout << "sta  set mem:" << arg << " to " << AReg << endl;
 				break;
 			case ADD:
 				flags[0] = 0;
@@ -1576,6 +1591,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "add" << endl;
 				break;
 			case SUB:
 				flags[0] = 0;
@@ -1588,6 +1605,8 @@ void Update()
 					flags[1] = 0;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "sub" << endl;
 				break;
 			case MULT:
 				flags[0] = 0;
@@ -1600,6 +1619,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "mult" << endl;
 				break;
 			case DIV:
 				flags[0] = 0;
@@ -1621,6 +1642,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "div" << endl;
 				break;
 			case JMP:
 				programCounter = GetMem(0, programCounter);
@@ -1651,18 +1674,18 @@ void Update()
 			case LDAIN:
 				AReg = GetMem(BankReg, AReg);
 				if (superVerbose)
-					cout << "ldain  change AReg to " << GetMem(BankReg, AReg) << endl;
+					cout << "ldain  change AReg to " << AReg << endl;
 				break;
 			case STAOUT:
 				SetMem(BankReg, AReg, BReg);
 				if (superVerbose)
-					cout << "staout  store BReg to " << AReg << endl;
+					cout << "staout  store BReg:" << BReg << " to " << AReg << endl;
 				break;
 			case LDLGE:
 				BankReg = arg & 0b111;
 				AReg = GetMem(BankReg, GetMem(0, programCounter));
 				if (superVerbose)
-					cout << "ldlge  change AReg to " << GetMem(0, programCounter) << endl;
+					cout << "ldlge  change AReg to " << AReg << endl;
 				programCounter++;
 				break;
 			case STLGE:
@@ -1684,14 +1707,20 @@ void Update()
 				CReg = AReg;
 				AReg = BReg;
 				BReg = CReg;
+				if (superVerbose)
+					cout << "swp" << endl;
 				break;
 			case SWPC:
 				BReg = CReg;
 				CReg = AReg;
 				AReg = BReg;
+				if (superVerbose)
+					cout << "swpc" << endl;
 				break;
 			case PCR:
 				AReg = programCounter - 1;
+				if (superVerbose)
+					cout << "pcr" << endl;
 				break;
 			case BSL:
 				flags[0] = 0;
@@ -1706,6 +1735,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "bsl" << endl;
 				break;
 			case BSR:
 				flags[0] = 0;
@@ -1720,6 +1751,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "bsr" << endl;
 				break;
 			case AND:
 				flags[0] = 0;
@@ -1734,6 +1767,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "and" << endl;
 				break;
 			case OR:
 				flags[0] = 0;
@@ -1748,6 +1783,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "or" << endl;
 				break;
 			case NOT:
 				flags[0] = 0;
@@ -1762,6 +1799,8 @@ void Update()
 					flags[1] = 1;
 				}
 				AReg = tempArithmetic;
+				if (superVerbose)
+					cout << "not" << endl;
 				break;
 			case BNK:
 				BankReg = arg & 0b111;
@@ -2096,9 +2135,12 @@ vector<vector<std::string>> parseCode(const std::string& input)
 
 	int memaddr = 0;
 	for (int i = 0; i < splitcode.size(); i++) {
-		splitcode[i] = trim(split(splitcode[i], ",")[0]);
+		splitcode[i] = trim(splitcode[i]);
 		if (splitcode[i] == "")
 			continue;
+		if (splitcode[i][0] == ',')
+			continue;
+		splitcode[i] = trim(split(splitcode[i], ",")[0]);
 
 		vector<std::string> splitBySpace = explode(splitcode[i], ' ');
 
@@ -3159,7 +3201,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If B is variable
 	else if (IsVar(valB)) {
-		LoadAddress("@B", valB);
+		LoadAddress("@B", to_string(GetVariableAddress(valB)));
 	}
 	// If B is decimal
 	else if (IsDec(valB)) {
@@ -3183,7 +3225,7 @@ void CompareValues(const string& valA, const string& comparer, const string& val
 	}
 	// If A is variable
 	else if (IsVar(valA)) {
-		LoadAddress("@A", valA);
+		LoadAddress("@A", to_string(GetVariableAddress(valA)));
 	}
 	// If A is decimal
 	else if (IsDec(valA)) {
@@ -3420,7 +3462,7 @@ string CompileCode(const string& inputcode)
 			// If changing a variable value and setting to another memory location
 			else if (IsVar(addrPre) && IsHex(valuePre)) {
 				LoadAddress("@A", to_string(value));
-				StoreAddress("@A", addrPre);
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -3444,8 +3486,8 @@ string CompileCode(const string& inputcode)
 			}
 			// If changing a variable value and setting equal to a variable
 			else if (IsVar(addrPre) && IsVar(valuePre)) {
-				LoadAddress("@A", valuePre);
-				StoreAddress("@A", addrPre);
+				LoadAddress("@A", to_string(GetVariableAddress(valuePre)));
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -3468,7 +3510,7 @@ string CompileCode(const string& inputcode)
 			}
 			// If changing a variable value and setting equal to a register
 			else if (IsVar(addrPre) && IsReg(valuePre)) {
-				StoreAddress(valuePre, addrPre);
+				StoreAddress(valuePre, to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -3495,7 +3537,7 @@ string CompileCode(const string& inputcode)
 			// If changing a variable value and setting equal to a pointer
 			else if (IsVar(addrPre) && IsPointer(valuePre)) {
 				LoadPointer(valuePre);	// Load pointer val to change TO into A
-				StoreAddress("@A", addrPre);
+				StoreAddress("@A", to_string(GetVariableAddress(addrPre)));
 			}
 
 
@@ -3613,8 +3655,8 @@ string CompileCode(const string& inputcode)
 			if (addrProcessed == "-1") {
 				addrProcessed = addrPre;
 			}
-			if (IsLabel(addrPre))
-				addrProcessed = addrPre;
+			//if (IsLabel(addrPre))
+			//	addrProcessed = addrPre;
 
 			compiledLines.push_back(",\n, " + string("goto:    '") + command + "' '" + addrProcessed + "'");
 
@@ -3649,8 +3691,8 @@ string CompileCode(const string& inputcode)
 			if (addrProcessed == "-1") {
 				addrProcessed = addrPre;
 			}
-			if (IsLabel(addrPre))
-				addrProcessed = addrPre;
+			//if (IsLabel(addrPre))
+			//	addrProcessed = addrPre;
 
 			// If using equal to '==' comparer
 			if (comparer == "==") {
