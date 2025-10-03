@@ -13,7 +13,7 @@ There are some demos for the Astro-8, such as the pong game and a typing program
 
 <p float="left">
 <img src="https://github.com/sam-astro/Astro8-Computer/blob/main/images/pong.gif" width=30% />
-<img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/perspectiveCube.gif"  width=30% />
+<img class="portfolio" src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/perspectiveCube.gif"  width=30%/>
 <img src="https://raw.githubusercontent.com/sam-astro/Astro8-Computer/main/images/raytracer.gif"  width=30% />
 </p>
 
